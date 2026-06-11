@@ -23,6 +23,7 @@ export default defineConfig({
 
                 'resources/js/reused.js',
                 'resources/js/cart.js',
+                'resources/js/modal.js',
                 'resources/js/app.js'
             ],
             refresh: true,

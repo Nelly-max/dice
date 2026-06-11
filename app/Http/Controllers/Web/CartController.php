@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\ItemReservation;
 use App\Models\CookingGas\GasQntImage;
 use App\Models\CookingGas\BusinessGasStock;
 use App\Models\SubDivision; 
@@ -17,163 +18,173 @@ class CartController extends Controller
 {
     // View cart
     public function view()
-{
-    $cartItems = Cart::forCurrent()
-        ->with(['stockable', 'subdivision'])
-        ->get();
+    {
+        $cartItems = Cart::forCurrent()
+            ->with([
+                'stockable',
+                'subdivision.shipment'
+            ])
+            ->get();
 
-    // =====================================================
-    // SHIPMENT TYPES
-    // =====================================================
-    $shipmentTypes = DB::table('shipment_types')
-        ->get()
-        ->keyBy('id');
+        // =====================================================
+        // SHIPMENT TYPES
+        // =====================================================
+        $shipmentTypes = DB::table('shipment_types')
+            ->get()
+            ->keyBy('id');
 
-    $shipmentInfo = [
-        'quick' => [
-            'icon' => 'ri-e-bike-2-line',
-            'label' => 'Quick in 10 - 50 Mins'
-        ],
-        'standard' => [
-            'icon' => 'ri-truck-line',
-            'label' => 'Standard delivery'
-        ],
-        'specific_shop' => [
-            'icon' => 'ri-riding-line',
-            'label' => 'Order to specific shop'
-        ]
-    ];
-
-    // =====================================================
-    // GROUP BY SHIPMENT TYPE FIRST
-    // =====================================================
-    $groupedByType = $cartItems->groupBy('shipment_type_id');
-
-    $shipments = [];
-
-    foreach ($groupedByType as $typeId => $items) {
-
-        $typeRule = $shipmentTypes->get($typeId);
-
-        $typeName = strtolower($typeRule->name ?? 'standard');
-
-        $minAmount = $typeRule->min_amount ?? 0;
-
-        $timeRange = [
-            'from' => $typeRule->time1 ?? null,
-            'to'   => $typeRule->time2 ?? null,
-        ];
-
-        // =================================================
-        // CHECK IF ANY ITEM IS SINGLE
-        // =================================================
-        $singleItems = $items->filter(function ($item) {
-            return ($item->subdivision?->consignment ?? 'group') === 'single';
-        });
-
-        $groupItems = $items->filter(function ($item) {
-            return ($item->subdivision?->consignment ?? 'group') === 'group';
-        });
-
-        // =================================================
-        // 1. GROUP ITEMS → ALL TOGETHER (EVEN DIFFERENT SUBDIVISIONS)
-        // =================================================
-        if ($groupItems->isNotEmpty()) {
-
-            $key = "group_{$typeId}";
-
-            $shipments[$key] = [
-                'shipment_type_id' => $typeId,
-                'shipment_type' => $typeName,
-                'mode' => 'group',
-
-                // subdivision is irrelevant because they are merged
-                'subdivision' => null,
-
-                'min_amount' => $minAmount,
-                'time_range' => $timeRange,
-
-                'items' => $groupItems,
-            ];
-        }
-
-        // =================================================
-        // 2. SINGLE ITEMS → EACH ITEM IS ITS OWN SHIPMENT
-        // =================================================
-        foreach ($singleItems as $item) {
-
-            $key = "single_{$typeId}_{$item->id}";
-
-            $shipments[$key] = [
-                'shipment_type_id' => $typeId,
-                'shipment_type' => $typeName,
-                'mode' => 'single',
-
-                // subdivision is just display info
-                'subdivision' => $item->subdivision,
-
-                'min_amount' => $minAmount,
-                'time_range' => $timeRange,
-
-                'items' => collect([$item]),
-            ];
-        }
-    }
-
-    // =====================================================
-    // FORMAT OUTPUT
-    // =====================================================
-    $formattedShipments = [];
-    $shipmentNumber = 1;
-
-    foreach ($shipments as $shipment) {
-
-        $items = $shipment['items'];
-
-        $subtotal = $items->sum(fn ($i) => $i->price * $i->quantity);
-
-        $typeName = $shipment['shipment_type'];
-
-        $formattedShipments[] = [
-            'number' => $shipmentNumber,
-            'title' => 'Shipment ' . $shipmentNumber,
-
-            'shipment_type' => $typeName,
-            'shipment_type_id' => $shipment['shipment_type_id'],
-
-            'info' => $shipmentInfo[$typeName] ?? [
-                'icon' => 'ri-package-line',
-                'label' => ucfirst($typeName)
+        $shipmentInfo = [
+            'quick' => [
+                'icon' => 'ri-e-bike-2-line',
+                'label' => 'Quick in 10 - 50 Mins'
             ],
-
-            'mode' => $shipment['mode'],
-            'subdivision' => $shipment['subdivision'],
-
-            'min_amount' => $shipment['min_amount'],
-            'time_range' => $shipment['time_range'],
-
-            'items' => $items,
-
-            'item_count' => $items->count(),
-            'total_quantity' => $items->sum('quantity'),
-
-            'subtotal' => $subtotal,
+            'standard' => [
+                'icon' => 'ri-truck-line',
+                'label' => 'Standard delivery'
+            ],
+            'specific_shop' => [
+                'icon' => 'ri-riding-line',
+                'label' => 'Order to specific shop'
+            ]
         ];
 
-        $shipmentNumber++;
+        // =====================================================
+        // GROUP BY SHIPMENT TYPE
+        // =====================================================
+        $groupedByType = $cartItems->groupBy('shipment_type_id');
+
+        $shipments = [];
+
+        foreach ($groupedByType as $typeId => $items) {
+
+            $typeRule = $shipmentTypes->get($typeId);
+
+            $typeName = strtolower($typeRule->name ?? 'standard');
+
+            $minAmount = $typeRule->min_amount ?? 0;
+
+            $timeRange = [
+                'from' => $typeRule->time1 ?? null,
+                'to'   => $typeRule->time2 ?? null,
+            ];
+
+            $groupItems = collect();
+            $singleItems = collect();
+
+            // =================================================
+            // SPLIT ITEMS BY CONSIGNMENT
+            // =================================================
+            foreach ($items as $item) {
+
+                $consignment = strtolower(
+                    $item->subdivision?->shipment?->consignment ?? 'group'
+                );
+
+                if ($consignment === 'single') {
+                    $singleItems->push($item);
+                } else {
+                    $groupItems->push($item);
+                }
+            }
+
+            // =================================================
+            // GROUP ITEMS
+            // Same shipment type + group consignment
+            // => ONE shipment
+            // =================================================
+            if ($groupItems->isNotEmpty()) {
+
+                $shipments["group_{$typeId}"] = [
+                    'shipment_type_id' => $typeId,
+                    'shipment_type' => $typeName,
+                    'mode' => 'group',
+
+                    'subdivision' => null,
+
+                    'min_amount' => $minAmount,
+                    'time_range' => $timeRange,
+
+                    'items' => $groupItems,
+                ];
+            }
+
+            // =================================================
+            // SINGLE ITEMS
+            // Each item becomes its own shipment
+            // =================================================
+            foreach ($singleItems as $item) {
+
+                $shipments["single_{$typeId}_{$item->id}"] = [
+                    'shipment_type_id' => $typeId,
+                    'shipment_type' => $typeName,
+                    'mode' => 'single',
+
+                    'subdivision' => $item->subdivision,
+
+                    'min_amount' => $minAmount,
+                    'time_range' => $timeRange,
+
+                    'items' => collect([$item]),
+                ];
+            }
+        }
+
+        // =====================================================
+        // FORMAT SHIPMENTS
+        // =====================================================
+        $formattedShipments = [];
+        $shipmentNumber = 1;
+
+        foreach ($shipments as $shipment) {
+
+            $items = $shipment['items'];
+
+            $subtotal = $items->sum(function ($item) {
+                return ($item->price ?? 0) * $item->quantity;
+            });
+
+            $typeName = $shipment['shipment_type'];
+
+            $formattedShipments[] = [
+                'number' => $shipmentNumber,
+                'title' => 'Shipment ' . $shipmentNumber,
+
+                'shipment_type' => $typeName,
+                'shipment_type_id' => $shipment['shipment_type_id'],
+
+                'info' => $shipmentInfo[$typeName] ?? [
+                    'icon' => 'ri-package-line',
+                    'label' => ucfirst($typeName)
+                ],
+
+                'mode' => $shipment['mode'],
+                'subdivision' => $shipment['subdivision'],
+
+                'min_amount' => $shipment['min_amount'],
+                'time_range' => $shipment['time_range'],
+
+                'items' => $items,
+
+                'item_count' => $items->count(),
+                'total_quantity' => $items->sum('quantity'),
+
+                'subtotal' => $subtotal,
+            ];
+
+            $shipmentNumber++;
+        }
+
+        // =====================================================
+        // TOTAL
+        // =====================================================
+        $total = collect($formattedShipments)->sum('subtotal');
+
+        return view('cart', [
+            'cartItems' => $cartItems,
+            'shipments' => $formattedShipments,
+            'total' => $total
+        ]);
     }
-
-    // =====================================================
-    // TOTAL
-    // =====================================================
-    $total = collect($formattedShipments)->sum('subtotal');
-
-    return view('cart', [
-        'cartItems' => $cartItems,
-        'shipments' => $formattedShipments,
-        'total' => $total
-    ]);
-}
 
     // Get product details including image
     private function getProductDetails($cartItem)
@@ -212,53 +223,147 @@ class CartController extends Controller
         return $cartItem;
     }
 
-    // Update quantity (form submission)
-    public function update(Request $request)
+    private function getAvailableStock($stockable): int
     {
-        $userId = Auth::id() ?? 1;
-
-        $request->validate([
-            'item_id' => 'required|integer',
-            'action' => 'required|in:increase,decrease'
-        ]);
-
-        $item = Cart::where('user_id', $userId)
-            ->where('id', $request->item_id)
-            ->first();
-
-        if (!$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Item not found'
-            ], 404);
+        if (method_exists($stockable, 'availableStock')) {
+            return (int) $stockable->availableStock();
         }
 
-        $qty = $item->quantity;
+        return 0;
+    }
+
+    // Update quantity (form submission)
+    public function update(Request $request)
+{
+    $request->validate([
+        'item_id' => 'required|integer',
+        'action'  => 'required|in:increase,decrease',
+    ]);
+
+    $item = Cart::forCurrent()
+        ->with('stockable')
+        ->where('id', $request->item_id)
+        ->first();
+
+    if (!$item) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Item not found'
+        ], 404);
+    }
+
+    DB::beginTransaction();
+
+    try {
+
+        $quantity = $item->quantity;
 
         if ($request->action === 'increase') {
-            $qty = min(99, $qty + 1);
+
+            $reservedByOthers = ItemReservation::query()
+                ->where('stockable_type', $item->stockable_type)
+                ->where('stockable_id', $item->stockable_id)
+                ->where('cart_id', '!=', $item->id)
+                ->where('expires_at', '>', now())
+                ->sum('quantity');
+
+            $availableStock = $this->getAvailableStock($item->stockable);
+
+            $available = max(
+                0,
+                $availableStock - $reservedByOthers
+            );
+
+            if (($quantity + 1) > $available) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only ' . $available . ' item(s) available.'
+                ], 422);
+            }
+
+            $quantity++;
         }
 
         if ($request->action === 'decrease') {
-            $qty = max(0, $qty - 1);
+            $quantity--;
         }
 
-        if ($qty === 0) {
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE ITEM
+        |--------------------------------------------------------------------------
+        */
+
+        if ($quantity <= 0) {
+
+            ItemReservation::where(
+                'cart_id',
+                $item->id
+            )->delete();
+
             $item->delete();
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'deleted' => true
+                'deleted' => true,
+                'cart_count' => Cart::forCurrent()->sum('quantity')
             ]);
         }
 
-        $item->update(['quantity' => $qty]);
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE CART
+        |--------------------------------------------------------------------------
+        */
+
+        $item->update([
+            'quantity' => $quantity
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE RESERVATION
+        |--------------------------------------------------------------------------
+        */
+
+        ItemReservation::updateOrCreate(
+            [
+                'cart_id' => $item->id,
+            ],
+            [
+                'stockable_type' => $item->stockable_type,
+                'stockable_id'   => $item->stockable_id,
+                'quantity'       => $quantity,
+                'expires_at'     => now()->addMinutes(10),
+            ]
+        );
+
+        DB::commit();
 
         return response()->json([
             'success' => true,
-            'quantity' => $qty
+            'quantity' => $quantity,
+            'cart_count' => Cart::forCurrent()->sum('quantity'),
+            'expires_at' => now()->addMinutes(10)->toDateTimeString(),
         ]);
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        report($e);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to update cart.'
+        ], 500);
     }
+}
     
 
     

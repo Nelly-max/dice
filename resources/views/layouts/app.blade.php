@@ -5,15 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dice || Cart</title>
+    <title>SMART MARKET || Cart</title>
 
     <!-- Vite CSS -->
     @vite([
             'resources/css/reused.css',
             'resources/css/main.css',
+            'resources/css/modal.css',
             
             'resources/js/reused.js',
             'resources/js/cart.js',
+            'resources/js/modal.js',
             ])
 
     <!-- Favicon -->

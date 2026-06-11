@@ -26,4 +26,9 @@ class SubDivision extends Model
     {
         return $this->belongsTo(MajorDivision::class);
     }
+
+    public function shipment()
+    {
+        return $this->hasOne(SubdivisionShipment::class, 'subdivision_id');
+    }
 }

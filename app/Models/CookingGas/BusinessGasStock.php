@@ -94,18 +94,18 @@ class BusinessGasStock extends Model
     /**
      * Get image with quantity applied
      */
-public function getCartImage($quantity = 1)
-{
-    $image = \App\Models\CookingGas\GasQntImage::where('gas_cylinder_id', $this->gas_cylinder_id)
-        ->where('quantity_id', $this->gas_quantity_id)
-        ->value('file_path');
+    public function getCartImage($quantity = 1)
+    {
+        $image = \App\Models\CookingGas\GasQntImage::where('gas_cylinder_id', $this->gas_cylinder_id)
+            ->where('quantity_id', $this->gas_quantity_id)
+            ->value('file_path');
 
-    if (!$image) {
-        return rtrim(config('app.media_url'), '/') . '/media/img/placeholder.png';
+        if (!$image) {
+            return rtrim(config('app.media_url'), '/') . '/media/img/placeholder.png';
+        }
+
+        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
     }
-
-    return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
-}
     /**
      * Get business name
      */
@@ -120,6 +120,11 @@ public function getCartImage($quantity = 1)
     public function getSubdivisionCode()
     {
         return 'cooking_gas';
+    }
+
+    public function availableStock(): int
+    {
+        return (int) $this->filled_cylinders;
     }
 
     /**

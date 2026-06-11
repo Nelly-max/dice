@@ -271,35 +271,49 @@ function setupQuantityControls() {
     }
 }
 
-/* ------------------ Cart Page: Update Quantity Buttons ------------------ */
-function setupCartQuantityButtons() {
-    const cartForms = document.querySelectorAll('.cart-item-form');
 
-    cartForms.forEach(form => {
-        const decBtn = form.querySelector('.dec');
-        const incBtn = form.querySelector('.inc');
-        const qtyInput = form.querySelector('input[name="quantity"]');
-        const itemId = form.querySelector('input[name="item_id"]').value;
+    /* ------------------ Cart Page: Update Quantity Buttons ------------------ */
+    function setupCartQuantityButtons() {
+        const cartForms = document.querySelectorAll('.cart-item-form');
 
-        decBtn.addEventListener('click', () => {
-            let qty = parseInt(qtyInput.value) || 1;
-            if (qty > 1) {
-                qty--;
-                qtyInput.value = qty;
-                updateCartItem(itemId, qty, form);
-            }
+        cartForms.forEach(form => {
+            const decBtn = form.querySelector('.dec');
+            const incBtn = form.querySelector('.inc');
+            const qtyInput = form.querySelector('input[name="quantity"]');
+            const itemId = form.querySelector('input[name="item_id"]').value;
+
+            decBtn.addEventListener('click', () => {
+                updateCartItem(itemId, 'decrease', form);
+            });
+
+            incBtn.addEventListener('click', () => {
+                updateCartItem(itemId, 'increase', form);
+            });
         });
+    }
 
-        incBtn.addEventListener('click', () => {
-            let qty = parseInt(qtyInput.value) || 1;
-            qty++;
-            qtyInput.value = qty;
-            updateCartItem(itemId, qty, form);
-        });
-    });
-}
+  let pendingDeleteItemId = null;
+  let pendingDeleteForm = null;
 
-function updateCartItem(itemId, quantity, form) {
+  decBtn.addEventListener('click', () => {
+
+      const qty = parseInt(qtyInput.value) || 1;
+
+      if (qty === 1) {
+
+          pendingDeleteItemId = itemId;
+          pendingDeleteForm = form;
+
+          showModal('deleteItem');
+
+          return;
+      }
+
+      updateCartItem(itemId, 'decrease', form);
+  });
+
+function updateCartItem(itemId, action, form) {
+
     const token = document.querySelector('meta[name="csrf-token"]').content;
 
     fetch('/cart/update', {
@@ -309,31 +323,94 @@ function updateCartItem(itemId, quantity, form) {
             'X-CSRF-TOKEN': token,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ item_id: itemId, quantity })
+        body: JSON.stringify({
+            item_id: itemId,
+            action: action
+        })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            showNotification('Cart updated!', 'success');
 
-            // Update shipment subtotal
-            if (data.item_subtotal && form) {
-                const subtotalEl = form.closest('.cart-items')
-                    .querySelector('.sub-total .cost h4:nth-child(2)');
-                if (subtotalEl) subtotalEl.textContent = `KSH ${data.item_subtotal.toLocaleString(undefined,{minimumFractionDigits:2})}`;
-            }
-
-            // Update cart count
-            if (data.cart_count !== undefined) updateCartCount(data.cart_count);
-
-            // Update total
-            if (data.total) {
-                const totalEl = document.querySelector('.cart-left .sub-total .cost h4:nth-child(2)');
-                if (totalEl) totalEl.textContent = `KSH ${data.total.toLocaleString(undefined,{minimumFractionDigits:2})}`;
-            }
-        } else {
+        if (!data.success) {
             showNotification(data.message || 'Failed to update cart', 'error');
+            return;
         }
+
+        // =====================================================
+        // ITEM REMOVED
+        // =====================================================
+        if (data.deleted) {
+
+            const cartItem =
+                form.closest('.cart-item') ||
+                form.closest('.cart-product') ||
+                form.closest('[data-cart-item]');
+
+            if (cartItem) {
+                cartItem.remove();
+            } else {
+                location.reload();
+            }
+
+            showNotification('Item removed from cart', 'success');
+
+            if (data.cart_count !== undefined) {
+                updateCartCount(data.cart_count);
+            }
+
+            return;
+        }
+
+        // =====================================================
+        // UPDATE QUANTITY INPUT
+        // =====================================================
+        const qtyInput = form.querySelector('input[name="quantity"]');
+
+        if (qtyInput && data.quantity !== undefined) {
+            qtyInput.value = data.quantity;
+        }
+
+        // =====================================================
+        // UPDATE CART COUNT
+        // =====================================================
+        if (data.cart_count !== undefined) {
+            updateCartCount(data.cart_count);
+        }
+
+        // =====================================================
+        // UPDATE SHIPMENT SUBTOTAL
+        // =====================================================
+        if (data.item_subtotal) {
+
+            const subtotalEl = form.closest('.cart-items')
+                ?.querySelector('.sub-total .cost h4:nth-child(2)');
+
+            if (subtotalEl) {
+                subtotalEl.textContent =
+                    `KSH ${Number(data.item_subtotal).toLocaleString(undefined,{
+                        minimumFractionDigits:2
+                    })}`;
+            }
+        }
+
+        // =====================================================
+        // UPDATE CART TOTAL
+        // =====================================================
+        if (data.total) {
+
+            const totalEl = document.querySelector(
+                '.cart-left .sub-total .cost h4:nth-child(2)'
+            );
+
+            if (totalEl) {
+                totalEl.textContent =
+                    `KSH ${Number(data.total).toLocaleString(undefined,{
+                        minimumFractionDigits:2
+                    })}`;
+            }
+        }
+
+        showNotification('Cart updated!', 'success');
     })
     .catch(err => {
         console.error(err);

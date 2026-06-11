@@ -79,16 +79,16 @@ class RetailInventory extends Model
     //     return $this->item?->images?->first()?->image_path;
     // }
 
-public function getCartImage()
-{
-    $image = $this->item?->images()->value('image_path');
+    public function getCartImage()
+    {
+        $image = $this->item?->images()->value('image_path');
 
-    if (!$image) {
-        return rtrim(config('app.media_url'), '/') . '/media/img/homeMarket/products/item_image.png';
+        if (!$image) {
+            return rtrim(config('app.media_url'), '/') . '/media/img/homeMarket/products/item_image.png';
+        }
+
+        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
     }
-
-    return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
-}
 
 // public function getCartImage()
 // {
@@ -107,6 +107,11 @@ public function getCartImage()
                 ?? $this->stockable->title
                 ?? 'Product Item')
             : 'Product not found';
+    }
+
+    public function availableStock(): int
+    {
+        return (int) $this->stock_available;
     }
 
     public function getCartDisplayName()

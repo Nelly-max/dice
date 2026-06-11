@@ -1,0 +1,185 @@
+    @extends('Home.layouts.modalLayout')
+
+    @section('modal')
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Home City || admin</title>
+        <link rel="stylesheet" href="/DiceBusiness/resources/css/homeCity.css">
+        <!-- <link rel="stylesheet" href="../resources/css/reused.css"> -->
+        <link rel="stylesheet" href="/DiceBusiness/resources/css/modal.css">
+        <link rel="stylesheet" href="/DiceBusiness/resources/css/reused.css">
+
+        <link rel="shortcut icon" href="/customer/public/img/logo/homecity.png" type="image/x-icon">
+        <!-- Box icons CDN Link -->
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        <!-- font awesome link -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    </head>
+    <body class="colorBestRed">
+        <div class="content fullbground no-sidebar">
+                <div class="listing">
+                    <a href="listing.html" class="back-arrow">
+                        <i class="fa-solid fa-arrow-left-long"></i>
+                        <h6>Back</h6>
+                    </a>
+                    <div class="list-item">
+                        <div class="header">
+                            <h3>1</h3>
+                            <span>
+                                <h4>Select</h4>
+                            </span>
+                            <!-- <select name="" id="">
+                                <option value="" selected>House</option>
+                            </select> -->
+                        </div>
+                        <div class="property-detail-row">
+                            <div class="property-detail">
+                                <input type="checkbox" class="rental-activator toggle-trigger" data-id="rental" data-type="rental" name="" id="">
+                                <h5>House on Rent</h5>
+                            </div>
+                            <div class="property-detail">
+                                <input type="checkbox" class="onsale-activator toggle-trigger" data-id="onsale" data-type="onsale" name="" id="">
+                                <h5>House On Sale</h5>
+                            </div>
+                            <div class="property-detail">
+                                <input type="checkbox" class="shop-activator toggle-trigger" data-id="shop" data-type="shop" name="" id="">
+                                <h5>Shop On Rent</h5>
+                            </div>
+                            <div class="property-detail">
+                                <input type="checkbox" class="office-activator toggle-trigger" data-id="office" data-type="office" name="" id="">
+                                <h5>Office on Rent</h5>
+                            </div>
+                            <div class="property-detail">
+                                <input type="checkbox" class="residential-activator toggle-trigger" data-id="residential" data-type="residential" name="" id="">
+                                <h5>Shop On Sale</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="list-item">
+                        <div class="header">
+                            <h3>2</h3>
+                            <span>
+                                <h4>Property Details</h4>
+                            </span>
+                        </div>
+                        <div class="property-detail-row structure">
+                            <div class="details-right">
+                                <div class="property-detail template rental-template active" data-id="rental">
+                                    <h5>Add Total Gas Cyinder To your shop</h5>
+                                    <div class="nature office">
+
+                                        <div class="check-item"><div><h4>6 KG</h4></div><span class="block-mob"><h4>TotalCyinders</h4><input class="num" type="text" name="" id=""><h4>Filled Cyinders</h4><input class="num" type="text" name="" id=""><h4>Refill price</h4><input type="text" name="" class="priceInput" id=""><h4>Outright price</h4><input type="text" name="" class="priceInput" id=""></span></div>
+                                        <div class="check-item"><div><h4>13 KG</h4></div><span class="block-mob"><h4>TotalCyinders</h4><input class="num" type="text" name="" id=""><h4>Filled Cyinders</h4><input class="num" type="text" name="" id=""><h4>Refill price</h4><input type="text" name="" class="priceInput" id=""><h4>Outright price</h4><input type="text" name="" class="priceInput" id=""></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="header">
+                            <h3>3</h3>
+                            <span>
+                                <h4>Charges</h4>
+                            </span>
+                        </div>
+                        <div class="property-detail-row structure">
+                            <div class="details-left">
+
+                            </div>
+                            <div class="details-right">
+                                <div class="property-detail reflex">
+                                    <h5>Extra Charges</h5>
+                                    <div class="nature charges">
+                                        <span><input type="checkbox" name="" id=""><h4>Viewing Fee</h4><h4>price</h4><input type="text" name="" class="priceInput" id=""></span>
+                                        <span><input type="checkbox" name="" id=""><h4>Garbage Collection</h4><h4>price</h4><input type="text" name="" class="priceInput" id=""></span>
+                                    </div>
+                                </div>
+
+                                <div class="property-detail reflex">
+                                    <h5>Bills</h5>
+                                    <div class="nature bills">
+                                        <span><input type="checkbox" name="" id=""><h4>Water</h4><input type="radio" name="water"  id=""><h4>Meter</h4><input type="radio" name="water"  id=""><h4>Shared</h4></span>
+                                        <span><input type="checkbox" name="" id=""><h4>Electricity</h4><input type="radio" name="electricity"  id=""><h4>Meter Bill</h4><input type="radio" name="electricity"  id=""><h4>Tokens</h4></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="header">
+                            <h3>3</h3>
+                            <span>
+                                <h4>Extra Information</h4>
+                            </span>
+                        </div>
+                        <div class="property-detail-row structure">
+                            <div class="details-left">
+                                <div class="property-detail">
+                                    <h5>Highlight</h5>
+                                    <div class="nature">
+                                        <textarea name="" id="autoTextarea"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="details-right">
+                                <div class="property-detail reflex">
+                                    <h5>Property Amenities</h5>
+                                    <div class="nature amenities">
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Kids Playground</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Wifi Ready</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Water</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Parking</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Shared washroom</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Own Compound</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Swimming Pool</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Furnised</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Car Parking</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Security</h4></span>
+                                        </div>
+                                        <div class="amenity">
+                                            <span><input type="checkbox" name="" id=""><h4>Gym</h4></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-item">
+                        <div class="header">
+                            <h3>4</h3>
+                            <span>
+                                <h4>Add Property</h4>
+                            </span>
+                        </div>
+                        <button type="submit" class="submit">Add Listing</button>
+                    </div>
+                </div>
+            </div>
+    </body>
+</html>
+    @endsection

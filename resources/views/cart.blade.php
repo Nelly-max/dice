@@ -208,3 +208,6 @@
 </main>
 
 @endsection
+
+{{-- Modal --}}
+@include('modals.modals')
