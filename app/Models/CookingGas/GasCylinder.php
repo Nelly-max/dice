@@ -43,7 +43,7 @@ class GasCylinder extends Model
     public function businessStock()
     {
         return $this->hasMany(
-            BusinessGasStock::class,
+            BusinessGasInventory::class,
             'gas_cylinder_id'
         );
     }

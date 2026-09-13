@@ -1,6 +1,6 @@
 <footer>
     <div class="footer-top"></div>
     <div class="footer-bottom">
-        <h3>© Right || smartmarket LTD 2026</h3>
+        <h3>©2026 Rights Reserved || smartmarket Kenya</h3>
     </div>
 </footer>

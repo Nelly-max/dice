@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web\CookingGas;
 
 use App\Http\Controllers\Controller;
-use App\Models\CookingGas\BusinessGasStock;
+use App\Models\CookingGas\BusinessGasInventory;
 use App\Models\CookingGas\GasQntImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $cylinders = BusinessGasStock::query()
+        $cylinders = BusinessGasInventory::query()
             ->select([
                 'gas_cylinder_id',
                 'gas_quantity_id',
@@ -35,7 +35,7 @@ class ProductController extends Controller
         $cylinders->each(function ($cylinder) {
             $cylinder->image = GasQntImage::where('gas_cylinder_id', $cylinder->gas_cylinder_id)
                 ->where('quantity_id', $cylinder->gas_quantity_id)
-                ->value('file_path');
+                ->value('image_path');
         });
 
         // Pass 'cylinders' to the view
@@ -46,7 +46,7 @@ class ProductController extends Controller
     /**
      * Show specific cylinder details and other valid vendors
      */
-    public function show(Request $request)
+    public function viewCylinder(Request $request)
     {
         $request->validate([
             'cylinder' => 'required|integer',
@@ -54,46 +54,131 @@ class ProductController extends Controller
             'business' => 'nullable|integer',
         ]);
 
-        $allStockEntries = BusinessGasStock::query()
+        // =====================================================
+        // BASE QUERY (STRICT SCOPE FOUNDATION)
+        // =====================================================
+
+        $baseQuery = BusinessGasInventory::query()
             ->where('gas_cylinder_id', $request->cylinder)
             ->where('gas_quantity_id', $request->quantity)
             ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
-            ->with(['cylinder:id,brand_name', 'quantity:id,quantity', 'business:id,name'])
-            ->get();
+            ->with([
+                'cylinder:id,brand_name',
+                'quantity:id,quantity',
+                'business:id,name'
+            ]);
 
-        if ($allStockEntries->isEmpty()) {
+        // =====================================================
+        // APPLY BUSINESS FILTER (USER INTENT)
+        // =====================================================
+
+        if ($request->filled('business')) {
+            $baseQuery->where('business_id', $request->business);
+        }
+
+        // =====================================================
+        // TRY STRICT MATCH FIRST
+        // =====================================================
+
+        $product = (clone $baseQuery)->first();
+
+        // =====================================================
+        // FALLBACK (ONLY IF NO BUSINESS WAS SPECIFIED)
+        // =====================================================
+
+        if (!$product && !$request->filled('business')) {
+            $product = BusinessGasInventory::query()
+                ->where('gas_cylinder_id', $request->cylinder)
+                ->where('gas_quantity_id', $request->quantity)
+                ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+                ->with([
+                    'cylinder:id,brand_name',
+                    'quantity:id,quantity',
+                    'business:id,name'
+                ])
+                ->orderBy('refill_price')
+                ->first();
+        }
+
+        // =====================================================
+        // NOT FOUND
+        // =====================================================
+
+        if (!$product) {
             abort(404, 'Product not available for online purchase');
         }
 
-        // Determine main product (specific business or cheapest)
-        $product = $request->has('business') 
-            ? $allStockEntries->where('business_id', $request->business)->first() 
-            : $allStockEntries->sortBy('refill_price')->first();
+        // Resolve final business context
+        $resolvedBusinessId = $product->business_id;
 
-        $otherVendors = $allStockEntries->where('business_id', '!=', $product->business_id);
+        // =====================================================
+        // MAIN PRODUCT IMAGE
+        // =====================================================
 
-        // Fetch available weight variants (thumbnails) from active vendors
-        $thumbnails = BusinessGasStock::query()
+        $product->image = GasQntImage::query()
             ->where('gas_cylinder_id', $product->gas_cylinder_id)
-            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
-            ->with(['quantity:id,quantity', 'cylinder:id,brand_name'])
-            ->get()
-            ->groupBy('gas_quantity_id')
-            ->map(function ($stocks) {
-                $cheapest = $stocks->sortBy('refill_price')->first();
-                $cheapest->image = GasQntImage::where('gas_cylinder_id', $cheapest->gas_cylinder_id)
-                    ->where('quantity_id', $cheapest->gas_quantity_id)
-                    ->value('file_path');
-                return $cheapest;
-            })
-            ->values();
-
-        $product->image = GasQntImage::where('gas_cylinder_id', $product->gas_cylinder_id)
             ->where('quantity_id', $product->gas_quantity_id)
-            ->value('file_path');
+            ->value('image_path');
 
-        return view('CookingGas.Products.viewCylinder', compact('product', 'otherVendors', 'thumbnails'));
+        // =====================================================
+        // THUMBNAILS (STRICT SAME BUSINESS ONLY)
+        // =====================================================
+
+        $thumbnails = BusinessGasInventory::query()
+            ->where('business_id', $resolvedBusinessId)
+            ->where('gas_cylinder_id', $product->gas_cylinder_id)
+            ->with([
+                'quantity:id,quantity',
+                'cylinder:id,brand_name',
+                'business:id,name'
+            ])
+            ->orderBy('gas_quantity_id')
+            ->get()
+            ->map(function ($stock) {
+
+                $stock->image = GasQntImage::query()
+                    ->where('gas_cylinder_id', $stock->gas_cylinder_id)
+                    ->where('quantity_id', $stock->gas_quantity_id)
+                    ->value('image_path');
+
+                $stock->route_url = route('gas.cylinder.view', [
+                    'cylinder' => $stock->gas_cylinder_id,
+                    'quantity' => $stock->gas_quantity_id,
+                    'business' => $stock->business_id,
+                ]);
+
+                return $stock;
+            });
+
+        // =====================================================
+        // OTHER VENDORS (SAME PRODUCT ONLY)
+        // =====================================================
+
+        $otherVendors = BusinessGasInventory::query()
+            ->where('gas_cylinder_id', $product->gas_cylinder_id)
+            ->where('gas_quantity_id', $product->gas_quantity_id)
+            ->where('business_id', '!=', $resolvedBusinessId)
+            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+            ->with([
+                'business:id,name'
+            ])
+            ->orderBy('refill_price')
+            ->get();
+
+        // =====================================================
+        // RETURN VIEW
+        // =====================================================
+
+        return view(
+            'CookingGas.Products.viewCylinder',
+            compact(
+                'product',
+                'otherVendors',
+                'thumbnails'
+            )
+        );
     }
+
 
     /**
      * JSON Response for switching quantity variants
@@ -105,7 +190,7 @@ class ProductController extends Controller
             'quantity' => 'required|integer',
         ]);
 
-        $stocks = BusinessGasStock::query()
+        $stocks = BusinessGasInventory::query()
             ->where('gas_cylinder_id', $request->cylinder)
             ->where('gas_quantity_id', $request->quantity)
             ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
@@ -159,7 +244,7 @@ class ProductController extends Controller
      */
     private function getCylinderQuery()
     {
-        return BusinessGasStock::query()
+        return BusinessGasInventory::query()
             ->select([
                 'gas_cylinder_id',
                 'gas_quantity_id',
@@ -179,11 +264,8 @@ class ProductController extends Controller
         $collection->each(function ($item) {
             $item->image = GasQntImage::where('gas_cylinder_id', $item->gas_cylinder_id)
                 ->where('quantity_id', $item->gas_quantity_id)
-                ->value('file_path');
+                ->value('image_path');
         });
     }
-
-
-
 
 }

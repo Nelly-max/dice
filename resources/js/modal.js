@@ -24,7 +24,23 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
-    
+    if (modalId === "mapModal") {
+
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+
+              initDeliveryMap();
+
+              // IMPORTANT: force Google Maps resize
+              if (map) {
+                  google.maps.event.trigger(map, "resize");
+              }
+
+          }, 300);
+      });
+    }
+  };
+
   window.closeModal = function() {
     document.querySelectorAll(".modal").forEach(modal => {
       modal.style.display = "none";
@@ -35,68 +51,5 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   };
-
-
-
-    if (modalId === "mapModal") {
-
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-
-              window.MapPicker.init(
-                  "map",
-                  'input[name="pin_location"]'
-              );
-
-              // IMPORTANT: force Google Maps resize
-              if (window.MapPicker.map) {
-                  google.maps.event.trigger(window.MapPicker.map, "resize");
-              }
-
-          }, 300);
-      });
-    }
-  };
-
-
-  let pendingDeleteItemId = null;
-  let pendingDeleteForm = null;
-
-  decBtn.addEventListener('click', () => {
-
-      const qty = parseInt(qtyInput.value) || 1;
-
-      if (qty === 1) {
-
-          pendingDeleteItemId = itemId;
-          pendingDeleteForm = form;
-
-          showModal('deleteItem');
-
-          return;
-      }
-
-      updateCartItem(itemId, 'decrease', form);
-  });
-
-  document
-    .getElementById('confirmDeleteCartItem')
-    ?.addEventListener('click', () => {
-
-        if (!pendingDeleteItemId) {
-            return;
-        }
-
-        updateCartItem(
-            pendingDeleteItemId,
-            'decrease',
-            pendingDeleteForm
-        );
-
-        closeModal();
-
-        pendingDeleteItemId = null;
-        pendingDeleteForm = null;
-    });
 
 });

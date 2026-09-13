@@ -14,11 +14,22 @@
             <div class="price">
                 <h4>Ksh</h4>
                 <h4 class="cash">
-                    <!-- Displays the calculated final markdown price value -->
                     {{ number_format($product->final_price, 2) }}
                 </h4>
             </div>
-            <i class="fa-solid fa-basket-shopping"></i>
+
+            <!-- Existing cart contract: use the same item/cart handler -->
+            <i class="fa-solid fa-basket-shopping add-to-cart-btn"
+               data-item-id="{{ $product->item_id }}"
+               data-stockable-id="{{ $product->id }}"
+               data-stockable-type="retail_inventory"
+               data-business-account="{{ $product->business_account ?? '' }}"
+               data-subdivision-code="{{ $product->subdivision_code ?? 'home_market' }}"
+               data-product-name="{{ $product->product_name }}"
+               data-image-url="{{ $product->image_url }}"
+               data-price="{{ $product->final_price }}"
+               data-variant-label="{{ $product->variant_label ?? '' }}"
+               title="Add to cart"></i>
         </span>
 
         <!-- 3. Renders the crossed-out original baseline retail price box ONLY when a promo markdown is live -->
@@ -30,9 +41,7 @@
 
         @if(!empty($product->packaging_name))
             <span>
-                <!-- <h4>Size:</h4> -->
                 <h4>
-                    <!-- Displays '2kg (Bale)' or '500G (Packet)' based on real database records -->
                     {{ $product->variant_label ?? 'N/A' }} 
                     ({{ strtolower($product->packaging_name) }})
                 </h4>
@@ -44,3 +53,4 @@
         </h4>
     </div>
 @endforeach
+

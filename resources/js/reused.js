@@ -113,141 +113,533 @@ themeBtns.forEach((themeBtn) => {
   });
 });
 
-var incrementButton = document.getElementsByClassName('inc');
-var decrementButton = document.getElementsByClassName('dec');
 
-//increment
-for(var i = 0; i < incrementButton.length; i++){
-    var button = incrementButton[i];
-    button.addEventListener('click',function(event){
-        var buttonClicked = event.target;
-        // console.log(buttonClicked);
-        var input = buttonClicked.parentElement.children[1];
-        // console.log(input);
-        var inputValue = input.value;
-        // console.log(inputValue);
-        var newValue = parseInt(inputValue) + 1;
-        // console.log(newValue);
-        if (newValue >= 999){ 
-            input.value = 999;         
-        }else{
-            input.value = newValue;
-        }
-    })
-}
 
-//decrement
 
-for(var i = 0; i < decrementButton.length; i++){
-    var button = decrementButton[i];
-    button.addEventListener('click',function(event){
-        var buttonClicked = event.target;
-        // console.log(buttonClicked);
-        var input = buttonClicked.parentElement.children[1];
-        // console.log(input);
-        var inputValue = input.value;
-        // console.log(inputValue);
-        var newValue = parseInt(inputValue) - 1;
-        // console.log(newValue);
-        if (newValue >= 0){            
-            input.value = newValue;
-        }else{
-            input.value = 0;
-        }
-    })
-}
+// var incrementButton = document.getElementsByClassName('inc');
+// var decrementButton = document.getElementsByClassName('dec');
+
+// //increment
+// for(var i = 0; i < incrementButton.length; i++){
+//     var button = incrementButton[i];
+//     button.addEventListener('click',function(event){
+//         var buttonClicked = event.target;
+//         // console.log(buttonClicked);
+//         var input = buttonClicked.parentElement.children[1];
+//         // console.log(input);
+//         var inputValue = input.value;
+//         // console.log(inputValue);
+//         var newValue = parseInt(inputValue) + 1;
+//         // console.log(newValue);
+//         if (newValue >= 999){ 
+//             input.value = 999;         
+//         }else{
+//             input.value = newValue;
+//         }
+//     })
+// }
+
+// //decrement
+
+// for(var i = 0; i < decrementButton.length; i++){
+//     var button = decrementButton[i];
+//     button.addEventListener('click',function(event){
+//         var buttonClicked = event.target;
+//         // console.log(buttonClicked);
+//         var input = buttonClicked.parentElement.children[1];
+//         // console.log(input);
+//         var inputValue = input.value;
+//         // console.log(inputValue);
+//         var newValue = parseInt(inputValue) - 1;
+//         // console.log(newValue);
+//         if (newValue >= 0){            
+//             input.value = newValue;
+//         }else{
+//             input.value = 0;
+//         }
+//     })
+// }
+
+
 
 
 // ===============================
 //  #Thumbnails
 // ===============================
 document.addEventListener('DOMContentLoaded', function () {
-    const thumbnails = document.querySelectorAll('.small-img-col');
-    const mainImage = document.getElementById('ProductImg');
-    const variantLabel = document.querySelector('.js-variant-label');
-    const packagingName = document.querySelector('.js-packaging-name');
-    
-    // Aligned to your exact custom markup bindings
-    const finalPriceDisplay = document.querySelector('.js-final-price');
-    const originalPriceDisplay = document.querySelector('.js-original-price');
-    const discountPercentage = document.querySelector('.js-discount-percentage');
-    const discountWrapper = document.querySelector('.js-discount-wrapper'); 
-    
-    const addToCartBtn = document.getElementById('AddToCartBtn');
 
-    thumbnails.forEach(thumb => {
-        thumb.addEventListener('click', function () {
-            // 1. Toggle Active Visual Selection Outline States
-            thumbnails.forEach(t => t.classList.remove('active-thumbnail'));
-            this.classList.add('active-thumbnail');
+    console.log('🔥 thumbnail JS loaded');
 
-            // 2. Pull Properties from Thumbnail Data Matrix Attributes
-            const targetImageUrl = this.getAttribute('data-full-url');
-            const targetLabel = this.getAttribute('data-label');
-            const targetPackaging = this.getAttribute('data-packaging-name');
-            const targetFinalPrice = this.getAttribute('data-full-url') ? this.getAttribute('data-final-price') : '';
-            const targetOriginalPrice = this.getAttribute('data-original-price');
-            const targetDiscountPct = this.getAttribute('data-discount-percentage');
-            const hasDiscount = this.getAttribute('data-has-discount') === 'true';
-            const targetRoute = this.getAttribute('data-route-url');
-            const targetItemId = this.getAttribute('data-item-id');
+    function initThumbnails() {
 
-            // 3. Update DOM Elements Instantly with Core Prefixes Preserved
-            if (mainImage) mainImage.src = targetImageUrl;
-            if (variantLabel) variantLabel.textContent = targetLabel;
+        const thumbnails = document.querySelectorAll('.small-img-col');
+
+        console.log('thumbnails found:', thumbnails.length);
+
+        if (!thumbnails.length) return;
+
+        const mainImage = document.getElementById('ProductImg');
+
+        const variantLabel = document.querySelector('.js-variant-label');
+        const packagingName = document.querySelector('.js-packaging-name');
+
+        const finalPriceDisplay = document.querySelector('.js-final-price');
+        const originalPriceDisplay = document.querySelector('.js-original-price');
+        const discountPercentage = document.querySelector('.js-discount-percentage');
+        const discountWrapper = document.querySelector('.js-discount-wrapper');
+
+        const addToCartBtn = document.getElementById('AddToCartBtn');
+
+        thumbnails.forEach(thumb => {
+
+            thumb.addEventListener('click', function () {
+
+                console.log('clicked thumbnail OK');
+
+                thumbnails.forEach(t => t.classList.remove('active-thumbnail'));
+                this.classList.add('active-thumbnail');
+
+                const targetImageUrl = this.getAttribute('data-full-url');
+                const targetLabel = this.getAttribute('data-label');
+                const targetPackaging = this.getAttribute('data-packaging-name');
+                const targetFinalPrice = this.getAttribute('data-final-price');
+                const targetOriginalPrice = this.getAttribute('data-original-price');
+                const targetDiscountPct = this.getAttribute('data-discount-percentage');
+                const hasDiscount = this.getAttribute('data-has-discount') === 'true';
+                const targetRoute = this.getAttribute('data-route-url');
+                const targetItemId = this.getAttribute('data-item-id');
+
+                // Cooking Gas specific
+                const targetSize = this.getAttribute('data-variant-label');
+                const targetSeller = this.getAttribute('data-business-account');
+
+                // Existing elements
+                if (mainImage) {
+                    mainImage.src = targetImageUrl;
+                }
+
+                if (variantLabel) {
+                    variantLabel.textContent = targetLabel;
+                }
+
+                if (finalPriceDisplay) {
+                    finalPriceDisplay.textContent = targetFinalPrice;
+                }
+
+                if (originalPriceDisplay) {
+                    originalPriceDisplay.textContent = targetOriginalPrice;
+                }
+
+                if (discountPercentage) {
+                    discountPercentage.textContent = targetDiscountPct;
+                }
+
+                if (packagingName) {
+                    packagingName.textContent = targetPackaging
+                        ? `(${targetPackaging})`
+                        : '';
+                }
+
+                if (discountWrapper) {
+                    discountWrapper.style.display = hasDiscount
+                        ? 'inline-flex'
+                        : 'none';
+                }
+
+                if (addToCartBtn) {
+                    addToCartBtn.setAttribute('data-item-id', targetItemId);
+                }
+
+                // ==================================================
+                // COOKING GAS PAGE SUPPORT
+                // ==================================================
+
+                const productTitle = document.getElementById('productTitle');
+                const productSize = document.getElementById('productSize');
+                const productPrice = document.getElementById('productPrice');
+                const sellerName = document.getElementById('sellerName');
+
+                if (productTitle) {
+                    productTitle.textContent =
+                        `${targetLabel} (${targetSize})`;
+                }
+
+                if (productSize) {
+                    productSize.textContent = targetSize;
+                }
+
+                if (productPrice) {
+                    productPrice.innerHTML =
+                        `<h3>Ksh ${Number(targetFinalPrice).toLocaleString()}</h3>`;
+                }
+
+                if (sellerName) {
+                    sellerName.textContent = targetSeller;
+                }
+
+                // ==================================================
+                // URL UPDATE
+                // ==================================================
+
+                if (targetRoute) {
+                    window.history.replaceState({}, '', targetRoute);
+                }
+
+                // ==================================================
+                // CART SUPPORT
+                // ==================================================
+
+                const hiddenCartInput =
+                    document.querySelector('input[name="item_id"]');
+
+                if (hiddenCartInput) {
+                    hiddenCartInput.value = targetItemId;
+                }
+
+                window.currentProduct = {
+                    stockable_id:
+                        document.getElementById('stockableId')?.value || '',
+
+                    stockable_type:
+                        document.getElementById('stockableType')?.value || '',
+
+                    business_account:
+                        document.getElementById('businessAccount')?.value || '',
+
+                    subdivision_code:
+                        document.getElementById('subdivisionCode')?.value || '',
+
+                    inventory_id: targetItemId,
+
+                    price:
+                        parseFloat(
+                            String(targetFinalPrice)
+                                .replace(/[^0-9.]/g, '')
+                        ) || 0,
+
+                    image: targetImageUrl,
+
+                    product_name: targetLabel
+                };
+
+                console.log('✅ Product updated without refresh');
+            });
+        });
+    }
+
+    initThumbnails();
+});
+
+
+
+
+// ===============================
+//  #Mobile Number
+// ===============================
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneInputs = document.querySelectorAll('.mobile-number');
+
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            // Remove all non-digits
+            let value = e.target.value.replace(/\D/g, '');
             
-            if (finalPriceDisplay) finalPriceDisplay.textContent = `${targetFinalPrice}`;
-            if (originalPriceDisplay) originalPriceDisplay.textContent = `${targetOriginalPrice}`;
-            if (discountPercentage) discountPercentage.textContent = `${targetDiscountPct}`;
-
-            // 4. Update Packaging Meta Labels Format
-            if (packagingName) {
-                packagingName.textContent = targetPackaging ? `(${targetPackaging})` : '';
+            // Group digits into 4, 3, and 3
+            if (value.length > 4 && value.length <= 7) {
+                value = `${value.slice(0, 4)} ${value.slice(4)}`;
+            } else if (value.length > 7) {
+                value = `${value.slice(0, 4)} ${value.slice(4, 7)} ${value.slice(7, 10)}`;
             }
-
-            // 5. Manage Sale Box Element Visibility Rules
-            if (discountWrapper) {
-                discountWrapper.style.display = hasDiscount ? 'inline-flex' : 'none';
-            }
-
-            // 6. Synchronize Checkout Button Identifiers
-            if (addToCartBtn) {
-                addToCartBtn.setAttribute('data-item-id', targetItemId);
-            }
-
-            // 7. CRITICAL FIX: Overwrite the current history state instead of piling up new pages
-            if (targetRoute) {
-                window.history.replaceState({ path: targetRoute }, '', targetRoute);
-            }
-
-            // 8. Sync hidden form inputs if rendering on your theme layout
-            const hiddenCartInput = document.querySelector('input[name="item_id"]');
-            if (hiddenCartInput) {
-                hiddenCartInput.value = targetItemId;
-            }
-
-
-            window.currentProduct = {
-                stockable_id: document.getElementById('stockableId')?.value || '', // PRODUCT ID (KEEP THIS FIXED)
-                stockable_type: document.getElementById('stockableType')?.value || '',
-                business_account: document.getElementById('businessAccount')?.value || '',
-                subdivision_code: document.getElementById('subdivisionCode')?.value || '',
-
-                // ADD VARIANT SEPARATELY
-                inventory_id: targetItemId,
-
-                price: parseFloat(targetFinalPrice?.replace(/[^0-9.]/g, '')) || 0,
-                image: targetImageUrl,
-                product_name: targetLabel
-            };
+            
+            // Update the input value
+            e.target.value = value;
         });
     });
 });
 
 
 // ===============================
-//  #Photo Slider
+//  #upload images
 // ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const FORM_KEY = "rider_application";
+
+    const fileContainers = document.querySelectorAll(".file-select");
+
+    const formInputs = document.querySelectorAll(
+        "input:not([type='file']), select, textarea"
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Local Storage Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    function getData() {
+        return JSON.parse(localStorage.getItem(FORM_KEY) || "{}");
+    }
+
+    function saveData(data) {
+        localStorage.setItem(
+            FORM_KEY,
+            JSON.stringify(data)
+        );
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Restore Text Inputs
+    |--------------------------------------------------------------------------
+    */
+
+    const saved = getData();
+
+    formInputs.forEach(input => {
+
+        if (!input.name) return;
+
+        if (saved[input.name] !== undefined) {
+            input.value = saved[input.name];
+        }
+
+        input.addEventListener("input", () => {
+
+            const data = getData();
+
+            data[input.name] = input.value;
+
+            saveData(data);
+
+        });
+
+    });
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Images
+    |--------------------------------------------------------------------------
+    */
+
+    function applyImage(container, image) {
+
+        container.style.backgroundImage = `url('${image}')`;
+
+        container.style.backgroundSize = "cover";
+
+        container.style.backgroundPosition = "center";
+
+        container.style.backgroundRepeat = "no-repeat";
+
+        const icon = container.querySelector("i");
+        const text = container.querySelector("h6");
+
+        if (icon) icon.style.opacity = "0";
+        if (text) text.style.opacity = "0";
+    }
+
+
+
+    fileContainers.forEach(container => {
+
+        const key = container.dataset.storage;
+
+        const fileInput = container.querySelector("input[type=file]");
+
+        if (!key || !fileInput) return;
+
+
+        if (saved[key]) {
+            applyImage(container, saved[key]);
+        }
+
+
+        fileInput.addEventListener("change", e => {
+
+            const file = e.target.files[0];
+
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = event => {
+
+                const data = getData();
+
+                data[key] = event.target.result;
+
+                saveData(data);
+
+                applyImage(container, event.target.result);
+
+            };
+
+            reader.readAsDataURL(file);
+
+        });
+
+    });
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Submit
+    |--------------------------------------------------------------------------
+    */
+
+    const submitButton = document.getElementById("submit-application");
+
+    if (submitButton) {
+
+        submitButton.addEventListener("click", () => {
+
+            console.log(getData());
+
+            // Later:
+            // send getData() using fetch()
+
+        });
+
+    }
+
+});
+
+
+// ==============================================
+//  #Fetch Customer Location
+// ===============================================
+document.addEventListener('DOMContentLoaded', function () {
+    const savedLocation = localStorage.getItem('delivery_location');
+
+    if (!savedLocation) {
+        return;
+    }
+
+    try {
+        const location = JSON.parse(savedLocation);
+
+        const latitude = parseFloat(location.latitude);
+        const longitude = parseFloat(location.longitude);
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+
+        const currentLatitude = parseFloat(
+            url.searchParams.get('latitude')
+        );
+
+        const currentLongitude = parseFloat(
+            url.searchParams.get('longitude')
+        );
+
+        /*
+         * Do not reload if the current URL already contains
+         * the same delivery coordinates.
+         */
+        if (
+            Number.isFinite(currentLatitude) &&
+            Number.isFinite(currentLongitude) &&
+            Math.abs(currentLatitude - latitude) < 0.000001 &&
+            Math.abs(currentLongitude - longitude) < 0.000001
+        ) {
+            return;
+        }
+
+        url.searchParams.set('latitude', latitude);
+        url.searchParams.set('longitude', longitude);
+
+        window.location.replace(url.toString());
+
+    } catch (error) {
+        console.error(
+            'Unable to read saved delivery location:',
+            error
+        );
+    }
+});
+
+
+// ==============================================
+//  #Inventory Search
+// ===============================================
+document.addEventListener('DOMContentLoaded', function () {
+
+    const topSearch = document.querySelector('.search-items input');
+    const searchBox = document.querySelector('.search-box');
+    const mainSearch = searchBox?.querySelector('input');
+    const cancelSearch = searchBox?.querySelector('.cancel-search');
+
+    if (!topSearch || !searchBox || !mainSearch) {
+        return;
+    }
+
+    function activateSearch() {
+        searchBox.classList.add('active');
+
+        // Transfer whatever has already been typed
+        mainSearch.value = topSearch.value;
+
+        // Move typing/focus to the main search input
+        mainSearch.focus();
+
+        // Place cursor at the end
+        mainSearch.setSelectionRange(
+            mainSearch.value.length,
+            mainSearch.value.length
+        );
+    }
+
+    // When user starts typing in the top search
+    topSearch.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+            activateSearch();
+        }
+    });
+
+    // Also activate when user clicks the top search
+    topSearch.addEventListener('focus', function () {
+        if (this.value.trim() !== '') {
+            activateSearch();
+        }
+    });
+
+    // Keep both search inputs synchronized
+    mainSearch.addEventListener('input', function () {
+        topSearch.value = this.value;
+    });
+
+    // Cancel / close search
+    if (cancelSearch) {
+        cancelSearch.addEventListener('click', function () {
+            searchBox.classList.remove('active');
+
+            mainSearch.value = '';
+            topSearch.value = '';
+
+            topSearch.focus();
+        });
+    }
+
+});
+
+
+// ===============================================
+//  #Photo Slider
+// ===============================================
 
  document.addEventListener("DOMContentLoaded", function () {
       const photoSlider = document.getElementById("imageSlider"); // the section.photo-grid
@@ -270,55 +662,71 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
 
-//Hero area Slider
-let list = document.querySelector('.slider .list');
-let items = document.querySelectorAll('.slider .list .item');
-let dots = document.querySelectorAll('.slider .dots li');
-let prev = document.getElementById('prev');
-let next = document.getElementById('next');
+// ===============================================
+// #Hero area Slider
+// ===============================================
+document.addEventListener('DOMContentLoaded', function () {
 
-let active = 0;
-let lengthItems = items.length - 1;
+    const list = document.querySelector('.slider .list');
+    const items = document.querySelectorAll('.slider .list .item');
+    const dots = document.querySelectorAll('.slider .dots li');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
 
-// Move to the next item
-next.onclick = function() {
-    active = (active + 1 > lengthItems) ? 0 : active + 1;
-    reloadSlider();
-}
+    if (!list || !items.length || !prev || !next) {
+        return;
+    }
 
-// Move to the previous item
-prev.onclick = function() {
-    active = (active - 1 < 0) ? lengthItems : active - 1;
-    reloadSlider();
-}
+    let active = 0;
+    const lengthItems = items.length - 1;
+    let refreshSlider;
 
-// Auto-slide every 3 seconds
-let refreshSlider = setInterval(() => { next.click(); }, 3000);
-
-// Update the slider position
-function reloadSlider() {
-    let checkLeft = items[active].offsetLeft;
-    list.style.left = -checkLeft + 'px';
-
-    // Update active dot
-    document.querySelector('.slider .dots li.active').classList.remove('active');
-    dots[active].classList.add('active');
-
-    // Reset auto-slide interval
-    clearInterval(refreshSlider);
-    refreshSlider = setInterval(() => { next.click(); }, 3000);
-}
-
-// Handle dot clicks
-dots.forEach((li, key) => {
-    li.addEventListener('click', function() {
-        active = key;
+    // Move to the next item
+    next.addEventListener('click', function () {
+        active = (active + 1 > lengthItems) ? 0 : active + 1;
         reloadSlider();
     });
-});
 
-// Handle window resize to adjust the slider
-window.addEventListener('resize', reloadSlider);
+    // Move to the previous item
+    prev.addEventListener('click', function () {
+        active = (active - 1 < 0) ? lengthItems : active - 1;
+        reloadSlider();
+    });
+
+    // Update the slider position
+    function reloadSlider() {
+        const checkLeft = items[active].offsetLeft;
+        list.style.left = -checkLeft + 'px';
+
+        // Update active dot
+        const currentDot = document.querySelector('.slider .dots li.active');
+        if (currentDot) {
+            currentDot.classList.remove('active');
+        }
+        if (dots[active]) {
+            dots[active].classList.add('active');
+        }
+
+        // Reset auto-slide interval
+        clearInterval(refreshSlider);
+        refreshSlider = setInterval(() => { next.click(); }, 3000);
+    }
+
+    // Handle dot clicks
+    dots.forEach((li, key) => {
+        li.addEventListener('click', function () {
+            active = key;
+            reloadSlider();
+        });
+    });
+
+    // Handle window resize to adjust the slider
+    window.addEventListener('resize', reloadSlider);
+
+    // Auto-slide every 3 seconds
+    refreshSlider = setInterval(() => { next.click(); }, 3000);
+
+});
 
 
 
@@ -715,3 +1123,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const today = new Date().toISOString().split('T')[0];
     document.getElementById('datePicker').setAttribute('min', today);
+

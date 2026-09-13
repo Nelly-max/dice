@@ -1,16 +1,13 @@
 console.log('Cart JS loaded');
 
-let currentProduct = {
-    stockable_id: '',
-    stockable_type: 'App\\Models\\CookingGas\\BusinessGasStock',
-    subdivision_code: 'cooking_gas',
-    quantity: 1,
-    price: 0,
-    product_name: '',
-    business_name: '',
-    image: '',
-    size: ''
-};
+import { isAuthenticated, customerId } from './auth.js';
+console.log('Auth:', isAuthenticated, customerId);
+
+let currentProduct = {};
+
+let pendingDeleteItemId = null;
+let pendingDeleteForm = null;
+
 
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -67,36 +64,60 @@ function initializeWithActiveThumbnail() {
 }
 
 function setupThumbnails() {
-    const thumbnails = document.querySelectorAll('.small-img');
-    thumbnails.forEach(thumbnail => {
-        thumbnail.addEventListener('click', function() {
-            const titleElement = document.getElementById('productTitle');
-            const brandName = titleElement ? titleElement.textContent.split('(')[0]?.trim() || 'Gas Cylinder' : 'Gas Cylinder';
-            const size = this.dataset.size || '';
-            const productName = `${brandName} (${size})`;
 
-            currentProduct = {
-                stockable_id: this.dataset.id || '',
-                stockable_type: 'App\\Models\\CookingGas\\BusinessGasStock',
-                subdivision_code: 'cooking_gas',
-                quantity: currentProduct.quantity,
-                price: parseFloat(this.dataset.price) || 0,
-                product_name: productName,
-                business_name: this.dataset.business || '',
-                image: this.dataset.image || '',
-                size: size
+    const thumbnails = document.querySelectorAll('.small-img-col');
+    const mainImage = document.getElementById('ProductImg');
+
+    thumbnails.forEach(thumb => {
+        thumb.addEventListener('click', function () {
+
+            // const targetStockableId = this.getAttribute('data-item-id');
+            const targetStockableId = this.getAttribute('data-stockable-id');
+            const targetImageUrl = this.getAttribute('data-full-url');
+            const targetLabel = this.getAttribute('data-label');
+            const targetPrice = this.getAttribute('data-price');
+
+            if (!targetStockableId) {
+                console.error('Thumbnail missing data-item-id');
+                return;
+            }
+
+            // 🚨 ALWAYS overwrite fully (no merging)
+            window.currentProduct = {
+                stockable_id: targetStockableId,
+                stockable_type: document.getElementById('stockableType')?.value || '',
+                subdivision_code: document.getElementById('subdivisionCode')?.value || '',
+                business_account: document.getElementById('businessAccount')?.value || '',
+                price: parseFloat(targetPrice) || 0,
+                image: targetImageUrl || '',
+                product_name: targetLabel || ''
             };
 
-            updateHiddenFields();
-            updateProductDisplay();
+            // update main image
+            if (mainImage && targetImageUrl) {
+                mainImage.src = targetImageUrl;
+            }
 
-            const mainImg = document.getElementById('ProductImg');
-            if (mainImg) mainImg.src = this.src;
-
-            thumbnails.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
+            // active state
+            thumbnails.forEach(t => t.classList.remove('active-thumbnail'));
+            this.classList.add('active-thumbnail');
         });
     });
+}
+
+function syncProductToHiddenFields(product) {
+    const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value ?? '';
+    };
+
+    set('stockableId', product.stockable_id);
+    set('stockableType', product.stockable_type);
+    set('subdivisionCode', product.subdivision_code);
+    set('businessAccount', product.business_account);
+    set('productPriceValue', product.price);
+    set('productName', product.product_name);
+    set('productImage', product.image);
 }
 
 function updateHiddenFields() {
@@ -127,34 +148,143 @@ function updateProductDisplay() {
     if (businessDisplay && currentProduct.business_name) businessDisplay.textContent = currentProduct.business_name;
 }
 
+/* --------------- Product Page: Add to Cart Local --------------- */
+function addToLocalCart(item) {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    const existing = cart.find(i =>
+        i.stockable_id == item.stockable_id &&
+        i.stockable_type == item.stockable_type &&
+        i.business_account == item.business_account
+    );
+
+    if (existing) {
+        existing.quantity += item.quantity;
+    } else {
+        cart.push(item);
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
 /* ------------------ Product Page: Add to Cart ------------------ */
 function setupCart(csrfToken) {
+
     const orderBtn = document.querySelector('.add-to-cart-btn');
     if (!orderBtn) return;
 
-    orderBtn.addEventListener('click', function(e) {
+    orderBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        const quantityInput = document.querySelector('.quantity-input');
-        const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
 
-        if (!currentProduct.stockable_id) {
-            showNotification('Please select a product variant first', 'error');
-            return;
+        // ==============================
+        // SAFE PRODUCT SOURCE
+        // ==============================
+        const baseProduct = window.currentProduct || {
+            business_account: document.getElementById('businessAccount')?.value || '',
+            stockable_id: document.getElementById('stockableId')?.value || '',
+            stockable_type: document.getElementById('stockableType')?.value || '',
+            subdivision_code: document.getElementById('subdivisionCode')?.value || ''
+        };
+
+        // ==============================
+        // SAFE QUANTITY (CRITICAL FIX)
+        // ==============================
+        let quantity = 1;
+
+        const qtyInput = document.querySelector('.quantity-val');
+        if (qtyInput) {
+            const parsed = parseInt(qtyInput.value, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+                quantity = parsed;
+            }
         }
 
+        // fallback to global if needed
+        if (window.currentQuantity) {
+            const parsedGlobal = parseInt(window.currentQuantity, 10);
+            if (!isNaN(parsedGlobal) && parsedGlobal > 0) {
+                quantity = parsedGlobal;
+            }
+        }
+
+        // ==============================
+        // FINAL PAYLOAD (NO UNDEFINED VALUES)
+        // ==============================
         const productData = {
-            stockable_id: currentProduct.stockable_id,
-            stockable_type: currentProduct.stockable_type,
-            subdivision_code: currentProduct.subdivision_code,
+            business_account: baseProduct.business_account || '',
+            stockable_id: baseProduct.stockable_id || '',
+            stockable_type: baseProduct.stockable_type || '',
+            subdivision_code: baseProduct.subdivision_code || '',
             quantity: quantity,
             shipment_type: 'quick',
             _token: csrfToken
         };
 
+        // ==============================
+        // VALIDATION
+        // ==============================
+        if (!productData.stockable_id || !productData.stockable_type) {
+            showNotification('Invalid product selection', 'error');
+            return;
+        }
+
+        if (!productData.quantity || productData.quantity < 1) {
+            showNotification('Invalid quantity', 'error');
+            return;
+        }
+
+        // ==============================
+        // LOADING STATE
+        // ==============================
         const originalHTML = orderBtn.innerHTML;
         orderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
         orderBtn.style.pointerEvents = 'none';
 
+        // =========================
+        // CHECK IF A USER IS AUTHENTICATED
+        // =========================
+
+        if (!isAuthenticated) {
+
+            // =========================
+            // GUEST → LOCAL STORAGE
+            // =========================
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+            const existing = cart.find(i =>
+                i.stockable_id === productData.stockable_id &&
+                i.stockable_type === productData.stockable_type &&
+                i.business_account === productData.business_account
+            );
+
+            if (existing) {
+                existing.quantity += productData.quantity;
+            } else {
+                cart.push({
+                    stockable_id: productData.stockable_id,
+                    stockable_type: productData.stockable_type,
+                    business_account: productData.business_account,
+                    subdivision_code: productData.subdivision_code,
+                    quantity: productData.quantity,
+                    shipment_type: productData.shipment_type
+                });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+
+            showNotification('✓ Added to cart', 'success');
+            updateCartCount(cart.reduce((sum, i) => sum + i.quantity, 0));
+
+            // reset UI
+            orderBtn.innerHTML = originalHTML;
+            orderBtn.style.pointerEvents = 'auto';
+
+            return;
+        }
+
+        // ==============================
+        // REQUEST
+        // ==============================
         fetch('/cart/add', {
             method: 'POST',
             headers: {
@@ -164,22 +294,23 @@ function setupCart(csrfToken) {
             },
             body: JSON.stringify(productData)
         })
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
-                showNotification(`✓ Added to cart!`, 'success');
-                updateCartCount(data.cart_count || 1);
-                if (quantityInput) {
-                    quantityInput.value = 1;
-                    currentProduct.quantity = 1;
-                }
+                showNotification('✓ Added to cart!', 'success');
+                updateCartCount(data.cart_count || 0);
+
+                // reset quantity safely
+                window.currentQuantity = 1;
+                if (qtyInput) qtyInput.value = 1;
+
             } else {
-                showNotification(data.message || 'Failed to add to cart', 'error');
+                showNotification(data.message || 'Failed', 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            showNotification('Network error: ' + err.message, 'error');
+            showNotification('Network error', 'error');
         })
         .finally(() => {
             orderBtn.innerHTML = originalHTML;
@@ -208,35 +339,55 @@ function setupQuantityControls() {
     }
 }
 
+
 /* ------------------ Cart Page: Update Quantity Buttons ------------------ */
 function setupCartQuantityButtons() {
+
     const cartForms = document.querySelectorAll('.cart-item-form');
 
     cartForms.forEach(form => {
+
         const decBtn = form.querySelector('.dec');
         const incBtn = form.querySelector('.inc');
         const qtyInput = form.querySelector('input[name="quantity"]');
-        const itemId = form.querySelector('input[name="item_id"]').value;
+        const itemId = form.querySelector('input[name="item_id"]')?.value;
 
+        if (!decBtn || !incBtn || !qtyInput || !itemId) {
+            return;
+        }
+
+        // ============================
+        // DECREASE
+        // ============================
         decBtn.addEventListener('click', () => {
-            let qty = parseInt(qtyInput.value) || 1;
-            if (qty > 1) {
-                qty--;
-                qtyInput.value = qty;
-                updateCartItem(itemId, qty, form);
+
+            const qty = parseInt(qtyInput.value) || 1;
+
+            if (qty === 1) {
+
+                pendingDeleteItemId = itemId;
+                pendingDeleteForm = form;
+
+                showModal('deleteItem');
+
+                return;
             }
+
+            updateCartItem(itemId, 'decrease', form);
         });
 
+        // ============================
+        // INCREASE
+        // ============================
         incBtn.addEventListener('click', () => {
-            let qty = parseInt(qtyInput.value) || 1;
-            qty++;
-            qtyInput.value = qty;
-            updateCartItem(itemId, qty, form);
+            updateCartItem(itemId, 'increase', form);
         });
+
     });
 }
 
-function updateCartItem(itemId, quantity, form) {
+function updateCartItem(itemId, action, form) {
+
     const token = document.querySelector('meta[name="csrf-token"]').content;
 
     fetch('/cart/update', {
@@ -246,37 +397,131 @@ function updateCartItem(itemId, quantity, form) {
             'X-CSRF-TOKEN': token,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({ item_id: itemId, quantity })
+        body: JSON.stringify({
+            item_id: itemId,
+            action: action
+        })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success) {
-            showNotification('Cart updated!', 'success');
 
-            // Update shipment subtotal
-            if (data.item_subtotal && form) {
-                const subtotalEl = form.closest('.cart-items')
-                    .querySelector('.sub-total .cost h4:nth-child(2)');
-                if (subtotalEl) subtotalEl.textContent = `KSH ${data.item_subtotal.toLocaleString(undefined,{minimumFractionDigits:2})}`;
-            }
-
-            // Update cart count
-            if (data.cart_count !== undefined) updateCartCount(data.cart_count);
-
-            // Update total
-            if (data.total) {
-                const totalEl = document.querySelector('.cart-left .sub-total .cost h4:nth-child(2)');
-                if (totalEl) totalEl.textContent = `KSH ${data.total.toLocaleString(undefined,{minimumFractionDigits:2})}`;
-            }
-        } else {
+        if (!data.success) {
             showNotification(data.message || 'Failed to update cart', 'error');
+            return;
         }
+
+        // =====================================================
+        // ITEM REMOVED
+        // =====================================================
+        if (data.deleted) {
+
+            const cartItem =
+                form.closest('.cart-item') ||
+                form.closest('.cart-product') ||
+                form.closest('[data-cart-item]');
+
+            if (cartItem) {
+                cartItem.remove();
+            } else {
+                location.reload();
+            }
+
+            showNotification('Item removed from cart', 'success');
+
+            if (data.cart_count !== undefined) {
+                updateCartCount(data.cart_count);
+            }
+
+            return;
+        }
+
+        // =====================================================
+        // UPDATE QUANTITY INPUT
+        // =====================================================
+        const qtyInput = form.querySelector('input[name="quantity"]');
+
+        if (qtyInput && data.quantity !== undefined) {
+            qtyInput.value = data.quantity;
+        }
+
+        // =====================================================
+        // UPDATE CART COUNT
+        // =====================================================
+        if (data.cart_count !== undefined) {
+            updateCartCount(data.cart_count);
+        }
+
+        // =====================================================
+        // UPDATE SHIPMENT SUBTOTAL
+        // =====================================================
+        if (data.item_subtotal) {
+
+            const subtotalEl = form.closest('.cart-items')
+                ?.querySelector('.sub-total .cost h4:nth-child(2)');
+
+            if (subtotalEl) {
+                subtotalEl.textContent =
+                    `KSH ${Number(data.item_subtotal).toLocaleString(undefined,{
+                        minimumFractionDigits:2
+                    })}`;
+            }
+        }
+
+        // =====================================================
+        // UPDATE CART TOTAL
+        // =====================================================
+        if (data.total) {
+
+            const totalEl = document.querySelector(
+                '.cart-left .sub-total .cost h4:nth-child(2)'
+            );
+
+            if (totalEl) {
+                totalEl.textContent =
+                    `KSH ${Number(data.total).toLocaleString(undefined,{
+                        minimumFractionDigits:2
+                    })}`;
+            }
+        }
+
+        showNotification('Cart updated!', 'success');
     })
     .catch(err => {
         console.error(err);
         showNotification('Network error', 'error');
     });
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const confirmDeleteBtn =
+        document.getElementById('confirmDeleteCartItem');
+
+    if (!confirmDeleteBtn) {
+        return;
+    }
+
+    confirmDeleteBtn.addEventListener('click', () => {
+
+        if (!pendingDeleteItemId || !pendingDeleteForm) {
+            closeModal();
+            return;
+        }
+
+        updateCartItem(
+            pendingDeleteItemId,
+            'decrease',
+            pendingDeleteForm
+        );
+
+        pendingDeleteItemId = null;
+        pendingDeleteForm = null;
+
+        closeModal();
+    });
+
+});
 
 /* ------------------ Notifications ------------------ */
 function showNotification(message, type = 'success') {

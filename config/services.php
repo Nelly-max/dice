@@ -14,6 +14,34 @@ return [
     |
     */
 
+    // ==================================
+    //     SMS API'S
+    // ==================================
+
+    /*
+    |--------------------------------------------------------------------------
+    | Text SmS
+    |--------------------------------------------------------------------------
+    */
+    'textsms' => [
+        'api_key'    => env('TEXTSMS_API_KEY'),
+        'partner_id' => env('TEXTSMS_PARTNER_ID'),
+        'sender_id'  => env('TEXTSMS_SENDER_ID'),
+        'base_url'   => env('TEXTSMS_BASE_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Talk Sasa
+    |--------------------------------------------------------------------------
+    */
+    'talksasa' => [
+        'api_key'   => env('TALKSASA_API_KEY'),
+        'sender_id' => env('TALKSASA_SENDER_ID'),
+        'base_url'  => env('TALKSASA_BASE_URL'),
+    ],
+
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -33,6 +61,11 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    //custom    
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
 ];

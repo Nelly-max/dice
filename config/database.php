@@ -79,6 +79,38 @@ return [
             'engine' => null,
         ],
 
+        // 🔹 FINANCE DATABASE
+        'finance' => [
+            'driver' => 'mysql',
+            'host' => env('FINANCE_DB_HOST', '127.0.0.1'),
+            'port' => env('FINANCE_DB_PORT', '3306'),
+            'database' => env('FINANCE_DB_DATABASE', 'finance'),
+            'username' => env('FINANCE_DB_USERNAME', 'root'),
+            'password' => env('FINANCE_DB_PASSWORD', ''),
+            'unix_socket' => env('FINANCE_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
+         // 🔹 CUSTOMER DATABASE
+        'customer' => [
+            'driver' => 'mysql',
+            'host' => env('CUSTOMER_DB_HOST', '127.0.0.1'),
+            'port' => env('CUSTOMER_DB_PORT', '3306'),
+            'database' => env('CUSTOMER_DB_DATABASE', 'customer'),
+            'username' => env('CUSTOMER_DB_USERNAME', 'root'),
+            'password' => env('CUSTOMER_DB_PASSWORD', ''),
+            'unix_socket' => env('CUSTOMER_DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
          // 🔹 PRODUCT VARIABLES DATABASE
         'product_variables' => [
             'driver' => 'mysql',

@@ -17,9 +17,19 @@
                 <h5>{{ $savedCount ?? 0 }}</h5>
                 <h4>Saved</h4>
             </a>                
-            <a href="{{ route('cart.view') }}" class="small-nav active">
-                <i class="fa-solid fa-cart-shopping" style="color:rgb(9, 161, 9)"></i>
-                <h5>{{ $cartCount ?? 0 }}</h5>
+            <a href="{{ route('cart.index') }}" class="small-nav active">
+                <i class="fa-solid fa-cart-shopping" style="color:rgb(9, 161, 9)">
+                    @php
+                        $cartCount = \App\Models\Customer\Cart::forCurrent()
+                            ->sum('quantity');
+                    @endphp
+
+                    @if ($cartCount > 0)
+                        <h5 class="cart-count" data-count="{{ $cartCount }}">
+                            {{ $cartCount }}
+                        </h5>
+                    @endif
+                </i>
                 <h4>Cart</h4>
             </a>
             <a href="{{ route('setting') }}" class="small-nav">
@@ -32,11 +42,11 @@
                 <i class="fa-regular fa-bell"></i>
                 <h5>{{ $notificationsCount ?? 0 }}</h5>
             </div>
-            <a href="#" class="profile-area">
+            <a href="{{ auth('customer')->check() ? route('hub.index') : route('login') }}" class="profile-area">
                 <img src="{{ asset('img/user.png') }}" alt="">
                 <div class="profile-name">
                     <h3>Hello</h3>
-                    <h4>{{ auth()->user()->name ?? 'Guest' }}</h4>
+                    <h4>{{ auth('customer')->user()?->name ?? 'Welcome' }}</h4>
                 </div>
             </a>
         </div>

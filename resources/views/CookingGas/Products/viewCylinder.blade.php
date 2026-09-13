@@ -19,29 +19,59 @@
                 {{-- Thumbnails --}}
                 <div class="small-img-row">
                     @foreach ($thumbnails as $thumb)
+
                         @php
                             $isActive = $thumb->gas_quantity_id == $product->gas_quantity_id;
-                            $size = ($thumb->quantity->quantity ?? '') . ($thumb->quantity->unit ?? '');
+
+                            $sizeLabel = ($thumb->quantity->quantity ?? '') . ($thumb->quantity->unit ?? '');
+
+                            $imageUrl = $thumb->image
+                                ? config('app.media_url') . '/' . ltrim($thumb->image, '/')
+                                : asset('img/placeholder.png');
+
+                            // IMPORTANT: raw numeric price for JS
+                            $rawPrice = $thumb->refill_price;
                         @endphp
-                        <div class="small-img-col" data-thumbnail="{{ $thumb->id }}">
+
+                        <div class="small-img-col
+                            @if($isActive) active-thumbnail @endif"
+
+                            data-item-id="{{ $thumb->id }}"
+                            data-full-url="{{ $imageUrl }}"
+                            data-label="{{ $thumb->cylinder->brand_name ?? 'Gas Cylinder' }}"
+                            data-packaging-name="Gas"
+
+                            {{-- IMPORTANT: RAW VALUES (NOT FORMATTED) --}}
+                            data-final-price="{{ $rawPrice }}"
+                            data-original-price="{{ $rawPrice }}"
+
+                            data-has-discount="false"
+                            data-discount-percentage="0"
+
+                            data-route-url="{{ route('gas.cylinder.view', [
+                                'cylinder' => $thumb->gas_cylinder_id,
+                                'quantity' => $thumb->gas_quantity_id,
+                                'business' => $thumb->business_id
+                            ]) }}"
+
+                            data-price="{{ $rawPrice }}"
+                            data-variant-label="{{ $sizeLabel }}"
+
+                            data-business-account="{{ $thumb->business->name ?? '' }}"
+                        >
+
                             <img
-                                src="{{ $thumb->image
-                                    ? config('app.media_url') . '/' . ltrim($thumb->image, '/')
-                                    : asset('img/placeholder.png') }}"
-                                class="small-img {{ $isActive ? 'active' : '' }}"
-                                data-id="{{ $thumb->id }}"
-                                data-cylinder="{{ $thumb->gas_cylinder_id }}"
-                                data-quantity="{{ $thumb->gas_quantity_id }}"
-                                data-size="{{ $size }}"
-                                data-price="{{ $thumb->refill_price }}"
-                                data-business="{{ $thumb->business->name ?? '' }}"
-                                data-business-id="{{ $thumb->business_id ?? '' }}" {{-- ADD THIS --}}
-                                data-image="{{ $thumb->image ?? '' }}" {{-- ADD THIS --}}
-                                data-stock-id="{{ $thumb->id }}" {{-- ADD THIS --}}
-                                alt="{{ $size }} cylinder"
-                                width="100%"
+                                src="{{ $imageUrl }}"
+                                class="small-img"
+                                alt="{{ $sizeLabel }}"
                             >
+
+                            <span style="display:block;font-size:10px;font-weight:bold;margin-top:3px;color:#878787;text-align:center;">
+                                {{ $sizeLabel }}
+                            </span>
+
                         </div>
+
                     @endforeach
                 </div>
             </div>
@@ -117,14 +147,14 @@
 
                 {{-- Business --}}
                 <h4 class="sub-heading">Sold By</h4>
-                <p>{{ $product->business->name ?? 'Unknown Seller' }}</p>
+                <p id="sellerName">{{ $product->business->name ?? 'Unknown Seller' }}</p>
 
             </div>
         </div>
 
         {{-- Delivery --}}
         <div class="select-delivery">
-            <h4 class="sub-heading">Delivery Options</h4>
+            <h4 class="sub-heading">Delivery Option</h4>
             <div class="delivery-options">
                 <div class="delivery-option active">
                     <i class="ri-e-bike-2-line"></i>
@@ -135,12 +165,28 @@
         </div>
     </div>
 
-    {{-- 🔹 Other Vendors (same product, different shops) --}}
+    <!-- {{-- 🔹 Other Vendors (same product, different shops) --}}
     <div class="other-vendors">
         <h4 class="heading">Other Sellers:</h4>
 
         @forelse($otherVendors ?? [] as $vendor)
-            <div class="vendor">
+
+            @php
+                $route = route('gas.cylinder.view', [
+                    'cylinder' => $product->gas_cylinder_id,
+                    'quantity' => $product->gas_quantity_id,
+                    'business' => $vendor->business_id
+                ]);
+
+                $price = $vendor->refill_price;
+            @endphp
+
+            <div class="vendor js-vendor-switch"
+                data-route-url="{{ $route }}"
+                data-business-id="{{ $vendor->business_id }}"
+                data-business-name="{{ $vendor->business->name }}"
+                data-price="{{ $price }}">
+
                 <div class="left">
                     <div class="logo">
                         <img src="{{ asset('img/logo/cookingGas.png') }}" alt="">
@@ -149,17 +195,20 @@
 
                 <div class="right">
                     <h4>{{ $vendor->business->name }}</h4>
-                    <h5>Ksh {{ number_format($vendor->refill_price) }}</h5>
+                    <h5>Ksh {{ number_format($price) }}</h5>
+
                     <span>
                         <i class="fa-solid fa-location-dot"></i>
                         <h6>{{ $vendor->business->location ?? '' }}</h6>
                     </span>
                 </div>
+
             </div>
+
         @empty
             <p>No other seller with this item.</p>
         @endforelse
-    </div>
+    </div> -->
 </main>
 
 @endsection

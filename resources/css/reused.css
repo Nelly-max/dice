@@ -73,6 +73,399 @@ body{
 /* ===========================
         Reused Styles
 =========================== */
+.gm-ui-hover-effect {
+    display: none !important;
+}
+
+.gm-style .gm-style-iw-c {
+    padding: 4px !important;
+    background: #f7a07ec7 !important;
+    /* background: #f25112 !important; */
+    box-shadow: none !important;
+    /* border-radius: 0 !important; */
+}
+
+.gm-style .gm-style-iw-d {
+    /* overflow: hidden !important; */
+}
+
+.gm-style .gm-style-iw-t::after {
+    /* display: none !important; */
+}
+
+
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: var(--small-text-color);
+  opacity: .5;
+  font-weight: 500;
+  font-size: .9em;
+  font-style: italic;
+}
+
+input[type="date"]:not(:focus):inline-placeholder-attribute,
+input[type="date"]:not(:focus):before {
+  content: "Select a date";
+  color: #9ca3af;
+  font-style: italic;
+  margin-right: 0.5em;
+}
+
+/* Styles the inner text masks when no date is chosen */
+.custom-date-picker:invalid::-webkit-datetime-edit {
+    color: #9ca3af !important;
+    font-style: italic;
+}
+
+/* Returns the font to normal when a date is selected */
+
+.required-input{
+    position: relative;
+}
+
+.required-input input{
+    width: 100%;
+}
+
+.required-input .required{
+    position: absolute;
+    font-size: .9em;
+    top: -1em;
+    right: 0;
+    color: var(--sweet-color);
+    opacity: .6;
+    font-weight: 400;
+    font-style: italic;
+}
+
+
+.deliveryAcceptBtn {
+    position: relative;
+    overflow: hidden;
+}
+
+
+.acceptProgress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: #ffffffcd;
+    transition: width 0.5s linear;
+    z-index: 0;
+}
+
+
+
+.deliveryAcceptBtn h4,
+.deliveryAcceptBtn span,
+.deliveryAcceptBtn i {
+    position: relative;
+    z-index: 1;
+
+}
+
+
+.toast{
+    display: none;
+}
+
+
+.toast.active{
+    display: block;
+}
+
+.toast button.btn-open{
+    position: absolute;
+    right: 2em;
+    bottom: 2em;
+    border-radius: 50%;
+    padding: .2em;
+    width: 3em;
+    height: 3em;
+    border: .15em solid var(--best-color);
+    cursor: pointer;
+    z-index: 999;
+}
+
+
+
+.toast.notificationAlert{
+    position: fixed; /* Keeps toast visible even when scrolling */
+    bottom: 24px; /*Placed at the bottom of the screen*/
+    left: 50%;
+    transform: translateX(-50%); /* Centers horizontally */
+    width: auto; /* Shrinks container width to fit the content */
+    max-width: 90%; /*Prevents clipping on narrow screens*/
+    height: auto; /* Restricts height to text content boundary */
+    z-index: 9999;
+    /* pointer-events: none; Prevents element from blocking clicks behind it */
+}
+
+
+.toast .bottom-toast{
+    width: 15em;
+}
+
+.toast button{
+    width: 100%;
+    padding: .5em;
+    border-radius: .5em;
+    border: none;
+    color: #009dff;
+    font-weight: 600;
+    background: #b9e4ff;
+    cursor: pointer;
+    /* background: red; */
+}
+
+.toast{
+    /* width: 100%; */
+}
+
+.toast button.btn-open{
+    position: absolute;
+    right: 2em;
+    bottom: 2em;
+    border-radius: 50%;
+    padding: .2em;
+    width: 3em;
+    height: 3em;
+    border: .15em solid var(--best-color);
+    cursor: pointer;
+    z-index: 999;
+}
+
+.toast button.btn-open i{
+    font-size: 1.5em;
+}
+
+
+/* =============================================
+        Search Box
+============================================= */
+
+.search-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999; /* below search-box, above page content */
+}
+
+.search-overlay.active {
+    display: block;
+}
+
+.search-box{
+    width: 10em;
+    position: fixed;
+    top: .5em;
+    padding: 0 .5em;
+    justify-content: center;
+    left: 45%;
+    transform: translateX(-50%);
+    max-height: 20em;
+    width: 40%;
+    overflow-y: auto;
+    z-index: 99999;
+    border-radius: .4em;
+    background: var(--bg-white);
+    display: none;
+}
+
+.search-box.active{
+    display: block;
+
+}
+
+.search-box .search-bar{
+    position: relative;
+}
+
+.search-box input{
+    width: 100%;
+    margin: .2em;
+    padding: .5em;
+    padding-right: 2em;
+    padding-left: 2em;
+    border: .15em solid var(--best-color);
+    outline: none;
+    border-radius: .8em;
+    font-size: .9rem;
+    color: var(--static-text);
+    background: var(--bg-white);
+}
+
+.search-box img{
+    position: absolute;
+    top: .2em;
+    left: 1em;
+    width: 1em;
+    height: 1em;
+}
+
+.search-box .cancel-search{
+    position: absolute;
+    top: .2em;
+    right: .8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    padding: .2em;
+    color: var(--color-light);
+    background: var(--color-gray-dark);
+    cursor: pointer;
+}
+
+.search-box input:focus{
+    outline: .15em solid var(--before-color1);
+    border: .15em solid var(--before-color);
+ }
+
+.search-box .search-results .search-result{
+    display: flex;
+    gap: 1em;
+    align-items: center;
+    justify-content: space-between;
+    padding: .4em 1em;
+    margin: .5em 0;
+    border-radius: .2em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-box .search-results .search-result:hover{
+    background: var(--tb-bground);
+}
+
+.search-box .search-results .search-result h4{
+    font-weight: 500;
+    font-size: .9rem;
+    color: var(--static-text);
+}
+
+.search-box .search-results .search-result i{
+    color: var(--best-color);
+}
+
+
+.search-box .search-results .search-result span{
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
+
+
+.search-box .search-results .search-result span i{
+    color: var(--static-text);
+}
+
+
+/* .search-results{
+    display: none;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: .5em;
+    top: 3.2em;
+    max-height: 25em;
+    width: 50%;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: .5em;
+    background: var(--bg-white);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 9999;
+} */
+
+/* .search-results .search-result{
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    margin-bottom: .6em;
+    padding: .5em;
+    border-radius: .5em;
+    background: var(--tb-bground);
+    transition: background 0.2s;
+    cursor: pointer;
+} */
+
+/* .search-results .search-result img{
+    width: 4em;
+    height: 4em;
+    border-radius: .5em;
+    background: var(--color-light);
+} */
+
+/* .search-results .search-result h3{
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--title);
+} */
+
+
+
+/* Container styling to look like a clickable card */
+.file-select {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s ease;
+  position: relative;
+}
+
+.file-select:hover {
+  border-color: #007bff;
+}
+
+/* Style the icon and text */
+.file-select i {
+  font-size: 24px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.file-select h6 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Hide the default ugly file input but keep it accessible */
+.file-select input[type="file"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+
+
 a{
     text-decoration: none;
 }
@@ -155,8 +548,8 @@ ul li{
     width: 100%;
     display: grid;
     margin: 1.5em 0; 
-    grid-template-columns: repeat(auto-fill, minmax(11.5em, 1fr));
-    /* gap: .2em; */
+    grid-template-columns: repeat(auto-fill, minmax(10em, 1fr));
+    gap: .2em;
 }
 
 
@@ -266,7 +659,7 @@ ul li{
     padding-right: 2em; 
     font-size: 1rem;   
     width: 35em;
-    border-radius: 50em;
+    border-radius: .8em;
     color: var(--text-color);
     background: var(--bg-white);
 }
@@ -295,47 +688,6 @@ ul li{
     display: none;
 }
 
-
-.search-results{
-    display: none;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: .5em;
-    top: 3.2em;
-    max-height: 25em;
-    width: 50%;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: .5em;
-    background: var(--bg-white);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 9999;
-}
-
-.search-results .search-result{
-    display: grid;
-    grid-template-columns: 1fr 4fr;
-    margin-bottom: .6em;
-    padding: .5em;
-    border-radius: .5em;
-    background: var(--tb-bground);
-    transition: background 0.2s;
-    cursor: pointer;
-}
-
-.search-results .search-result img{
-    width: 4em;
-    height: 4em;
-    border-radius: .5em;
-    background: var(--color-light);
-}
-
-.search-results .search-result h3{
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--title);
-}
 
 .main-nav .main-nav-left{
     display: flex;
@@ -934,6 +1286,128 @@ footer{
     text-align: center;
     pointer-events: none;
 }
+
+
+
+/* ===========================
+******Custom Select*******
+=========================== */
+
+.select{
+    width: 10em;
+}
+
+.custom-select {
+    position: relative;
+    width: 100%;
+    border-radius: .5em;
+    font-size: .9rem;
+    border: 1px solid var(--primary);
+}
+
+.custom-select .select-btn {
+    height: 2em;
+    justify-content: space-between;
+    padding: 0 .2em;
+    border-radius: .5em;
+    color: var(--text-color);
+    background: transparent;
+}
+
+.custom-select .select-btn i {
+    font-size: .8em;
+    transition: transform 0.3s linear;
+}
+
+.custom-select .select-options {
+    padding: .5em;
+    margin-top: .5em;
+    border-radius: .5em;
+    background: var(--bg-white);
+    display: none;
+    position: absolute;
+    width: 100%;
+    z-index: 100;
+    color: var(--text-color);
+    box-shadow: 0px 0px 20px 0px var(--color-lighter);
+}
+
+.custom-select.active .select-options {
+    display: block;
+}
+
+.custom-select.active .select-btn i {
+    transform: rotate(-180deg);
+}
+
+.custom-select .select-btn, .options li {
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+}
+
+.custom-select .select-options .search {
+    position: relative;
+    /* border: .1em solid var(--primary); */
+    /* border-radius: .5em; */
+}
+
+/* .custom-select .search i {
+    position: absolute;
+    left: 1em;
+    color: #999;
+    font-size: 1em;
+    line-height: 1.5em;
+    padding: .2em;
+} */
+
+.custom-select .search input.option-search {
+    height: 2em;
+    width: 100%;
+    outline: none;
+    font-size: 1rem;
+    border-radius: .5em;
+    padding: 0 .5em 0 .5em;
+    border: 1px solid #b3b3b3;
+}
+
+.custom-select .select-options .options {
+    margin-top: 1em;
+    max-height: 14.5em;
+    overflow-y: auto;
+}
+
+.options::-webkit-scrollbar {
+    width: .3em;
+}
+
+.options::-webkit-scrollbar-track {
+    background: var(--color-light);
+    border-radius: 1em;
+}
+
+.options::-webkit-scrollbar-thumb {
+    background: var(--best-color);
+    border-radius: 1em;
+}
+
+.options li {
+    height: 2.4em;
+    padding: 0 .2em;
+    border-radius: 5px;
+}
+
+.options li:hover {
+    background: var(--color-lighter);
+}
+
+.options .selected {
+    color: var(--soft-color);
+    background: var(--tb-bground);
+}
+/*
+====================================
+==================================== */
 
 
 

@@ -6,7 +6,7 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 5173,
         hmr: {
-        host: '192.168.100.132',
+        host: '192.168.100.95',
         },
     },
     plugins: [
@@ -22,9 +22,14 @@ export default defineConfig({
 
 
                 'resources/js/reused.js',
-                'resources/js/cart.js',
                 'resources/js/modal.js',
-                'resources/js/app.js'
+                'resources/js/cart.js',
+                'resources/js/checkout.js',
+                'resources/js/orderPayment.js',
+                'resources/js/signup.js',
+                'resources/js/app.js',
+                'resources/js/map.js',
+                'resources/js/riderLocation.js',
             ],
             refresh: true,
         }),

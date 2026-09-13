@@ -133,9 +133,10 @@ ul li{
 }
 
 .nav .logo span{
-    font-weight: 900;
+    font-weight: 800;
     font-size: 1.3em;
     color: var(--best-color);
+    font: 'poppins';
 }
 
 .nav .logo img{
@@ -154,11 +155,11 @@ ul li{
 .nav .search-bar input{
     outline: none;
     border: .1em solid var(--theme-clr);
-    padding: .5em 1em;
+    padding: .4em 1em;
     padding-right: 2em; 
     font-size: 1rem;   
     width: 35em;
-    border-radius: 50em;
+    border-radius: .8em;
     color: var(--text-color);
     background: var(--bg-white);
 }
@@ -305,7 +306,7 @@ ul li{
     margin: 0 .5em;
     color: var(--primary);
     font-weight: 500;
-    font-size: 1rem;
+    font-size: .9rem;
     cursor: pointer;
     transition: .3s ease;
 }
@@ -318,7 +319,7 @@ ul li{
     display: flex;
     align-items: center;
     padding-right: .3em;
-    font-size: 1.4rem;
+    font-size: 1rem;
 }
 
 .filter-container{
@@ -1559,11 +1560,17 @@ footer{
         top: 0;
         right: 0;
         height: 16em;
-        width: 12em;
+        width: 100%;
         opacity: 1;
         border-radius: .5em;
         display: none;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.078);
+        background: var(--bg-white);
+    }
+
+    .nav .nav-bottom .links{
+        height: calc(100% - 2em);
+        display: block;
     }
 
     .nav .nav-bottom .links{
@@ -1572,14 +1579,17 @@ footer{
     }
 
     .nav .nav-bottom .links a{
-        display: block;
+        display: flex;
+        justify-content: start;
         margin: .5em 0;
+        padding: .5em;
         transition: .3s ease;
         cursor: pointer;
+        border-radius: .5em;
     }
-    
+
     .nav .nav-bottom .links a:hover{
-        background: var(--light-card-bg);        
+        background: var(--light-card-bg);
     }
 
     .nav .nav-bottom.active{
@@ -1592,7 +1602,8 @@ footer{
         font-size: 1.2em;
         left: 80%;
         top: 1em;
-        color: var(--best-color);
+        color: red;
+        z-index: 99999;
     }
 
     .wrapper{

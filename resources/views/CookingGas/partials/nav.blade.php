@@ -13,13 +13,22 @@
             <i class="fa-solid fa-magnifying-glass search-show-btn"></i>
         </div>
         <div class="main-nav-left">
-            <div class="col account" onclick="showModal('signUp')">
+            <a href="{{ auth('customer')->check() ? route('hub.index') : route('login') }}" class="col account">
                 <i class="ri-user-line"></i>
-                <span>Login & Register</span>
-            </div>
+                <span>{{ auth('customer')->user()?->name ?? 'Login & Register' }}</span>
+            </a>
             <div class="col cart" onclick="showModal('cart')">
                 <i class="fa-solid fa-cart-shopping">
-                    <h5>2</h5>
+                    @php
+                        $cartCount = \App\Models\Customer\Cart::forCurrent()
+                            ->sum('quantity');
+                    @endphp
+
+                    @if ($cartCount > 0)
+                        <h5 class="cart-count" data-count="{{ $cartCount }}">
+                            {{ $cartCount }}
+                        </h5>
+                    @endif
                 </i>
                 
                 <span>- My Orders</span>

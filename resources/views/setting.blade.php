@@ -44,26 +44,20 @@
         <section class="cat-settings">
             <h4>socials</h4>
             <div class="settings">
-                <a href="#" class="setting">
-                    <i class="fa-brands fa-youtube"></i>
-                    <h5>YouTube</h5>
-                </a>
-                <a href="#" class="setting">
-                    <i class="fa-brands fa-instagram"></i>
-                    <h5>Instagram</h5>
-                </a>
-                <a href="#" class="setting">
+                <a href="#" class="setting" target="_blank" rel="noopener noreferrer">
                     <i class="fa-brands fa-tiktok"></i>
                     <h5>Tiktok</h5>
                 </a>
-                <a href="#" class="setting">
-                    <i class="fa-brands fa-x-twitter"></i>
-                    <h5>X</h5>
-                </a>                        
-                <a href="#" class="setting">
-                    <i class="fa-brands fa-discord"></i>
-                    <h5>Discord</h5>
+                
+                <a href="https://www.instagram.com/smartmarket_ke/" class="setting" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-instagram"></i>
+                    <h5>Instagram</h5>
                 </a>
+
+                <a href="#" class="setting" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-brands fa-youtube"></i>
+                    <h5>YouTube</h5>
+                </a>                
             </div>
         </section>
     </div>

@@ -3,7 +3,8 @@
 @section('content')
 
 <main class="wrapper">
-    <div class="del-options">
+
+    <!-- <div class="del-options">
         <div class="del-option">
             <div class="opt-icon">
                 <i class="ri-truck-line"></i>
@@ -38,7 +39,8 @@
                 <i class="fa-solid fa-circle-info del-info-icon"></i>
             </div>
         </div>
-    </div>
+    </div> -->
+
     <div class="slider">
         <div class="list">
             @php
@@ -401,4 +403,120 @@
 
 </main>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load saved delivery location
+    |--------------------------------------------------------------------------
+    */
+    const savedLocation = localStorage.getItem('delivery_location');
+
+    if (!savedLocation) {
+        return;
+    }
+
+    try {
+
+        const location = JSON.parse(savedLocation);
+
+        const latitude = Number(location.latitude);
+        const longitude = Number(location.longitude);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate coordinates
+        |--------------------------------------------------------------------------
+        */
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180
+        ) {
+            console.warn(
+                'Invalid delivery coordinates:',
+                location
+            );
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Current URL
+        |--------------------------------------------------------------------------
+        */
+        const url = new URL(window.location.href);
+
+        const currentLatitude = Number(
+            url.searchParams.get('latitude')
+        );
+
+        const currentLongitude = Number(
+            url.searchParams.get('longitude')
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Coordinates already match
+        |
+        | Nothing needs to happen.
+        |--------------------------------------------------------------------------
+        */
+        if (
+            Number.isFinite(currentLatitude) &&
+            Number.isFinite(currentLongitude) &&
+            Math.abs(currentLatitude - latitude) < 0.000001 &&
+            Math.abs(currentLongitude - longitude) < 0.000001
+        ) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Add delivery coordinates to URL
+        |--------------------------------------------------------------------------
+        */
+        url.searchParams.set(
+            'latitude',
+            latitude.toFixed(7)
+        );
+
+        url.searchParams.set(
+            'longitude',
+            longitude.toFixed(7)
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reload HomeMarket with the delivery coordinates
+        |--------------------------------------------------------------------------
+        */
+        window.location.replace(url.toString());
+
+    } catch (error) {
+
+        console.error(
+            'Unable to read saved delivery location:',
+            error
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remove corrupted localStorage value
+        |--------------------------------------------------------------------------
+        */
+        localStorage.removeItem('delivery_location');
+    }
+});
+</script>
+
 @endsection
+
+@include('modals.map')
+@include('HomeMarket.partials.search-box')
+

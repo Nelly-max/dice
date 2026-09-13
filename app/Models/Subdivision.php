@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Customer\SubdivisionShipment; 
+
 use Illuminate\Database\Eloquent\Model;
 
 class SubDivision extends Model
@@ -26,7 +28,12 @@ class SubDivision extends Model
     {
         return $this->belongsTo(MajorDivision::class);
     }
-
+    
+    public function connection()
+    {
+        return $this->db_connection;
+    }
+        
     public function shipment()
     {
         return $this->hasOne(SubdivisionShipment::class, 'subdivision_id');

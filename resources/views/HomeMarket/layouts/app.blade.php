@@ -4,7 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta
+    name="customer-auth"
+    content='@json([
+        "authenticated" => auth("customer")->check(),
+        "id" => auth("customer")->id(),
+    ])'
+>
     <title>SMART MARKET || Home Market</title>
+
+    <!-- <script>
+        window.App = {
+            isAuthenticated: @json(auth('customer')->check()),
+            customerId: @json(auth('customer')->id()),
+        };
+    </script> -->
+    
 
     <!-- Vite CSS -->
     @vite([
@@ -13,6 +28,7 @@
             
             'resources/js/reused.js',
             'resources/js/cart.js',
+            'resources/js/map.js',
             ])
 
     <!-- Favicon -->
@@ -24,17 +40,17 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body>
+    <body>
 
-    {{-- Navbar --}}
-    @include('HomeMarket.partials.nav')
+        {{-- Navbar --}}
+        @include('HomeMarket.partials.nav')
 
-    {{-- Main Content --}}
-    <main class="">
-        @yield('content')
-    </main>
+        {{-- Main Content --}}
+        <main class="">
+            @yield('content')
+        </main>
 
-    {{-- Footer --}}
-    @include('HomeMarket.partials.footer')
-</body>
+        {{-- Footer --}}
+        @include('HomeMarket.partials.footer')
+    </body>
 </html>

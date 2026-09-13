@@ -16,6 +16,9 @@ class RetailInventory extends Model
         'item_id',
         'stock_count',
         'retail_price',
+        'discount',
+        'discount_start',
+        'discount_stop',
         'status',
     ];
 
@@ -32,6 +35,11 @@ class RetailInventory extends Model
     public function item()
     {
         return $this->belongsTo(ProductItem::class, 'item_id');
+    }
+
+    public function getCheckoutPriceAttribute()
+    {
+        return $this->retail_price;
     }
 
     // ============================================
@@ -150,5 +158,24 @@ class RetailInventory extends Model
         return $this->business_account
             ?? $this->business->account
             ?? null;
+    }
+
+    public function getCurrentDiscount()
+    {
+        if (!$this->discount || $this->discount <= 0) {
+            return 0;
+        }
+
+        $now = now();
+
+        if ($this->discount_start && $this->discount_start->isFuture()) {
+            return 0;
+        }
+
+        if ($this->discount_stop && $this->discount_stop->isPast()) {
+            return 0;
+        }
+
+        return $this->discount;
     }
 }

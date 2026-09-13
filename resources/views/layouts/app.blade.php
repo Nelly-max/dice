@@ -9,17 +9,23 @@
 
     <!-- Vite CSS -->
     @vite([
+            'resources/css/modal.css',
             'resources/css/reused.css',
             'resources/css/main.css',
-            'resources/css/modal.css',
             
+            'resources/js/signup.js',
             'resources/js/reused.js',
-            'resources/js/cart.js',
             'resources/js/modal.js',
+            'resources/js/cart.js',
+            'resources/js/checkout.js',
+            'resources/js/orderPayment.js',
             ])
 
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('img/favicon.png') }}">
+
+    <!-- ===============Iconscout CSS=========== -->
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
 
     <!-- Remix icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet"/>
@@ -33,8 +39,9 @@
     @include('partials.nav')
 
     {{-- Main Content --}}
-    <main class="wrapper">
+    <main>
         @yield('content')
     </main>
+        
 </body>
 </html>
