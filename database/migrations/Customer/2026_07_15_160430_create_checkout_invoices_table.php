@@ -151,7 +151,6 @@ return new class extends Migration
                 $table->index('county_id');
                 $table->index('county_sequence');
                 $table->index('status');
-                $table->index('order_id');
             });
     }
 
