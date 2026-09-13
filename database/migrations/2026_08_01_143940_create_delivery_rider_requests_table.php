@@ -66,7 +66,7 @@ return new class extends Migration
                 'rejected',
                 'expired'
 
-            ])->default('sent');
+            ])->default('pending');
 
 
 
