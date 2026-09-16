@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\OrderPayment;
+namespace App\Http\Controllers\Web\OrderPayment;
 
 use App\Http\Controllers\Controller;
 use App\Services\OrderPayment\MpesaService;

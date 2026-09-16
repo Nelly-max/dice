@@ -29,7 +29,7 @@
             'resources/js/reused.js',
             'resources/js/cart.js',
             'resources/js/map.js',
-            ])
+        ])
 
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('img/favicon.png') }}">

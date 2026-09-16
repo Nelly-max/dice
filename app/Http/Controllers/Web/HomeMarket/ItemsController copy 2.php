@@ -3,26 +3,22 @@
 namespace App\Http\Controllers\Web\HomeMarket;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 use App\Models\Customer\Cart;
-
-use App\Services\DeliveryLocationService;
 
 class ItemsController extends Controller
 {
     /**
-     * Display all HomeMarket items.
+     * Display all items on the homepage.
      */
-    public function index(
-        Request $request,
-        DeliveryLocationService $locationService
-    ) {
+    public function index(Request $request)
+    {
         /*
         |--------------------------------------------------------------------------
-        | Current Customer
+        | Get Current Customer
         |--------------------------------------------------------------------------
         */
 
@@ -32,53 +28,81 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Current Cart Shop
+        | Get Current Customer Cart Shop
         |--------------------------------------------------------------------------
+        |
+        | The first shop represented in the active cart becomes the
+        | selected shop.
+        |
         */
 
-        $selectedBusinessAccount = $this->getSelectedBusinessAccount(
-            $userId,
-            $sessionId
-        );
+        $cartQuery = Cart::active();
+
+        if ($userId) {
+
+            $cartQuery->where(
+                'user_id',
+                $userId
+            );
+
+        } else {
+
+            $cartQuery->where(
+                'session_id',
+                $sessionId
+            );
+        }
+
+        $selectedBusinessAccount = $cartQuery
+            ->whereNotNull('business_account')
+            ->value('business_account');
 
 
         /*
         |--------------------------------------------------------------------------
-        | Customer Delivery Location
+        | Customer Delivery Coordinates
+        |--------------------------------------------------------------------------
+        |
+        | These may come from:
+        |
+        | /home-market?latitude=-1.3812&longitude=36.7881
+        |
+        */
+
+        $customerLatitude = $request->query('latitude');
+        $customerLongitude = $request->query('longitude');
+
+        $hasDeliveryLocation =
+            is_numeric($customerLatitude) &&
+            is_numeric($customerLongitude) &&
+            (float) $customerLatitude >= -90 &&
+            (float) $customerLatitude <= 90 &&
+            (float) $customerLongitude >= -180 &&
+            (float) $customerLongitude <= 180;
+
+        if ($hasDeliveryLocation) {
+
+            $customerLatitude = (float) $customerLatitude;
+            $customerLongitude = (float) $customerLongitude;
+
+        } else {
+
+            $customerLatitude = null;
+            $customerLongitude = null;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Progressive Delivery Radius
         |--------------------------------------------------------------------------
         |
         | IMPORTANT:
         |
-        | Coordinates are NOT read from the URL.
+        | If a cart shop already exists, we DO NOT use this radius to
+        | select other shops.
         |
-        | They come from the Laravel session through
-        | DeliveryLocationService.
-        |
-        */
-
-        $deliveryLocation = $locationService->get($request);
-
-        $customerLatitude = $deliveryLocation['latitude'] ?? null;
-        $customerLongitude = $deliveryLocation['longitude'] ?? null;
-
-        $hasDeliveryLocation =
-            !is_null($customerLatitude) &&
-            !is_null($customerLongitude);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Determine Progressive Radius
-        |--------------------------------------------------------------------------
-        |
-        | If the customer has a delivery location and does not already
-        | have a cart shop, find the nearest radius containing at least
-        | one qualifying shop.
-        |
-        | 500m
-        | 1km
-        | 2km
-        | 3km maximum
+        | The cart shop always has priority.
         |
         */
 
@@ -88,10 +112,183 @@ class ItemsController extends Controller
             $hasDeliveryLocation &&
             !$selectedBusinessAccount
         ) {
-            $selectedRadius = $this->resolveDeliveryRadius(
-                $customerLatitude,
-                $customerLongitude
-            );
+
+            $radiusOptions = [
+                500,
+                1000,
+                2000,
+                3000,
+            ];
+
+            foreach ($radiusOptions as $radius) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Haversine Distance
+                |--------------------------------------------------------------------------
+                */
+
+                $distanceSql = "
+                    6371000 * ACOS(
+                        LEAST(
+                            1,
+                            GREATEST(
+                                -1,
+                                COS(RADIANS(?))
+                                *
+                                COS(RADIANS(b.latitude))
+                                *
+                                COS(
+                                    RADIANS(b.longitude)
+                                    -
+                                    RADIANS(?)
+                                )
+                                +
+                                SIN(RADIANS(?))
+                                *
+                                SIN(RADIANS(b.latitude))
+                            )
+                        )
+                    )
+                ";
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Check For Qualifying Shop
+                |--------------------------------------------------------------------------
+                */
+
+                $hasShop = DB::connection('homemarket')
+                    ->table('business as b')
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Active Subscription
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->join(
+                        'business_subscription as bs',
+                        function ($join) {
+
+                            $join->on(
+                                'bs.main_branch_account',
+                                '=',
+                                'b.main_branch_account'
+                            );
+
+                            $join->where(
+                                'bs.status',
+                                'active'
+                            );
+                        }
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Tariff
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->join(
+                        'tariffs as t',
+                        't.id',
+                        '=',
+                        'bs.tariff_id'
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Qualifying Inventory
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->whereExists(function ($query) {
+
+                        $query
+                            ->select(DB::raw(1))
+                            ->from('retail_inventory as ri')
+                            ->whereColumn(
+                                'ri.business_account',
+                                'b.account'
+                            )
+                            ->where(
+                                'ri.status',
+                                'instock'
+                            )
+                            ->whereNotNull(
+                                'ri.retail_price'
+                            );
+                    })
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Ecommerce Access
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        't.ecommerce_access',
+                        1
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Shop Open
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->where(
+                        'b.shop_status',
+                        'open'
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Coordinates
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->whereNotNull(
+                        'b.latitude'
+                    )
+                    ->whereNotNull(
+                        'b.longitude'
+                    )
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Radius
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->whereRaw(
+                        "{$distanceSql} <= ?",
+                        [
+                            $customerLatitude,
+                            $customerLongitude,
+                            $customerLatitude,
+                            $radius,
+                        ]
+                    )
+
+                    ->exists();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | First Matching Radius
+                |--------------------------------------------------------------------------
+                */
+
+                if ($hasShop) {
+
+                    $selectedRadius = $radius;
+
+                    break;
+                }
+            }
         }
 
 
@@ -105,9 +302,9 @@ class ItemsController extends Controller
             ->table('retail_inventory as ri')
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Business
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->join(
@@ -118,14 +315,15 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Active Subscription
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->join(
                 'business_subscription as bs',
                 function ($join) {
+
                     $join->on(
                         'bs.main_branch_account',
                         '=',
@@ -140,9 +338,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Tariff
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->join(
@@ -153,9 +351,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Product
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->join(
@@ -166,9 +364,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Product Item
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->join(
@@ -179,9 +377,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Packaging
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->leftJoin(
@@ -192,9 +390,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Quantity Unit
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->leftJoin(
@@ -205,9 +403,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Weight Unit
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->leftJoin(
@@ -218,9 +416,9 @@ class ItemsController extends Controller
             )
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Basic Product Eligibility
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             ->where(
@@ -253,18 +451,35 @@ class ItemsController extends Controller
         | SHOP SELECTION PRIORITY
         |--------------------------------------------------------------------------
         |
-        | 1. Existing cart shop
-        | 2. Delivery location
-        | 3. All qualifying shops
+        | 1. If cart already has a shop:
+        |       ONLY THAT SHOP.
         |
+        | 2. If cart is empty but delivery location exists:
+        |       Apply progressive radius.
+        |
+        | 3. If neither exists:
+        |       Show all qualifying shops.
+        |
+        */
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRIORITY 1:
+        | Existing Cart Shop
+        |--------------------------------------------------------------------------
         */
 
         if ($selectedBusinessAccount) {
 
             /*
-            |------------------------------------------------------------------
-            | Existing Cart Shop
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
+            | CRITICAL SHOP LOCK
+            |--------------------------------------------------------------------------
+            |
+            | Once the first item is added to the cart, every product
+            | displayed on HomeMarket must belong to that same shop.
+            |
             */
 
             $products->where(
@@ -272,21 +487,36 @@ class ItemsController extends Controller
                 $selectedBusinessAccount
             );
 
-        } elseif ($hasDeliveryLocation) {
 
             /*
-            |------------------------------------------------------------------
-            | Delivery Location
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
+            | IMPORTANT:
+            | Do NOT apply delivery-radius filtering here.
+            |--------------------------------------------------------------------------
+            |
+            | The cart shop has already been selected.
+            |
+            */
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRIORITY 2:
+        | No Cart Shop + Delivery Location
+        |--------------------------------------------------------------------------
+        */
+
+        elseif ($hasDeliveryLocation) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | No Qualifying Shop Within 3km
+            |--------------------------------------------------------------------------
             */
 
             if (is_null($selectedRadius)) {
-
-                /*
-                | No qualifying shop exists within the maximum 3km.
-                |
-                | Therefore show no products.
-                */
 
                 $products->whereRaw(
                     '1 = 0'
@@ -294,14 +524,66 @@ class ItemsController extends Controller
 
             } else {
 
-                $this->applyDistanceFilter(
-                    $products,
-                    $customerLatitude,
-                    $customerLongitude,
-                    $selectedRadius
-                );
+                /*
+                |--------------------------------------------------------------------------
+                | Haversine Distance
+                |--------------------------------------------------------------------------
+                */
+
+                $distanceSql = "
+                    6371000 * ACOS(
+                        LEAST(
+                            1,
+                            GREATEST(
+                                -1,
+                                COS(RADIANS(?))
+                                *
+                                COS(RADIANS(b.latitude))
+                                *
+                                COS(
+                                    RADIANS(b.longitude)
+                                    -
+                                    RADIANS(?)
+                                )
+                                +
+                                SIN(RADIANS(?))
+                                *
+                                SIN(RADIANS(b.latitude))
+                            )
+                        )
+                    )
+                ";
+
+                $products
+                    ->whereNotNull(
+                        'b.latitude'
+                    )
+                    ->whereNotNull(
+                        'b.longitude'
+                    )
+
+                    ->whereRaw(
+                        "{$distanceSql} <= ?",
+                        [
+                            $customerLatitude,
+                            $customerLongitude,
+                            $customerLatitude,
+                            $selectedRadius,
+                        ]
+                    );
             }
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRIORITY 3:
+        | No Cart Shop + No Delivery Location
+        |--------------------------------------------------------------------------
+        |
+        | No additional business filter is applied.
+        |
+        */
 
 
         /*
@@ -313,17 +595,17 @@ class ItemsController extends Controller
         $products->select([
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Retail Inventory
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'ri.*',
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Business
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'b.name as business_name',
@@ -332,9 +614,9 @@ class ItemsController extends Controller
             'b.longitude as business_longitude',
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Product
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'p.id as product_id',
@@ -344,9 +626,9 @@ class ItemsController extends Controller
             'p.description',
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Product Item
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'pi.id as item_id',
@@ -356,18 +638,18 @@ class ItemsController extends Controller
             'pi.pieces',
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Units
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'qu.slug as quantity_unit',
             'wu.name as weight_unit',
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Packaging
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             'pv_pack.name as packaging_name',
@@ -376,7 +658,7 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Primary Product Image
+        | Product Image
         |--------------------------------------------------------------------------
         */
 
@@ -395,30 +677,57 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Distance
+        | Add Distance To Products
         |--------------------------------------------------------------------------
         |
-        | Only calculate distance when the customer is discovering shops
-        | using their delivery location.
+        | Only relevant when delivery location is being used to
+        | discover shops.
         |
         */
 
         if (
             $hasDeliveryLocation &&
-            !$selectedBusinessAccount &&
-            !is_null($selectedRadius)
+            !$selectedBusinessAccount
         ) {
-            $this->addDistanceSelect(
-                $products,
-                $customerLatitude,
-                $customerLongitude
+
+            $distanceSql = "
+                6371000 * ACOS(
+                    LEAST(
+                        1,
+                        GREATEST(
+                            -1,
+                            COS(RADIANS(?))
+                            *
+                            COS(RADIANS(b.latitude))
+                            *
+                            COS(
+                                RADIANS(b.longitude)
+                                -
+                                RADIANS(?)
+                            )
+                            +
+                            SIN(RADIANS(?))
+                            *
+                            SIN(RADIANS(b.latitude))
+                        )
+                    )
+                )
+            ";
+
+            $products->selectRaw(
+                "{$distanceSql} AS distance_meters",
+                [
+                    $customerLatitude,
+                    $customerLongitude,
+                    $customerLatitude,
+                ]
             );
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Execute Query
+        | Execute Products Query
         |--------------------------------------------------------------------------
         */
 
@@ -436,9 +745,9 @@ class ItemsController extends Controller
         $products->transform(function ($product) {
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Variant Label
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             $variant = '';
@@ -447,6 +756,7 @@ class ItemsController extends Controller
                 $product->size_value &&
                 $product->quantity_unit
             ) {
+
                 $variant =
                     rtrim(
                         rtrim(
@@ -455,12 +765,14 @@ class ItemsController extends Controller
                         ),
                         '.'
                     )
-                    . $product->quantity_unit;
+                    .
+                    $product->quantity_unit;
 
             } elseif (
                 $product->weight_value &&
                 $product->weight_unit
             ) {
+
                 $variant =
                     rtrim(
                         rtrim(
@@ -469,10 +781,12 @@ class ItemsController extends Controller
                         ),
                         '.'
                     )
-                    . $product->weight_unit;
+                    .
+                    $product->weight_unit;
             }
 
             if ($product->pieces) {
+
                 $variant .=
                     ' (' .
                     $product->pieces .
@@ -483,9 +797,9 @@ class ItemsController extends Controller
 
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Image URL
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             $baseMediaUrl = rtrim(
@@ -508,9 +822,9 @@ class ItemsController extends Controller
 
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Discount
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             $now = Carbon::now();
@@ -526,6 +840,7 @@ class ItemsController extends Controller
                 !is_null($product->discount) &&
                 (float) $product->discount > 0
             ) {
+
                 $startValid =
                     is_null($product->discount_start)
                     ||
@@ -548,6 +863,7 @@ class ItemsController extends Controller
                     $startValid &&
                     $stopValid
                 ) {
+
                     $hasActiveDiscount = true;
 
                     $originalPrice =
@@ -561,6 +877,7 @@ class ItemsController extends Controller
                         );
 
                     if ($originalPrice > 0) {
+
                         $discountPercentage =
                             round(
                                 (
@@ -574,9 +891,9 @@ class ItemsController extends Controller
 
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Discount Properties
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             $product->has_discount =
@@ -590,21 +907,24 @@ class ItemsController extends Controller
 
 
             /*
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             | Distance
-            |------------------------------------------------------------------
+            |--------------------------------------------------------------------------
             */
 
             if (
                 isset($product->distance_meters) &&
                 !is_null($product->distance_meters)
             ) {
+
                 $product->distance_km =
                     round(
                         (float) $product->distance_meters / 1000,
                         2
                     );
+
             } else {
+
                 $product->distance_km = null;
             }
 
@@ -631,14 +951,9 @@ class ItemsController extends Controller
 
     /**
      * View a single inventory item.
-     *
-     * The same shop/location rules used by the homepage are respected.
      */
-    public function ViewItem(
-        $inventoryId,
-        Request $request,
-        DeliveryLocationService $locationService
-    ) {
+    public function ViewItem($inventoryId)
+    {
         /*
         |--------------------------------------------------------------------------
         | Current Customer
@@ -646,68 +961,40 @@ class ItemsController extends Controller
         */
 
         $userId = auth('customer')->id();
-        $sessionId = $request->session()->getId();
+        $sessionId = request()->session()->getId();
 
 
         /*
         |--------------------------------------------------------------------------
-        | Selected Cart Shop
+        | Determine Selected Cart Shop
         |--------------------------------------------------------------------------
         */
 
-        $selectedBusinessAccount =
-            $this->getSelectedBusinessAccount(
-                $userId,
-                $sessionId
+        $cartQuery = Cart::active();
+
+        if ($userId) {
+
+            $cartQuery->where(
+                'user_id',
+                $userId
             );
 
+        } else {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Delivery Location
-        |--------------------------------------------------------------------------
-        */
-
-        $deliveryLocation =
-            $locationService->get($request);
-
-        $customerLatitude =
-            $deliveryLocation['latitude'] ?? null;
-
-        $customerLongitude =
-            $deliveryLocation['longitude'] ?? null;
-
-        $hasDeliveryLocation =
-            !is_null($customerLatitude) &&
-            !is_null($customerLongitude);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Progressive Radius
-        |--------------------------------------------------------------------------
-        |
-        | Only used when there is no cart shop.
-        |
-        */
-
-        $selectedRadius = null;
-
-        if (
-            $hasDeliveryLocation &&
-            !$selectedBusinessAccount
-        ) {
-            $selectedRadius =
-                $this->resolveDeliveryRadius(
-                    $customerLatitude,
-                    $customerLongitude
-                );
+            $cartQuery->where(
+                'session_id',
+                $sessionId
+            );
         }
 
+        $selectedBusinessAccount = $cartQuery
+            ->whereNotNull('business_account')
+            ->value('business_account');
+
 
         /*
         |--------------------------------------------------------------------------
-        | Product Query
+        | Fetch Inventory Item
         |--------------------------------------------------------------------------
         */
 
@@ -724,13 +1011,13 @@ class ItemsController extends Controller
             ->join(
                 'business_subscription as bs',
                 function ($join) {
+
                     $join->on(
                         'bs.main_branch_account',
                         '=',
                         'b.main_branch_account'
-                    );
-
-                    $join->where(
+                    )
+                    ->where(
                         'bs.status',
                         'active'
                     );
@@ -811,56 +1098,26 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Item Shop / Location Rules
+        | Cart Shop Lock On Item View
         |--------------------------------------------------------------------------
+        |
+        | If the customer already has a shop selected, they cannot
+        | directly open an item belonging to another shop.
+        |
         */
 
         if ($selectedBusinessAccount) {
-
-            /*
-            |------------------------------------------------------------------
-            | Existing Cart Shop Has Priority
-            |------------------------------------------------------------------
-            */
 
             $productQuery->where(
                 'ri.business_account',
                 $selectedBusinessAccount
             );
-
-        } elseif ($hasDeliveryLocation) {
-
-            /*
-            |------------------------------------------------------------------
-            | Customer Location
-            |------------------------------------------------------------------
-            */
-
-            if (is_null($selectedRadius)) {
-
-                /*
-                | No qualifying shop within 3km.
-                */
-
-                $productQuery->whereRaw(
-                    '1 = 0'
-                );
-
-            } else {
-
-                $this->applyDistanceFilter(
-                    $productQuery,
-                    $customerLatitude,
-                    $customerLongitude,
-                    $selectedRadius
-                );
-            }
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Select Main Product
+        | Select Item
         |--------------------------------------------------------------------------
         */
 
@@ -871,10 +1128,7 @@ class ItemsController extends Controller
 
                 'b.name as business_name',
                 'b.account as business_account',
-                'b.latitude as business_latitude',
-                'b.longitude as business_longitude',
 
-                'p.id as product_id',
                 'p.name as product_name',
                 'p.description',
 
@@ -894,14 +1148,15 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Item Not Available
+        | Item Not Found / Item Belongs To Another Shop
         |--------------------------------------------------------------------------
         */
 
         if (!$product) {
+
             abort(
                 404,
-                'The targeted inventory variation could not be found or is not available from your selected shop or delivery area.'
+                'The targeted inventory variation could not be found or is not available from your selected shop.'
             );
         }
 
@@ -918,6 +1173,7 @@ class ItemsController extends Controller
             $product->size_value &&
             $product->quantity_unit
         ) {
+
             $variant =
                 rtrim(
                     rtrim(
@@ -926,12 +1182,14 @@ class ItemsController extends Controller
                     ),
                     '.'
                 )
-                . $product->quantity_unit;
+                .
+                $product->quantity_unit;
 
         } elseif (
             $product->weight_value &&
             $product->weight_unit
         ) {
+
             $variant =
                 rtrim(
                     rtrim(
@@ -940,10 +1198,12 @@ class ItemsController extends Controller
                     ),
                     '.'
                 )
-                . $product->weight_unit;
+                .
+                $product->weight_unit;
         }
 
         if ($product->pieces) {
+
             $variant .=
                 ' (' .
                 $product->pieces .
@@ -977,23 +1237,17 @@ class ItemsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $imageRecord =
-            DB::connection('homemarket')
-                ->table('product_item_images')
-                ->where(
-                    'product_item_id',
-                    $product->item_id
-                )
-                ->orderBy(
-                    'is_primary',
-                    'DESC'
-                )
-                ->orderBy(
-                    'id',
-                    'ASC'
-                )
-                ->first();
-
+        $imageRecord = DB::connection('homemarket')
+            ->table('product_item_images')
+            ->where(
+                'product_item_id',
+                $product->item_id
+            )
+            ->orderBy(
+                'is_primary',
+                'DESC'
+            )
+            ->first();
 
         $product->image_url =
             (
@@ -1014,7 +1268,7 @@ class ItemsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Current Time
+        | Carbon
         |--------------------------------------------------------------------------
         */
 
@@ -1027,9 +1281,7 @@ class ItemsController extends Controller
         |--------------------------------------------------------------------------
         |
         | IMPORTANT:
-        |
-        | Variations remain locked to the same business as the
-        | currently viewed item.
+        | These remain locked to the same business.
         |
         */
 
@@ -1047,13 +1299,13 @@ class ItemsController extends Controller
                 ->join(
                     'business_subscription as bs',
                     function ($join) {
+
                         $join->on(
                             'bs.main_branch_account',
                             '=',
                             'b.main_branch_account'
-                        );
-
-                        $join->where(
+                        )
+                        ->where(
                             'bs.status',
                             'active'
                         );
@@ -1106,9 +1358,9 @@ class ItemsController extends Controller
                 )
 
                 /*
-                |------------------------------------------------------------------
-                | Same Business
-                |------------------------------------------------------------------
+                |--------------------------------------------------------------------------
+                | Same Business Only
+                |--------------------------------------------------------------------------
                 */
 
                 ->where(
@@ -1165,11 +1417,6 @@ class ItemsController extends Controller
                     'DESC'
                 )
 
-                ->orderBy(
-                    'pii.id',
-                    'ASC'
-                )
-
                 ->get()
 
                 ->unique('item_id')
@@ -1181,9 +1428,9 @@ class ItemsController extends Controller
                     ) {
 
                         /*
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         | Variant Label
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         */
 
                         $label = '';
@@ -1192,6 +1439,7 @@ class ItemsController extends Controller
                             $variantItem->size_value &&
                             $variantItem->quantity_unit
                         ) {
+
                             $label =
                                 rtrim(
                                     rtrim(
@@ -1207,6 +1455,7 @@ class ItemsController extends Controller
                             $variantItem->weight_value &&
                             $variantItem->weight_unit
                         ) {
+
                             $label =
                                 rtrim(
                                     rtrim(
@@ -1220,6 +1469,7 @@ class ItemsController extends Controller
                         }
 
                         if ($variantItem->pieces) {
+
                             $label .=
                                 ' (' .
                                 $variantItem->pieces .
@@ -1231,9 +1481,9 @@ class ItemsController extends Controller
 
 
                         /*
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         | Image
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         */
 
                         $variantItem->full_url =
@@ -1253,9 +1503,9 @@ class ItemsController extends Controller
 
 
                         /*
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         | Discount
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         */
 
                         $hasActiveDiscount = false;
@@ -1277,6 +1527,7 @@ class ItemsController extends Controller
                             (float)
                             $variantItem->discount > 0
                         ) {
+
                             $startValid =
                                 is_null(
                                     $variantItem->discount_start
@@ -1303,7 +1554,9 @@ class ItemsController extends Controller
                                 $startValid &&
                                 $stopValid
                             ) {
-                                $hasActiveDiscount = true;
+
+                                $hasActiveDiscount =
+                                    true;
 
                                 $finalPrice =
                                     max(
@@ -1316,6 +1569,7 @@ class ItemsController extends Controller
                                 if (
                                     $originalPrice > 0
                                 ) {
+
                                     $discountPercentage =
                                         round(
                                             (
@@ -1329,9 +1583,9 @@ class ItemsController extends Controller
 
 
                         /*
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         | Discount Properties
-                        |------------------------------------------------------
+                        |--------------------------------------------------------------------------
                         */
 
                         $variantItem->has_discount =
@@ -1373,6 +1627,7 @@ class ItemsController extends Controller
             !is_null($product->discount) &&
             (float) $product->discount > 0
         ) {
+
             $startValid =
                 is_null($product->discount_start)
                 ||
@@ -1395,6 +1650,7 @@ class ItemsController extends Controller
                 $startValid &&
                 $stopValid
             ) {
+
                 $hasActiveDiscount = true;
 
                 $originalPrice =
@@ -1412,6 +1668,7 @@ class ItemsController extends Controller
                 if (
                     $originalPrice > 0
                 ) {
+
                     $discountPercentage =
                         round(
                             (
@@ -1451,273 +1708,5 @@ class ItemsController extends Controller
             'HomeMarket.products.viewItem',
             compact('product')
         );
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRIVATE HELPERS
-    |--------------------------------------------------------------------------
-    */
-
-
-    /**
-     * Get the business account currently represented in the active cart.
-     */
-    private function getSelectedBusinessAccount(
-        $userId,
-        string $sessionId
-    ): ?string {
-        $cartQuery = Cart::active();
-
-        if ($userId) {
-            $cartQuery->where(
-                'user_id',
-                $userId
-            );
-        } else {
-            $cartQuery->where(
-                'session_id',
-                $sessionId
-            );
-        }
-
-        return $cartQuery
-            ->whereNotNull('business_account')
-            ->value('business_account');
-    }
-
-
-/**
- * Resolve the customer's progressive delivery radius.
- *
- * Radius progression:
- *
- * 1 km
- * 3 km
- * 5 km maximum
- *
- * The first radius containing at least one
- * qualifying shop is selected.
- *
- * Returns:
- * 1000, 3000, 5000
- *
- * or null when no qualifying shop exists
- * within 5km.
- */
-private function resolveDeliveryRadius(
-    float $customerLatitude,
-    float $customerLongitude
-): ?int {
-    /*
-    |--------------------------------------------------------------------------
-    | Progressive delivery radius
-    |--------------------------------------------------------------------------
-    |
-    | 1 km -> 2 km -> 3 km maximum
-    |
-    | The first radius containing at least one qualifying shop wins.
-    |
-    */
-
-    $radiusOptions = [
-        1000, // 1 km
-        2000, // 2 km
-        3000, // 3 km maximum
-    ];
-
-    foreach ($radiusOptions as $radius) {
-
-        $distanceSql = $this->distanceSql();
-
-        $hasShop = DB::connection('homemarket')
-            ->table('business as b')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Active subscription
-            |--------------------------------------------------------------------------
-            */
-            ->join('business_subscription as bs', function ($join) {
-                $join->on(
-                    'bs.main_branch_account',
-                    '=',
-                    'b.main_branch_account'
-                )->where(
-                    'bs.status',
-                    'active'
-                );
-            })
-
-            /*
-            |--------------------------------------------------------------------------
-            | Ecommerce tariff
-            |--------------------------------------------------------------------------
-            */
-            ->join(
-                'tariffs as t',
-                't.id',
-                '=',
-                'bs.tariff_id'
-            )
-
-            ->where('t.ecommerce_access', 1)
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must be open
-            |--------------------------------------------------------------------------
-            */
-            ->where('b.shop_status', 'open')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must have valid coordinates
-            |--------------------------------------------------------------------------
-            */
-            ->whereNotNull('b.latitude')
-            ->whereNotNull('b.longitude')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must have qualifying inventory
-            |--------------------------------------------------------------------------
-            */
-            ->whereExists(function ($query) {
-
-                $query->select(DB::raw(1))
-                    ->from('retail_inventory as ri')
-
-                    ->whereColumn(
-                        'ri.business_account',
-                        'b.account'
-                    )
-
-                    ->where(
-                        'ri.status',
-                        'instock'
-                    )
-
-                    ->whereNotNull(
-                        'ri.retail_price'
-                    );
-            })
-
-            /*
-            |--------------------------------------------------------------------------
-            | Distance from customer
-            |--------------------------------------------------------------------------
-            */
-            ->whereRaw(
-                "{$distanceSql} <= ?",
-                [
-                    $customerLatitude,
-                    $customerLongitude,
-                    $customerLatitude,
-                    $radius,
-                ]
-            )
-
-            ->exists();
-
-        if ($hasShop) {
-            return $radius;
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | No qualifying shop within 3 km
-    |--------------------------------------------------------------------------
-    */
-
-    return null;
-}
-
-
-    /**
-     * Apply a delivery-radius filter to a product query.
-     */
-    private function applyDistanceFilter(
-        $query,
-        float $customerLatitude,
-        float $customerLongitude,
-        int $radius
-    ): void {
-        $distanceSql =
-            $this->distanceSql();
-
-        $query
-            ->whereNotNull(
-                'b.latitude'
-            )
-            ->whereNotNull(
-                'b.longitude'
-            )
-            ->whereRaw(
-                "{$distanceSql} <= ?",
-                [
-                    $customerLatitude,
-                    $customerLongitude,
-                    $customerLatitude,
-                    $radius,
-                ]
-            );
-    }
-
-
-    /**
-     * Add calculated distance to a product query.
-     */
-    private function addDistanceSelect(
-        $query,
-        float $customerLatitude,
-        float $customerLongitude
-    ): void {
-        $distanceSql =
-            $this->distanceSql();
-
-        $query->selectRaw(
-            "{$distanceSql} AS distance_meters",
-            [
-                $customerLatitude,
-                $customerLongitude,
-                $customerLatitude,
-            ]
-        );
-    }
-
-
-    /**
-     * Haversine distance SQL.
-     *
-     * Returns distance in meters.
-     */
-    private function distanceSql(): string
-    {
-        return "
-            6371000 * ACOS(
-                LEAST(
-                    1,
-                    GREATEST(
-                        -1,
-                        COS(RADIANS(?))
-                        *
-                        COS(RADIANS(b.latitude))
-                        *
-                        COS(
-                            RADIANS(b.longitude)
-                            -
-                            RADIANS(?)
-                        )
-                        +
-                        SIN(RADIANS(?))
-                        *
-                        SIN(RADIANS(b.latitude))
-                    )
-                )
-            )
-        ";
     }
 }

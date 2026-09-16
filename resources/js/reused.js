@@ -519,63 +519,20 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==============================================
 //  #Fetch Customer Location
 // ===============================================
-document.addEventListener('DOMContentLoaded', function () {
-    const savedLocation = localStorage.getItem('delivery_location');
 
-    if (!savedLocation) {
-        return;
-    }
 
-    try {
-        const location = JSON.parse(savedLocation);
 
-        const latitude = parseFloat(location.latitude);
-        const longitude = parseFloat(location.longitude);
 
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-            return;
-        }
 
-        const url = new URL(window.location.href);
 
-        const currentLatitude = parseFloat(
-            url.searchParams.get('latitude')
-        );
 
-        const currentLongitude = parseFloat(
-            url.searchParams.get('longitude')
-        );
 
-        /*
-         * Do not reload if the current URL already contains
-         * the same delivery coordinates.
-         */
-        if (
-            Number.isFinite(currentLatitude) &&
-            Number.isFinite(currentLongitude) &&
-            Math.abs(currentLatitude - latitude) < 0.000001 &&
-            Math.abs(currentLongitude - longitude) < 0.000001
-        ) {
-            return;
-        }
-
-        url.searchParams.set('latitude', latitude);
-        url.searchParams.set('longitude', longitude);
-
-        window.location.replace(url.toString());
-
-    } catch (error) {
-        console.error(
-            'Unable to read saved delivery location:',
-            error
-        );
-    }
-});
 
 
 // ==============================================
 //  #Inventory Search
 // ===============================================
+
 document.addEventListener('DOMContentLoaded', function () {
 
     const topSearch = document.querySelector('.search-items input');
@@ -587,13 +544,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Activate search box
+    |--------------------------------------------------------------------------
+    */
+
     function activateSearch() {
+
         searchBox.classList.add('active');
 
         // Transfer whatever has already been typed
         mainSearch.value = topSearch.value;
 
-        // Move typing/focus to the main search input
+        // Move focus to the main search input
         mainSearch.focus();
 
         // Place cursor at the end
@@ -603,38 +567,110 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     }
 
-    // When user starts typing in the top search
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hide search box
+    |--------------------------------------------------------------------------
+    */
+
+    function hideSearch() {
+
+        searchBox.classList.remove('active');
+
+        mainSearch.value = '';
+        topSearch.value = '';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Top search input
+    |--------------------------------------------------------------------------
+    */
+
     topSearch.addEventListener('input', function () {
-        if (this.value.trim() !== '') {
+
+        const value = this.value.trim();
+
+        if (value !== '') {
+
             activateSearch();
+
+        } else {
+
+            hideSearch();
         }
     });
 
-    // Also activate when user clicks the top search
+
+    /*
+    |--------------------------------------------------------------------------
+    | Top search focus
+    |--------------------------------------------------------------------------
+    */
+
     topSearch.addEventListener('focus', function () {
+
         if (this.value.trim() !== '') {
             activateSearch();
         }
     });
 
-    // Keep both search inputs synchronized
-    mainSearch.addEventListener('input', function () {
-        topSearch.value = this.value;
-    });
 
-    // Cancel / close search
-    if (cancelSearch) {
-        cancelSearch.addEventListener('click', function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Main search input
+    |--------------------------------------------------------------------------
+    */
+
+    mainSearch.addEventListener('input', function () {
+
+        const value = this.value;
+
+        // Keep top search synchronized
+        topSearch.value = value;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hide when empty
+        |--------------------------------------------------------------------------
+        */
+
+        if (value.trim() === '') {
+
             searchBox.classList.remove('active');
 
-            mainSearch.value = '';
+            // Keep both inputs empty
             topSearch.value = '';
+            mainSearch.value = '';
 
+            // Return focus to the compact search input
+            topSearch.focus();
+        }
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cancel / close search
+    |--------------------------------------------------------------------------
+    */
+
+    if (cancelSearch) {
+
+        cancelSearch.addEventListener('click', function () {
+
+            hideSearch();
+
+            // Return focus to top search
             topSearch.focus();
         });
     }
 
 });
+
+
 
 
 // ===============================================

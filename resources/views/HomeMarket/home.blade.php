@@ -177,6 +177,45 @@
         </ul>
         <i id="right" class="fa-solid fa-angle-right"></i>
     </section>
+
+    <div class="cards-slider">
+        <div class="head">
+            <h3 class="sub-heading">Hot Deals</h3>
+            <span>
+                <i class="fa-solid fa-angle-left"></i>
+                <i class="fa-solid fa-angle-right"></i>
+            </span>
+        </div>
+        <div class="items-container cards-container column-cards">
+            @include('HomeMarket.products.items')
+        </div>
+    </div>
+
+    <section class="carousel-container">
+        <i id="left" class="fa-solid fa-angle-left"></i>
+        <ul class="carousel">
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
+            </li>
+        </ul>
+        <i id="right" class="fa-solid fa-angle-right"></i>
+    </section>
+
     <div class="cards-slider">
         <div class="head">
             <h3 class="sub-heading">Most Popular</h3>
@@ -189,6 +228,59 @@
             @include('HomeMarket.products.items')
         </div>
     </div>
+
+    <div class="cards-slider">
+        <div class="head">
+            <h3 class="sub-heading"></h3>
+            <span>
+                <i class="fa-solid fa-angle-left"></i>
+                <i class="fa-solid fa-angle-right"></i>
+            </span>
+        </div>
+        <div class="items-container cards-container column-cards">
+            @include('HomeMarket.products.items')
+        </div>
+    </div>
+
+    <section class="carousel-container">
+        <i id="left" class="fa-solid fa-angle-left"></i>
+        <ul class="carousel">
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
+            </li>
+            <li class="card">
+                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
+            </li>
+        </ul>
+        <i id="right" class="fa-solid fa-angle-right"></i>
+    </section>
+
+    <div class="cards-slider">
+        <div class="head">
+            <h3 class="sub-heading">House Care & Hygine</h3>
+            <span>
+                <i class="fa-solid fa-angle-left"></i>
+                <i class="fa-solid fa-angle-right"></i>
+            </span>
+        </div>
+        <div class="items-container cards-container column-cards">
+            @include('HomeMarket.products.items')
+        </div>
+    </div>
+
+
     <section class="carousel-container">
         <i id="left" class="fa-solid fa-angle-left"></i>
         <ul class="carousel">
@@ -222,173 +314,43 @@
             <img src="/public/img/homeMarket/STATIC_BANNER_2.jpg" alt="">
         </div>
     </section>
-    <div class="items-slider">
-        <h3 class="heading">Big Deals</h3>
-        <div class="items-container column-items">
-            <div class="item-container active" data-content="10%">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FH001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">410.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h4>Jik clothes bleach, jik companies. only white</h4>
-            </div>
-            <div class="item-container">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FD001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">175.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h4>Geisha</h4>
-            </div>
-        </div>
-    </div>
-    <section class="carousel-container">
-        <i id="left" class="fa-solid fa-angle-left"></i>
-        <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
-        </ul>
-        <i id="right" class="fa-solid fa-angle-right"></i>
-    </section>
+
+
+
     <div class="items-slider">
         <div class="head">
-            <h3 class="sub-heading">Most Popular</h3>
+            <h3 class="sub-heading">Every Day Products</h3>
             <span>
                 <i class="fa-solid fa-angle-left"></i>
                 <i class="fa-solid fa-angle-right"></i>
             </span>
         </div>
-        <div class="items-container column-items">
-            <div class="item-container">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FR001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">370.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h5 data-discount="10%Off">Ksh 480</h5>
-                <h4>Rina vegetable cooking oil from kapa oil refinaries</h4>
-            </div>
-            <div class="item-container active" data-content="10%">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FH001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">410.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h4>Jik clothes bleach, jik companies. only white</h4>
-            </div>
-            <div class="item-container">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FC001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">370.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h4>Dairy milk chocolate</h4>
-            </div>
+        <div class="items-container cards-container column-cards">
+            @include('HomeMarket.products.items')
         </div>
     </div>
+    <div class="items-slider">
+        <div class="head">
+            <span>
+                <i class="fa-solid fa-angle-left"></i>
+                <i class="fa-solid fa-angle-right"></i>
+            </span>
+        </div>
+        <div class="items-container cards-container column-cards">
+            @include('HomeMarket.products.items')
+        </div>
+    </div>
+
+
+
     <section class="static-banners static_one">
         <div class="static-banner">
             <img src="/public/img/homeMarket/STATIC_BANNER_1.jpg" alt="">
         </div>
     </section>
-    <section class="carousel-container">
-        <i id="left" class="fa-solid fa-angle-left"></i>
-        <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
-        </ul>
-        <i id="right" class="fa-solid fa-angle-right"></i>
-    </section>
-    <div class="items-slider">
-        <h3 class="sub-heading">For your kitchen</h3>
-        <div class="items-container column-items">
-            <div class="item-container">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FR001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">370.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h5 data-discount="10%Off">Ksh 480</h5>
-                <h4>Rina vegetable cooking oil from kapa oil refinaries</h4>
-            </div>
-            <div class="item-container active" data-content="10%">
-                <a href="#">
-                    <img src="/public/img/homeMarket/FH001_HM.png" alt="">
-                </a>
-                <span>
-                    <div class="price">
-                        <h4>Ksh</h4>
-                        <h4 class="cash">410.00</h4>
-                    </div>
-                    <i class="fa-solid fa-basket-shopping"></i>
-                </span>
-                <h4>Jik clothes bleach, jik companies. only white</h4>
-            </div>
-        </div>
-    </div>
+
+
+
     <section class="static-banners static_three">
         <div class="static-banner">
             <img src="/public/img/homeMarket/STATIC_BANNER_1.jpg" alt="">
@@ -403,117 +365,7 @@
 
 </main>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Load saved delivery location
-    |--------------------------------------------------------------------------
-    */
-    const savedLocation = localStorage.getItem('delivery_location');
-
-    if (!savedLocation) {
-        return;
-    }
-
-    try {
-
-        const location = JSON.parse(savedLocation);
-
-        const latitude = Number(location.latitude);
-        const longitude = Number(location.longitude);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Validate coordinates
-        |--------------------------------------------------------------------------
-        */
-        if (
-            !Number.isFinite(latitude) ||
-            !Number.isFinite(longitude) ||
-            latitude < -90 ||
-            latitude > 90 ||
-            longitude < -180 ||
-            longitude > 180
-        ) {
-            console.warn(
-                'Invalid delivery coordinates:',
-                location
-            );
-
-            return;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Current URL
-        |--------------------------------------------------------------------------
-        */
-        const url = new URL(window.location.href);
-
-        const currentLatitude = Number(
-            url.searchParams.get('latitude')
-        );
-
-        const currentLongitude = Number(
-            url.searchParams.get('longitude')
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Coordinates already match
-        |
-        | Nothing needs to happen.
-        |--------------------------------------------------------------------------
-        */
-        if (
-            Number.isFinite(currentLatitude) &&
-            Number.isFinite(currentLongitude) &&
-            Math.abs(currentLatitude - latitude) < 0.000001 &&
-            Math.abs(currentLongitude - longitude) < 0.000001
-        ) {
-            return;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Add delivery coordinates to URL
-        |--------------------------------------------------------------------------
-        */
-        url.searchParams.set(
-            'latitude',
-            latitude.toFixed(7)
-        );
-
-        url.searchParams.set(
-            'longitude',
-            longitude.toFixed(7)
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Reload HomeMarket with the delivery coordinates
-        |--------------------------------------------------------------------------
-        */
-        window.location.replace(url.toString());
-
-    } catch (error) {
-
-        console.error(
-            'Unable to read saved delivery location:',
-            error
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Remove corrupted localStorage value
-        |--------------------------------------------------------------------------
-        */
-        localStorage.removeItem('delivery_location');
-    }
-});
-</script>
 
 @endsection
 

@@ -1,4 +1,5 @@
 let map;
+let marker;
 let geocoder;
 let autocomplete;
 
@@ -14,128 +15,80 @@ window.initDeliveryMap = function () {
         lng: 36.764
     };
 
-    map = new google.maps.Map(
-        document.getElementById("map"),
-        {
-            center,
-            zoom: 19,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-            clickableIcons: false
-        }
-    );
+    map = new google.maps.Map(document.getElementById("map"), {
+        center,
+        zoom: 19,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false
+    });
+
+    // marker = new google.maps.Marker({
+    //     map,
+    //     position: center,
+    //     draggable: true
+    // });
 
     geocoder = new google.maps.Geocoder();
 
     const input = document.getElementById("place-search");
 
-    if (input) {
+    autocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: {
+            country: "ke"
+        },
+        fields: [
+            "geometry",
+            "place_id",
+            "name"
+        ]
+    });
 
-        autocomplete = new google.maps.places.Autocomplete(
-            input,
-            {
-                componentRestrictions: {
-                    country: "ke"
-                },
-                fields: [
-                    "geometry",
-                    "place_id",
-                    "name"
-                ]
-            }
-        );
-
-        autocomplete.bindTo("bounds", map);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Search
-        |--------------------------------------------------------------------------
-        */
-
-        autocomplete.addListener("place_changed", () => {
-
-            const place = autocomplete.getPlace();
-
-            if (
-                !place.geometry ||
-                !place.geometry.location
-            ) {
-
-                console.warn(
-                    "Selected place has no geometry."
-                );
-
-                return;
-            }
-
-            map.panTo(place.geometry.location);
-            map.setZoom(19);
-
-            reverseGeocode(
-                place.geometry.location
-            );
-        });
-    }
-
+    autocomplete.bindTo("bounds", map);
 
     /*
     |--------------------------------------------------------------------------
-    | Click Map
+    | Search
     |--------------------------------------------------------------------------
     */
+    autocomplete.addListener("place_changed", () => {
 
+        const place = autocomplete.getPlace();
+
+        // if (!place.geometry || !place.geometry.location) {
+        //     alert("Please select one of the suggested locations.");
+        //     return;
+        // }
+
+        map.panTo(place.geometry.location);
+        map.setZoom(19);
+
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Click map
+    |--------------------------------------------------------------------------
+    */
     map.addListener("click", (event) => {
-
-        reverseGeocode(
-            event.latLng
-        );
-
+        reverseGeocode(event.latLng);
     });
-
 
     /*
     |--------------------------------------------------------------------------
-    | Map Center Changed
+    | Drag marker
     |--------------------------------------------------------------------------
-    |
-    | This keeps the selected delivery location synchronized with
-    | the center of the map.
-    |
     */
-
     map.addListener("idle", () => {
-
-        const mapCenter = map.getCenter();
-
-        if (!mapCenter) {
-            return;
-        }
-
-        reverseGeocode(mapCenter);
-
+        const center = map.getCenter();
+        reverseGeocode(center);
     });
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Initial Location
-    |--------------------------------------------------------------------------
-    |
-    | Do NOT use marker.getPosition().
-    | The marker is no longer being created.
-    |
-    */
-
-    const initialCenter = map.getCenter();
-
-    if (initialCenter) {
-        reverseGeocode(initialCenter);
-    }
+    // Load the initial location
+    reverseGeocode(marker.getPosition());
 
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -145,81 +98,63 @@ window.initDeliveryMap = function () {
 
 function reverseGeocode(location) {
 
-    if (!geocoder || !location) {
-        return;
-    }
+    geocoder.geocode({
+        location
+    }, (results, status) => {
 
-    geocoder.geocode(
-        {
-            location: location
-        },
-        (results, status) => {
-
-            if (
-                status !== "OK" ||
-                !results ||
-                !results.length
-            ) {
-
-                console.error(
-                    "Reverse geocoding failed:",
-                    status
-                );
-
-                return;
-            }
-
-            updateLocation(
-                location,
-                buildAddress(results[0])
-            );
-
+        if (status !== "OK" || !results.length) {
+            console.error(status);
+            return;
         }
-    );
+
+        updateLocation(location, buildAddress(results[0]));
+
+    });
 
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| Build Delivery Address
+| Build Delivery Address (Kenya Friendly)
 |--------------------------------------------------------------------------
 */
 
 function buildAddress(result) {
 
-    const components =
-        result.address_components || [];
+    const components = result.address_components;
 
     const get = (...types) => {
 
-        const component = components.find(
-            c => types.some(
-                type => c.types.includes(type)
-            )
+        const component = components.find(c =>
+            types.some(type => c.types.includes(type))
         );
 
-        return component
-            ? component.long_name
-            : "";
+        return component ? component.long_name : "";
     };
-
 
     /*
     |--------------------------------------------------------------------------
     | County
     |--------------------------------------------------------------------------
+    |
+    | Nairobi
+    | Kajiado
+    | Kiambu
+    |
     */
 
     const county =
         get("administrative_area_level_2") ||
         get("administrative_area_level_1");
 
-
     /*
     |--------------------------------------------------------------------------
     | Town
     |--------------------------------------------------------------------------
+    |
+    | Kenya is inconsistent.
+    | We try the most common values first.
+    |
     */
 
     const town =
@@ -230,240 +165,102 @@ function buildAddress(result) {
         get("sublocality_level_1") ||
         get("sublocality");
 
-
     /*
     |--------------------------------------------------------------------------
     | Building / Landmark / Road
     |--------------------------------------------------------------------------
     */
 
-    const building =
-        get("premise");
-
-    const subpremise =
-        get("subpremise");
-
-    const landmark =
+    const street =
+        get("premise") ||
+        get("subpremise") ||
         get("point_of_interest") ||
-        get("establishment");
-
-    const road =
+        get("establishment") ||
         get("route");
-
 
     /*
     |--------------------------------------------------------------------------
-    | Build Full Address
+    | Build address
     |--------------------------------------------------------------------------
     */
 
     const parts = [];
 
-    if (county) {
+    if (county)
         parts.push(county);
-    }
 
-    if (
-        town &&
-        town !== county
-    ) {
+    if (town && town !== county)
         parts.push(town);
-    }
 
-    if (building) {
-        parts.push(building);
-    } else if (subpremise) {
-        parts.push(subpremise);
-    } else if (landmark) {
-        parts.push(landmark);
-    } else if (road) {
-        parts.push(road);
-    }
+    let full = parts.join(", ");
 
-    const full =
-        parts.join(", ");
-
+    if (street)
+        full += " > " + street;
 
     return {
 
-        county: county,
+        county,
 
-        town: town,
+        town,
 
-        estate: "",
+        street,
 
-        building: building || subpremise || "",
-
-        road: road || "",
-
-        landmark: landmark || "",
-
-        street: road || "",
-
-        full: full
+        full
 
     };
 
 }
 
-
 /*
 |--------------------------------------------------------------------------
-| Update Location
+| Update UI
 |--------------------------------------------------------------------------
 */
 
-function updateLocation(
-    location,
-    address,
-    moveMap = false
-) {
+function updateLocation(location, address, moveMap = false) {
 
-    if (!location) {
-        return;
-    }
+    // marker.setPosition(location);
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Move Map
-    |--------------------------------------------------------------------------
-    */
-
-    if (moveMap && map) {
-
+    if (moveMap) {
         map.panTo(location);
         map.setZoom(15);
-
     }
 
+    const lat = location.lat();
+    const lng = location.lng();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Coordinates
-    |--------------------------------------------------------------------------
-    */
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+    document.getElementById("delivery_address").value = address.full;
 
-    const lat =
-        typeof location.lat === "function"
-            ? location.lat()
-            : Number(location.lat);
-
-    const lng =
-        typeof location.lng === "function"
-            ? location.lng()
-            : Number(location.lng);
-
-
-    if (
-        !Number.isFinite(lat) ||
-        !Number.isFinite(lng)
-    ) {
-
-        console.error(
-            "Invalid delivery coordinates:",
-            location
-        );
-
-        return;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hidden Inputs
-    |--------------------------------------------------------------------------
-    */
-
-    const latitudeInput =
-        document.getElementById("latitude");
-
-    const longitudeInput =
-        document.getElementById("longitude");
-
-    const deliveryAddressInput =
-        document.getElementById("delivery_address");
-
-
-    if (latitudeInput) {
-        latitudeInput.value = lat;
-    }
-
-    if (longitudeInput) {
-        longitudeInput.value = lng;
-    }
-
-    if (deliveryAddressInput) {
-        deliveryAddressInput.value =
-            address.full;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Search Field
-    |--------------------------------------------------------------------------
-    */
-
-    const search =
-        document.getElementById("place-search");
+    const search = document.getElementById("place-search");
 
     if (search) {
         search.value = address.full;
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Selected Address Label
-    |--------------------------------------------------------------------------
-    */
-
-    const label =
-        document.getElementById("selected-address");
+    const label = document.getElementById("selected-address");
 
     if (label) {
-
         label.innerHTML =
             `<i class="fa-solid fa-map-pin"></i> ${address.full}`;
-
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Keep Current Delivery Location
-    |--------------------------------------------------------------------------
-    */
-
+    // Keep for saving later
     window.currentDeliveryLocation = {
-
         county: address.county,
-
         town: address.town,
-
         estate: address.estate,
-
         building: address.building,
-
         road: address.road,
-
         address: address.full,
-
         latitude: lat,
-
         longitude: lng
-
     };
 
-
-    console.log(
-        "Current delivery location:",
-        window.currentDeliveryLocation
-    );
+    console.log(window.currentDeliveryLocation);
 
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -473,40 +270,23 @@ function updateLocation(
 
 window.confirmDeliveryLocation = function () {
 
-    if (
-        !window.currentDeliveryLocation
-    ) {
-
-        alert(
-            "Please choose a delivery location."
-        );
-
+    if (!window.currentDeliveryLocation) {
+        alert("Please choose a delivery location.");
         return;
     }
 
+    const latitude = Number(
+        window.currentDeliveryLocation.latitude
+    );
 
-    const latitude =
-        Number(
-            window.currentDeliveryLocation.latitude
-        );
-
-    const longitude =
-        Number(
-            window.currentDeliveryLocation.longitude
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validate Coordinates
-    |--------------------------------------------------------------------------
-    */
+    const longitude = Number(
+        window.currentDeliveryLocation.longitude
+    );
 
     if (
         !Number.isFinite(latitude) ||
         !Number.isFinite(longitude)
     ) {
-
         alert(
             "The selected delivery location does not have valid coordinates."
         );
@@ -514,180 +294,137 @@ window.confirmDeliveryLocation = function () {
         return;
     }
 
+    const locationToSave = {
+        ...window.currentDeliveryLocation,
+        latitude,
+        longitude,
+        saved_at: new Date().toISOString()
+    };
 
     /*
     |--------------------------------------------------------------------------
-    | Save Delivery Location
+    | Browser copy
     |--------------------------------------------------------------------------
     */
-
-    const locationToSave = {
-
-        ...window.currentDeliveryLocation,
-
-        latitude: latitude,
-
-        longitude: longitude,
-
-        saved_at:
-            new Date().toISOString()
-
-    };
-
 
     localStorage.setItem(
         "delivery_location",
         JSON.stringify(locationToSave)
     );
 
-
-    console.log(
-        "Delivery location saved:",
-        locationToSave
-    );
-
-
     /*
     |--------------------------------------------------------------------------
-    | Update Navigation Display
+    | Laravel session
     |--------------------------------------------------------------------------
     */
 
-    const display =
-        document.getElementById(
-            "current-delivery-location"
-        );
+    const csrfToken = document.querySelector(
+        'meta[name="csrf-token"]'
+    )?.content;
 
-    if (display) {
-
-        display.textContent =
-            locationToSave.address;
-
+    if (!csrfToken) {
+        console.error("CSRF token not found.");
+        alert("Unable to save delivery location.");
+        return;
     }
 
+    fetch("/delivery-location", {
+        method: "POST",
 
-    /*
-    |--------------------------------------------------------------------------
-    | Close Modal
-    |--------------------------------------------------------------------------
-    */
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": csrfToken
+        },
 
-    closeModal();
+        body: JSON.stringify({
+            latitude,
+            longitude
+        })
+    })
+    .then(response => {
 
+        if (!response.ok) {
+            throw new Error(
+                `Location request failed: ${response.status}`
+            );
+        }
 
-    /*
-    |--------------------------------------------------------------------------
-    | IMPORTANT:
-    |
-    | Send the coordinates to Laravel.
-    |
-    | Laravel cannot read localStorage directly.
-    |
-    |--------------------------------------------------------------------------
-    */
+        return response.json();
+    })
+    .then(data => {
 
-    const url =
-        new URL(
+        if (!data.success) {
+            throw new Error(
+                data.message ||
+                "Unable to save delivery location."
+            );
+        }
+
+        closeModal();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clean old coordinates from URL
+        |--------------------------------------------------------------------------
+        */
+
+        const url = new URL(
             window.location.href
         );
 
+        url.searchParams.delete("latitude");
+        url.searchParams.delete("longitude");
 
-    url.searchParams.set(
-        "latitude",
-        latitude
-    );
+        window.location.replace(
+            url.pathname + url.search
+        );
+    })
+    .catch(error => {
 
-    url.searchParams.set(
-        "longitude",
-        longitude
-    );
+        console.error(
+            "Unable to save delivery location:",
+            error
+        );
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | If this is the HomeMarket page,
-    | reload it using the new delivery location.
-    |
-    | If the modal is used elsewhere, the same URL
-    | still carries the location coordinates.
-    |--------------------------------------------------------------------------
-    */
-
-    window.location.href =
-        url.toString();
-
+        alert(
+            "Unable to save your delivery location. Please try again."
+        );
+    });
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| Load Saved Delivery Location In Navigation
+| Load Delivery Location on the Nav
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-        const display =
-            document.getElementById(
-                "current-delivery-location"
-            );
+    const display = document.getElementById("current-delivery-location");
 
-        if (!display) {
-            return;
-        }
+    if (!display) return;
 
+    const savedLocation = localStorage.getItem("delivery_location");
 
-        const savedLocation =
-            localStorage.getItem(
-                "delivery_location"
-            );
-
-
-        if (!savedLocation) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | No localStorage:
-            | keep the database/Blade value.
-            |--------------------------------------------------------------------------
-            */
-
-            return;
-        }
-
-
-        try {
-
-            const location =
-                JSON.parse(
-                    savedLocation
-                );
-
-
-            if (
-                location &&
-                location.address
-            ) {
-
-                display.textContent =
-                    location.address;
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Invalid delivery_location in localStorage.",
-                error
-            );
-
-            localStorage.removeItem(
-                "delivery_location"
-            );
-
-        }
-
+    if (!savedLocation) {
+        // No local storage, keep the database value already rendered by Blade
+        return;
     }
-);
+
+    try {
+
+        const location = JSON.parse(savedLocation);
+
+        if (location && location.address) {
+            display.textContent = location.address;
+        }
+
+    } catch (error) {
+        console.error("Invalid delivery_location in localStorage.", error);
+
+        // Optional: remove the corrupted data
+        localStorage.removeItem("delivery_location");
+    }
+
+});
