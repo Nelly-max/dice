@@ -105,12 +105,14 @@
     
     
                         <span>
-                            <h4>Licence Number</h4>
+                            <h4>Licence No.</h4>
     
-                            <input type="text"
-                                   name="license_number"
-                                   value="{{ old('license_number') }}"
-                                   placeholder="Your driver's licence no.">
+                            <div class="required-input">
+                                <input type="text"
+                                    name="license_number"
+                                    value="{{ old('license_number') }}"
+                                    placeholder="your driver's licence no.">
+                            </div>
     
                         </span>
     
@@ -187,10 +189,7 @@
     
                             </div>
     
-                        </span>
-    
-    
-    
+                        </span>    
     
                         <span>
     
@@ -199,12 +198,9 @@
                             <div class="required-input">
     
                                 <input type="text"
-                                       name="vehicle_make"
-                                       value="{{ old('vehicle_make') }}"
-                                       placeholder="eg. Honda"
-                                       required>
-    
-                                <h6 class="required">*</h6>
+                                    name="vehicle_make"
+                                    value="{{ old('vehicle_make') }}"
+                                    placeholder="eg. Honda">
     
                             </div>
     
@@ -220,13 +216,9 @@
                             <div class="required-input">
     
                                 <input type="text"
-                                       name="vehicle_model"
-                                       value="{{ old('vehicle_model') }}"
-                                       placeholder="eg. Boxer 150"
-                                       required>
-    
-                                <h6 class="required">*</h6>
-    
+                                    name="vehicle_model"
+                                    value="{{ old('vehicle_model') }}"
+                                    placeholder="eg. Boxer 150">    
                             </div>
     
                         </span>
@@ -252,29 +244,10 @@
                                 </option>
     
     
-                                <option value="car"
+                                <!-- <option value="car"
                                     {{ old('vehicle_type') == 'car' ? 'selected' : '' }}>
                                     Car
-                                </option>
-    
-    
-                                <option value="bicycle"
-                                    {{ old('vehicle_type') == 'bicycle' ? 'selected' : '' }}>
-                                    Bicycle
-                                </option>
-    
-    
-                                <option value="van"
-                                    {{ old('vehicle_type') == 'van' ? 'selected' : '' }}>
-                                    Van
-                                </option>
-    
-    
-                                <option value="truck"
-                                    {{ old('vehicle_type') == 'truck' ? 'selected' : '' }}>
-                                    Truck
-                                </option>
-    
+                                </option>     -->
     
                             </select>  
     
@@ -306,7 +279,7 @@
                                     data-selected="{{ $business->county_id ?? '' }}">
 
                                     <div class="select-btn">
-                                        <span>Select County</span>
+                                        <span>County</span>
                                         <i class="fa-solid fa-chevron-down"></i>
                                     </div>
 
@@ -342,7 +315,7 @@
                                     data-selected="{{ $business->town_id ?? '' }}">
 
                                     <div class="select-btn">
-                                        <span>Select Town</span>
+                                        <span>Town</span>
                                         <i class="fa-solid fa-chevron-down"></i>
                                     </div>
 
@@ -377,7 +350,7 @@
                                     data-selected="{{ $business->place_id ?? '' }}">
     
                                     <div class="select-btn">
-                                        <span>Select Place</span>
+                                        <span>Place</span>
                                         <i class="fa-solid fa-chevron-down"></i>
                                     </div>
     

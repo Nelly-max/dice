@@ -1304,13 +1304,14 @@ td img,
 }
 
 .topbar h2{
-    font-size: 1.5rem;  
+    font-size: 1.2rem;  
     color: var(--title);
     font-weight: 600;
 }
 
 .topbar i{
     font-size: 1.5em;  
+    font-weight: 700;
     cursor: pointer;  
     color: var(--hold);
 }
