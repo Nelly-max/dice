@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/css/main.css',
                 'resources/css/modal.css',
+                'resources/css/toast.css',
                 'resources/css/homecity.css',
                 'resources/css/homemrkt.css',
                 'resources/css/reused.css',
