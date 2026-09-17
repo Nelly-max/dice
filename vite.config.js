@@ -21,6 +21,7 @@ export default defineConfig({
                 'resources/css/reused.css',
                 'resources/css/LargeCards.css',
                 'resources/css/hub.css',
+                'resources/css/calendar.css',
 
 
                 'resources/js/reused.js',
