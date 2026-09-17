@@ -1560,7 +1560,7 @@ td img,
 
 
 .account-details .account-detail{
-    margin: 1em;
+    /* margin: 1em; */
     margin-bottom: 1em;
     padding: 1em;
     border-radius: 1em;

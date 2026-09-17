@@ -10,7 +10,7 @@
                         <div>
                             <img src="../public/img/user.png" alt="">
                             <h3 class="heading">U01A-A001AZ</h3>
-                            <h4>Standard Account</h4>
+                            <h4>Customer Account</h4>
                         </div>
                         <div>
                             <div class="wallet-area">
@@ -29,11 +29,11 @@
                     <div class="shortcuts">
                         <a href="{{ route('hub.account.marketer.join') }}" class="shortcut">
                             <i class="fa-solid fa-user-pen"></i>
-                            Join Marketers
+                            Marketer
                         </a>
                         <a href="{{ route('hub.account.rider-application') }}" class="shortcut" style="color: #079d9f; background: #d7fdff;">
                             <i class="fa-solid fa-motorcycle"></i>
-                            Rider Application
+                            Rider
                         </a>
                         <a class="shortcut" style="color: #9f6007; background: #fff0d7;">
                             <i class="fa-solid fa-coins"></i>
