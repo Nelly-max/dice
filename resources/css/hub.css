@@ -2618,4 +2618,18 @@ td img,
         border-radius: 1em;
         background: var(--color-lighter);
     }
+
+    .hub-nav{
+        padding: .5em 1em;    
+    }
+
+    #fixed{
+        left: .5em;
+        width: calc(100% - 1em);
+    }
+    .hub-content{
+        left: .5em;
+        width: calc(100% - 1em);
+        height: calc(100% - 7.5em);
+    }
 }
