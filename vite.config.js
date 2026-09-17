@@ -30,6 +30,7 @@ export default defineConfig({
                 'resources/js/checkout.js',
                 'resources/js/orderPayment.js',
                 'resources/js/signup.js',
+                'resources/js/select.js',
                 'resources/js/app.js',
                 'resources/js/map.js',
                 'resources/js/riderLocation.js',
