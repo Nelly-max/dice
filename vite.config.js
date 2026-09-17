@@ -33,6 +33,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/map.js',
                 'resources/js/riderLocation.js',
+                'resources/js/hub.js',
+                'resources/js/calendar.js',
             ],
             refresh: true,
         }),
