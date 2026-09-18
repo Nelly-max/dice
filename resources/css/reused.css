@@ -270,16 +270,32 @@ input[type="date"]:not(:focus):before {
     display: block;
 }
 
-.search-box{
-    width: 10em;
-    position: fixed;
+/* .search-box{
+    position: absolute;
     top: .5em;
     padding: 0 .5em;
     justify-content: center;
     left: 45%;
     transform: translateX(-50%);
     max-height: 20em;
-    width: 40%;
+    width: 100%;
+    overflow-y: auto;
+    z-index: 99999;
+    border-radius: .4em;
+    background: var(--bg-white);
+    display: none;
+} */
+
+
+.search-box{
+    position: absolute;
+    top: .5em;
+    left: 45%;
+    transform: translateX(-50%);
+    padding: 0 .5em;
+    justify-content: center;
+    max-height: 20em;
+    width: 38%;
     overflow-y: auto;
     z-index: 99999;
     border-radius: .4em;
@@ -287,13 +303,18 @@ input[type="date"]:not(:focus):before {
     display: none;
 }
 
+
 .search-box.active{
     display: block;
 
 }
 
-.search-box .search-bar{
-    position: relative;
+.search-box .search-box-bar{
+    /* position: relative; */
+    position: fixed;
+    width: 100%;
+    margin: .2em;
+    top: 0em;
 }
 
 .search-box input{
@@ -312,7 +333,7 @@ input[type="date"]:not(:focus):before {
 
 .search-box img{
     position: absolute;
-    top: .2em;
+    top: .8em;
     left: 1em;
     width: 1em;
     height: 1em;
@@ -320,7 +341,7 @@ input[type="date"]:not(:focus):before {
 
 .search-box .cancel-search{
     position: absolute;
-    top: .2em;
+    top: .8em;
     right: .8em;
     display: flex;
     align-items: center;
@@ -1079,7 +1100,7 @@ ul li{
 
 
 .category-icons .category-icon span{
-    font-size: .9rem;
+    font-size: .8rem;
     font-weight: 500;
     color: var(--color-gray-dark);
     text-align: center;
@@ -1104,7 +1125,7 @@ ul li{
 }
 
 .category-icons.main-cat-icons .category-icon img{
-    height: 6em;
+    height: 5em;
     width: fit-content;
     border-radius: 50%;
     transition: all .3s ease;
@@ -1421,6 +1442,10 @@ footer{
         padding: .4em 1em;
         font-size: 1rem;   
         width: 30em;
+    }
+
+    .search-box{
+        background: red;
     }
 
     .category-links .category-link{

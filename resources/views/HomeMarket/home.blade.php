@@ -75,7 +75,6 @@
         </div>
 
 
-
         <!-- button prev and next -->
         <div class="buttons">
             <button id="prev"><</button>
@@ -115,66 +114,147 @@
             </div>               
         </a>
     </div>
+
     <section class="category-icons main-cat-icons">
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/hot_sale.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/hot_sale.png"
+                alt="Hot Sales"
+            >
             <span>Hot Sales</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/discount_banner_1.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/discount_banner_1.png"
+                alt="Online Exclusive"
+            >
             <span>Online Exclusive</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FR001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FR001_HM.png"
+                alt="Foods"
+            >
             <span>Foods</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FD001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FD001_HM.png"
+                alt="House Hold"
+            >
             <span>House Hold</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FD002_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FD002_HM.png"
+                alt="Detergent"
+            >
             <span>Detergent</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FC001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FC001_HM.png"
+                alt="Confectionery"
+            >
             <span>Confectionery</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FDR001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FDR001_HM.png"
+                alt="Dairies"
+            >
             <span>Dairies</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FB001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FB001_HM.png"
+                alt="Beverages"
+            >
             <span>Beverages</span>
         </a>
+
+
         <a href="#" class="category-icon">
-            <img src="/public/img/homeMarket/FH001_HM.png" alt="">
+            <img
+                src="{{ $mediaBaseUrl }}/media/img/homeMarket/Category_icons/FH001_HM.png"
+                alt="Hygene"
+            >
             <span>Hygene</span>
         </a>
+
     </section>
+
     <section class="carousel-container">
         <i id="left" class="fa-solid fa-angle-left"></i>
+
         <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
+
+            @php
+                // Local folder containing the carousel images
+                $localPath = 'C:\media\img\homeMarket\Carousel_1';
+
+                // Media server base URL
+                $mediaBaseUrl = rtrim(
+                    config('app.media_url') ?: env('MEDIA_URL'),
+                    '/'
+                );
+
+                // Supported image formats
+                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+                // Find all carousel images
+                $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
+
+                // Optional: sort alphabetically
+                natsort($foundImages);
+            @endphp
+
+            @forelse($foundImages as $filePath)
+
+                @php
+                    $fileName = basename($filePath);
+                    $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+                @endphp
+
+                <li class="card">
+                    <div class="img">
+                        <img
+                            src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_1/{{ rawurlencode($fileName) }}"
+                            alt="{{ $imageName }}"
+                            draggable="false"
+                        >
+                    </div>
+                </li>
+
+            @empty
+
+                <li class="card">
+                    <div class="img">
+                        <p style="padding: 20px; text-align: center; color: #888;">
+                            No slider images found.
+                        </p>
+                    </div>
+                </li>
+
+            @endforelse
+
         </ul>
+
         <i id="right" class="fa-solid fa-angle-right"></i>
     </section>
 
@@ -194,24 +274,56 @@
     <section class="carousel-container">
         <i id="left" class="fa-solid fa-angle-left"></i>
         <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
+
+            @php
+                // Local folder containing the carousel images
+                $localPath = 'C:\media\img\homeMarket\Carousel_2';
+
+                // Media server base URL
+                $mediaBaseUrl = rtrim(
+                    config('app.media_url') ?: env('MEDIA_URL'),
+                    '/'
+                );
+
+                // Supported image formats
+                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+                // Find all carousel images
+                $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
+
+                // Optional: sort alphabetically
+                natsort($foundImages);
+            @endphp
+
+            @forelse($foundImages as $filePath)
+
+                @php
+                    $fileName = basename($filePath);
+                    $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+                @endphp
+
+                <li class="card">
+                    <div class="img">
+                        <img
+                            src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_2/{{ rawurlencode($fileName) }}"
+                            alt="{{ $imageName }}"
+                            draggable="false"
+                        >
+                    </div>
+                </li>
+
+            @empty
+
+                <li class="card">
+                    <div class="img">
+                        <p style="padding: 20px; text-align: center; color: #888;">
+                            No slider images found.
+                        </p>
+                    </div>
+                </li>
+
+            @endforelse
+
         </ul>
         <i id="right" class="fa-solid fa-angle-right"></i>
     </section>
@@ -242,29 +354,52 @@
         </div>
     </div>
 
-    <section class="carousel-container">
-        <i id="left" class="fa-solid fa-angle-left"></i>
-        <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
-        </ul>
-        <i id="right" class="fa-solid fa-angle-right"></i>
+    <section class="static-banners static_two">
+
+        @php
+            // Local folder containing static banner images
+            $localPath = 'C:\media\img\homeMarket\StaticBanners_1';
+
+            // Media server base URL
+            $mediaBaseUrl = rtrim(
+                config('app.media_url') ?: env('MEDIA_URL'),
+                '/'
+            );
+
+            // Supported image formats
+            $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+            // Find all banner images
+            $foundBanners = glob($imagePattern, GLOB_BRACE) ?: [];
+
+            // Keep banners in natural filename order
+            natsort($foundBanners);
+        @endphp
+
+        @forelse($foundBanners as $filePath)
+
+            @php
+                $fileName = basename($filePath);
+                $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+            @endphp
+
+            <div class="static-banner">
+                <img
+                    src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_1/{{ rawurlencode($fileName) }}"
+                    alt="{{ $imageName }}"
+                >
+            </div>
+
+        @empty
+
+            <div class="static-banner">
+                <p style="padding: 20px; text-align: center; color: #888;">
+                    No static banner images found.
+                </p>
+            </div>
+
+        @endforelse
+
     </section>
 
     <div class="cards-slider">
@@ -281,40 +416,110 @@
     </div>
 
 
+    <section class="static-banners static_one">
+
+        @php
+            // Local folder containing static banner images
+            $localPath = 'C:\media\img\homeMarket\StaticBanners_2';
+
+            // Media server base URL
+            $mediaBaseUrl = rtrim(
+                config('app.media_url') ?: env('MEDIA_URL'),
+                '/'
+            );
+
+            // Supported image formats
+            $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+            // Find all banner images
+            $foundBanners = glob($imagePattern, GLOB_BRACE) ?: [];
+
+            // Keep banners in natural filename order
+            natsort($foundBanners);
+        @endphp
+
+        @forelse($foundBanners as $filePath)
+
+            @php
+                $fileName = basename($filePath);
+                $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+            @endphp
+
+            <div class="static-banner">
+                <img
+                    src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_2/{{ rawurlencode($fileName) }}"
+                    alt="{{ $imageName }}"
+                >
+            </div>
+
+        @empty
+
+            <div class="static-banner">
+                <p style="padding: 20px; text-align: center; color: #888;">
+                    No static banner images found.
+                </p>
+            </div>
+
+        @endforelse
+
+    </section>
+
     <section class="carousel-container">
         <i id="left" class="fa-solid fa-angle-left"></i>
         <ul class="carousel">
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_1.jpg" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_2.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_3.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_4.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_5.png" alt="" draggable="false"></div>
-            </li>
-            <li class="card">
-                <div class="img"><img src="/public/img/homeMarket/LEAFLET_CARD_6.png" alt="" draggable="false"></div>
-            </li>
+
+            @php
+                // Local folder containing the carousel images
+                $localPath = 'C:\media\img\homeMarket\Carousel_3';
+
+                // Media server base URL
+                $mediaBaseUrl = rtrim(
+                    config('app.media_url') ?: env('MEDIA_URL'),
+                    '/'
+                );
+
+                // Supported image formats
+                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+                // Find all carousel images
+                $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
+
+                // Optional: sort alphabetically
+                natsort($foundImages);
+            @endphp
+
+            @forelse($foundImages as $filePath)
+
+                @php
+                    $fileName = basename($filePath);
+                    $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+                @endphp
+
+                <li class="card">
+                    <div class="img">
+                        <img
+                            src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_3/{{ rawurlencode($fileName) }}"
+                            alt="{{ $imageName }}"
+                            draggable="false"
+                        >
+                    </div>
+                </li>
+
+            @empty
+
+                <li class="card">
+                    <div class="img">
+                        <p style="padding: 20px; text-align: center; color: #888;">
+                            No slider images found.
+                        </p>
+                    </div>
+                </li>
+
+            @endforelse
+
         </ul>
         <i id="right" class="fa-solid fa-angle-right"></i>
     </section>
-
-    <section class="static-banners static_two">
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_1.jpg" alt="">
-        </div>
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_2.jpg" alt="">
-        </div>
-    </section>
-
 
 
     <div class="items-slider">
@@ -329,6 +534,7 @@
             @include('HomeMarket.products.items')
         </div>
     </div>
+
     <div class="items-slider">
         <div class="head">
             <span>
@@ -343,24 +549,52 @@
 
 
 
-    <section class="static-banners static_one">
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_1.jpg" alt="">
-        </div>
-    </section>
-
-
-
     <section class="static-banners static_three">
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_1.jpg" alt="">
-        </div>
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_2.jpg" alt="">
-        </div>
-        <div class="static-banner">
-            <img src="/public/img/homeMarket/STATIC_BANNER_2.jpg" alt="">
-        </div>
+
+        @php
+            // Local folder containing static banner images
+            $localPath = 'C:\media\img\homeMarket\StaticBanners_3';
+
+            // Media server base URL
+            $mediaBaseUrl = rtrim(
+                config('app.media_url') ?: env('MEDIA_URL'),
+                '/'
+            );
+
+            // Supported image formats
+            $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+
+            // Find all banner images
+            $foundBanners = glob($imagePattern, GLOB_BRACE) ?: [];
+
+            // Keep banners in natural filename order
+            natsort($foundBanners);
+        @endphp
+
+        @forelse($foundBanners as $filePath)
+
+            @php
+                $fileName = basename($filePath);
+                $imageName = pathinfo($fileName, PATHINFO_FILENAME);
+            @endphp
+
+            <div class="static-banner">
+                <img
+                    src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_3/{{ rawurlencode($fileName) }}"
+                    alt="{{ $imageName }}"
+                >
+            </div>
+
+        @empty
+
+            <div class="static-banner">
+                <p style="padding: 20px; text-align: center; color: #888;">
+                    No static banner images found.
+                </p>
+            </div>
+
+        @endforelse
+
     </section>
 
 </main>

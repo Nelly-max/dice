@@ -11,6 +11,7 @@
             <i class="fa-solid fa-xmark close-search search-close-btn"></i>
             <input type="text" placeholder="search from shops near you . .">
             <i class="fa-solid fa-magnifying-glass search-show-btn"></i>
+            @include('HomeMarket.partials.search-box')
         </div>
         <div class="nav-left">
             <div class="col account"  onclick="showModal('mapModal')">
@@ -60,5 +61,3 @@
         </div>
     </section>
 </nav>
-
-@include('HomeMarket.partials.search-box')

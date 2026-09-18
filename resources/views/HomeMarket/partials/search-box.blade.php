@@ -1,5 +1,5 @@
 <div class="search-box">
-    <span class="search-bar">
+    <span class="search-box-bar">
         <img src="img/home_icon.png" alt="">
         <input type="text" placeholder="search from shops near you . .">
         <i class="fa-solid fa-xmark cancel-search"></i>

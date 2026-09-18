@@ -1113,8 +1113,8 @@ ul li{
 
 
 @keyframes moving{
-    from{tranform: translateX(50px);opacity: 0;}
-    to{tranform: translateX(0px);opacity: 1;}
+    from{transform: translateX(50px);opacity: 0;}
+    to{transform: translateX(0px);opacity: 1;}
 }
 
 .tab_box .tab.active{

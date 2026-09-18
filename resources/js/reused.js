@@ -1010,150 +1010,123 @@ hideBtns.forEach((btn, index) => {
 // ====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-    const sliderWrapper = document.querySelector(".cards-slider");
-    if (!sliderWrapper) return;
+    document.querySelectorAll(".cards-slider, .items-slider").forEach(sliderWrapper => {
+        const track = sliderWrapper.querySelector(".column-cards");
+        const prevBtn = sliderWrapper.querySelector(".fa-angle-left");
+        const nextBtn = sliderWrapper.querySelector(".fa-angle-right");
+        if (!track) return;
 
-    const track = sliderWrapper.querySelector(".column-cards");
-    const prevBtn = sliderWrapper.querySelector(".fa-angle-left");
-    const nextBtn = sliderWrapper.querySelector(".fa-angle-right");
-    
-    let originalCards = [...track.querySelectorAll(".card-data")];
-    if (originalCards.length === 0) return;
+        const originalCards = [...track.querySelectorAll(".card-data")];
+        if (!originalCards.length) return;
 
-    const itemSpacing = 6; 
-    const padding = 6;     
-    let cardWidth = 160;   
-    let timeoutId = null;
-    let isDragging = false, startX, startScrollLeft;
-    let isTouchHolding = false;
+        const itemSpacing = 6, padding = 6, minWidth = 160;
+        let cardWidth = minWidth, cardPerView = 1;
+        let timeoutId = null, isDragging = false, isTouchHolding = false;
+        let startX, startScrollLeft;
 
-    // Get number of cards per view to determine clone count
-    let cardPerView = Math.round(track.offsetWidth / cardWidth) || 1;
+        const calculateLayout = () => {
+            const width = sliderWrapper.offsetWidth;
+            if (!width) return;
 
-    // 🔄 Step 1: Clone cards for infinite scrolling loops
-    originalCards.slice(-cardPerView).reverse().forEach(card => {
-        track.insertAdjacentHTML("afterbegin", card.outerHTML);
-    });
-    originalCards.slice(0, cardPerView).forEach(card => {
-        track.insertAdjacentHTML("beforeend", card.outerHTML);
-    });
+            cardPerView = Math.floor((width - padding * 2) / minWidth) || 2;
+            cardWidth = (width - padding * 2 - itemSpacing * (cardPerView - 1)) / cardPerView;
 
-    // Fetch newly updated cards list (including clones)
-    let allCards = track.querySelectorAll(".card-data");
-
-    // 📱 Step 2: Proportional Width Dimension Matrix Calculator
-    const calculateLayoutDimensions = () => {
-        const wrapperWidth = sliderWrapper.offsetWidth;
-        if (wrapperWidth > 0) {
-            cardPerView = Math.floor((wrapperWidth - padding *2) / 160) || 2;
-            cardWidth = (wrapperWidth - padding * 2 - itemSpacing * (cardPerView - 1)) / cardPerView;
-
-            allCards.forEach(card => {
+            track.querySelectorAll(".card-data").forEach(card => {
                 card.style.width = `${cardWidth}px`;
                 card.style.marginRight = `${itemSpacing}px`;
-                card.style.flexShrink = "0"; 
+                card.style.flexShrink = "0";
             });
-        }
-    };
+        };
 
-    // ⏳ Step 3: Global Autoplay Timing Controller
-    const autoPlay = () => {
-        clearTimeout(timeoutId);
-        
-        // Stop execution IF a human is actively dragging or holding their finger on the track
-        if (isTouchHolding || isDragging) return;
-        
-        timeoutId = setTimeout(() => {
-            track.scrollLeft += (cardWidth + itemSpacing);
-        }, 3000); // 3 second intervals
-    };
+        calculateLayout();
 
-    // 🎮 Step 4: Control Arrows Click Handler (FIXED: Safely restarts autoplay)
-    const handleArrowClick = (direction) => {
-        clearTimeout(timeoutId); // Stop current timer instantly
-        
-        const step = cardWidth + itemSpacing;
-        track.scrollLeft += direction === "left" ? -step : step;
-        
-        // Force-start a clean 3s autoplay countdown right after the manual click action
-        autoPlay(); 
-    };
+        originalCards.slice(-cardPerView).reverse().forEach(card => {
+            track.insertAdjacentHTML("afterbegin", card.outerHTML);
+        });
 
-    prevBtn.addEventListener("click", () => handleArrowClick("left"));
-    nextBtn.addEventListener("click", () => handleArrowClick("right"));
+        originalCards.slice(0, cardPerView).forEach(card => {
+            track.insertAdjacentHTML("beforeend", card.outerHTML);
+        });
 
-    // 👆 Step 5: Touch & Drag Input Handlers
-    const getPageX = (e) => e.type.includes('touch') ? e.touches.pageX : e.pageX;
+        const autoPlay = () => {
+            clearTimeout(timeoutId);
+            if (isDragging || isTouchHolding) return;
 
-    const dragStart = (e) => {
-        isDragging = true;
-        if (e.type.includes('touch')) isTouchHolding = true;
-        
-        track.classList.add('dragging');
-        startX = getPageX(e);
-        startScrollLeft = track.scrollLeft;
-        clearTimeout(timeoutId); 
-    };
+            timeoutId = setTimeout(() => {
+                track.scrollLeft += cardWidth + itemSpacing;
+            }, 3000);
+        };
 
-    const dragging = (e) => {
-        if (!isDragging) return;
-        track.scrollLeft = startScrollLeft - (getPageX(e) - startX);
-    };
+        const move = direction => {
+            clearTimeout(timeoutId);
+            track.scrollLeft += direction * (cardWidth + itemSpacing);
+            autoPlay();
+        };
 
-    const dragStop = () => {
-        if (!isDragging) return;
-        isDragging = false;
-        isTouchHolding = false;
-        track.classList.remove('dragging');
-        autoPlay(); 
-    };
+        const getPageX = e => e.type.includes("touch") ? e.touches[0].pageX : e.pageX;
 
-    // 🔄 Step 6: Infinite Scroll Boundary Reset (FIXED: Continues autoplay sequence)
-    const infiniteScroll = () => {
-        // If at the beginning clone zone, jump seamlessly to the end
-        if (Math.abs(track.scrollLeft) < 1) {
-            track.classList.add("no-transition");
-            track.scrollLeft = track.scrollWidth - (2 * track.offsetWidth);
-            track.classList.remove("no-transition");
-        }
-        // If at the end clone zone, jump seamlessly to the beginning
-        else if (Math.abs(track.scrollLeft - (track.scrollWidth - track.offsetWidth)) < 1) {
-            track.classList.add("no-transition");
-            track.scrollLeft = track.offsetWidth;
-            track.classList.remove("no-transition");
-        }
-        
-        // Keep the autoplay clock alive anytime a scroll action finishes
-        autoPlay();
-    };
+        const dragStart = e => {
+            isDragging = true;
+            isTouchHolding = e.type.includes("touch");
+            startX = getPageX(e);
+            startScrollLeft = track.scrollLeft;
+            track.classList.add("dragging");
+            clearTimeout(timeoutId);
+        };
 
-    // Desktop Mouse Event Hooks
-    track.addEventListener("mousedown", dragStart);
-    track.addEventListener("mousemove", dragging);
-    document.addEventListener("mouseup", dragStop);
+        const dragging = e => {
+            if (isDragging) {
+                track.scrollLeft = startScrollLeft - (getPageX(e) - startX);
+            }
+        };
 
-    // Mobile Touch Gesture Event Hooks
-    track.addEventListener("touchstart", dragStart, { passive: true });
-    track.addEventListener("touchmove", dragging, { passive: true });
-    document.addEventListener("touchend", dragStop);
+        const dragStop = () => {
+            if (!isDragging) return;
 
-    // Structural Resize & Loop Watchers
-    window.addEventListener("resize", () => {
-        calculateLayoutDimensions();
+            isDragging = false;
+            isTouchHolding = false;
+            track.classList.remove("dragging");
+            autoPlay();
+        };
+
+        const infiniteScroll = () => {
+            if (Math.abs(track.scrollLeft) < 1) {
+                track.classList.add("no-transition");
+                track.scrollLeft = track.scrollWidth - 2 * track.offsetWidth;
+                track.classList.remove("no-transition");
+            } else if (Math.abs(track.scrollLeft - (track.scrollWidth - track.offsetWidth)) < 1) {
+                track.classList.add("no-transition");
+                track.scrollLeft = track.offsetWidth;
+                track.classList.remove("no-transition");
+            }
+
+            autoPlay();
+        };
+
+        prevBtn?.addEventListener("click", () => move(-1));
+        nextBtn?.addEventListener("click", () => move(1));
+
+        track.addEventListener("mousedown", dragStart);
+        track.addEventListener("mousemove", dragging);
+        track.addEventListener("touchstart", dragStart, { passive: true });
+        track.addEventListener("touchmove", dragging, { passive: true });
+
+        document.addEventListener("mouseup", dragStop);
+        document.addEventListener("touchend", dragStop);
+
+        track.addEventListener("scroll", infiniteScroll);
+
+        sliderWrapper.addEventListener("mouseenter", () => clearTimeout(timeoutId));
+        sliderWrapper.addEventListener("mouseleave", autoPlay);
+
+        window.addEventListener("resize", () => {
+            calculateLayout();
+            autoPlay();
+        });
+
+        track.scrollLeft = track.offsetWidth;
         autoPlay();
     });
-    track.addEventListener("scroll", infiniteScroll);
-
-    // Mouse hovering over the container will pause the loop, leaving resumes it
-    sliderWrapper.addEventListener("mouseenter", () => clearTimeout(timeoutId));
-    sliderWrapper.addEventListener("mouseleave", autoPlay);
-
-    // Initial Layout Configurations
-    calculateLayoutDimensions();
-    
-    // Position initial track view past start-clones instantly
-    track.scrollLeft = track.offsetWidth; 
-    autoPlay();
 });
 
 
