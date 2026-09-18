@@ -44,15 +44,15 @@
     <div class="slider">
         <div class="list">
             @php
-                // 1. Establish the absolute local file system access route path on your Windows machine
-                $localPath = 'C:\media\img\homeMarket\Sliders';
+                // 1. Establish the absolute local file system access route path on the server
+                $localPath = rtrim(config('app.media_root'), '/') . '/img/homeMarket/Sliders';
 
                 // 2. Safely resolve your application's absolute public network domain routing endpoint address
-                $mediaBaseUrl = rtrim(config('app.media_url') ?: env('MEDIA_URL'), '/');
+                $mediaBaseUrl = rtrim(config('app.media_url'), '/');
 
                 // 3. Scan the storage index layout directory structure to find matching image file extension formats
                 // This looks up files matching .jpg, .jpeg, .png, and .webp patterns
-                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+                $imagePattern = $localPath . '/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
                 $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
             @endphp
 
@@ -61,10 +61,10 @@
                     // 4. Extract just the trailing filename string part out of the absolute storage path mapping text
                     $fileName = basename($filePath);
                 @endphp
-                
+
                 <div class="item">
                     <!-- 5. Generate absolute programmatic client URLs targeting your application media server link path -->
-                    <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Sliders/{{ $fileName }}" alt="{{ pathinfo($fileName, PATHINFO_FILENAME) }}">
+                    <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Sliders/{{ rawurlencode($fileName) }}" alt="{{ pathinfo($fileName, PATHINFO_FILENAME) }}">
                 </div>
             @empty
                 <!-- Fallback block configuration to prevent design breaks if the directory index layout returns empty -->
@@ -73,7 +73,6 @@
                 </div>
             @endforelse
         </div>
-
 
         <!-- button prev and next -->
         <div class="buttons">
@@ -89,6 +88,7 @@
             <li></li>
         </ul>
     </div>
+
     <div class="info-bar">
         <a href="#" class="info">
             <i class="fa-brands fa-hive" style="color: #ff8c00"></i>
@@ -276,17 +276,14 @@
         <ul class="carousel">
 
             @php
-                // Local folder containing the carousel images
-                $localPath = 'C:\media\img\homeMarket\Carousel_2';
+                // Server-side folder containing the carousel images
+                $localPath = rtrim(config('app.media_root'), '/') . '/img/homeMarket/Carousel_2';
 
                 // Media server base URL
-                $mediaBaseUrl = rtrim(
-                    config('app.media_url') ?: env('MEDIA_URL'),
-                    '/'
-                );
+                $mediaBaseUrl = rtrim(config('app.media_url'), '/');
 
                 // Supported image formats
-                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+                $imagePattern = $localPath . '/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
 
                 // Find all carousel images
                 $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
