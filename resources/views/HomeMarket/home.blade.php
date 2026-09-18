@@ -205,17 +205,14 @@
         <ul class="carousel">
 
             @php
-                // Local folder containing the carousel images
-                $localPath = 'C:\media\img\homeMarket\Carousel_1';
+                // Server folder containing the carousel images
+                $localPath = rtrim(config('app.media_root'), '/') . '/img/homeMarket/Carousel_1';
 
                 // Media server base URL
-                $mediaBaseUrl = rtrim(
-                    config('app.media_url') ?: env('MEDIA_URL'),
-                    '/'
-                );
+                $mediaBaseUrl = rtrim(config('app.media_url'), '/');
 
                 // Supported image formats
-                $imagePattern = $localPath . DIRECTORY_SEPARATOR . '*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
+                $imagePattern = $localPath . '/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}';
 
                 // Find all carousel images
                 $foundImages = glob($imagePattern, GLOB_BRACE) ?: [];
