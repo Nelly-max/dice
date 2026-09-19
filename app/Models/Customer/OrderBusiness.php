@@ -5,7 +5,7 @@ namespace App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-use App\Models\SubDivision; 
+use App\Models\Subdivision; 
 
 class OrderBusiness extends Model
 {
@@ -62,11 +62,11 @@ class OrderBusiness extends Model
 
     /**
      * Get the sub-division details from across your separate hub database.
-     * (Ensure your SubDivision model is configured to use the 'hub' database connection)
+     * (Ensure your Subdivision model is configured to use the 'hub' database connection)
      */
     public function subDivision(): BelongsTo
     {
-        return $this->belongsTo(SubDivision::class, 'sub_division_id');
+        return $this->belongsTo(Subdivision::class, 'sub_division_id');
     }
 
     /**

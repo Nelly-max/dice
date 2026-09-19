@@ -64,19 +64,7 @@
                     <span class="link_name">Deliveries</span>
                 </a>
             </div>
-        </li>
-
-        <li class="link extra-link">
-            <div class="icon-link arrowOpen">
-                <a href="task.html" class="link">
-                    <div class="count-holder">
-                        <i class="fa-solid fa-bars-progress" style="color: #b300d7"></i>
-                        <h4 class="counter order">12</h4>
-                    </div>
-                    <span class="link_name">Tasks</span>
-                </a>
-            </div>
-        </li>                   
+        </li>                  
         
         <li class="link {{ request()->routeIs('hub.account.*') ? 'active' : '' }}">
             <div class="icon-link arrowOpen">

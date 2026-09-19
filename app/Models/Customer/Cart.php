@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models\Customer;
-use App\Models\SubDivision; 
+use App\Models\Subdivision; 
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;

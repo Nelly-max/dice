@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-use App\Models\SubDivision; 
+use App\Models\Subdivision; 
 
 class CheckoutItem extends Model
 {
@@ -80,10 +80,10 @@ class CheckoutItem extends Model
 
     /**
      * Get the sub-division mapping across your separate hub database.
-     * Ensure your SubDivision model uses the 'hub' connection or defines its table prefix.
+     * Ensure your Subdivision model uses the 'hub' connection or defines its table prefix.
      */
     public function subDivision(): BelongsTo
     {
-        return $this->belongsTo(SubDivision::class, 'sub_division_id');
+        return $this->belongsTo(Subdivision::class, 'sub_division_id');
     }
 }
