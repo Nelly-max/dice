@@ -110,7 +110,6 @@ ul li{
     transition: all .3s ease;
     opacity: .98;
     z-index: 99;
-    background: red;
 }
 
 .nav .nav-top{
@@ -118,6 +117,7 @@ ul li{
     flex-wrap: nowrap;
     align-items: center;
     justify-content: space-around;
+    padding: .5em;
     height: 4em;
     background: var(--bg-white);
     transition: all .3s ease;
@@ -197,7 +197,9 @@ ul li{
 .nav .nav-left{
     display: flex;
     align-items: center;
-    gap: 2em;
+    gap: 1em;
+    margin-left: 1em;
+    /* background: red; */
 }
 
 .nav .nav-left .col{
@@ -208,7 +210,7 @@ ul li{
 
 .nav .nav-left .col i{
     cursor: pointer;
-    font-size: 1.2em;
+    font-size: 1em;
     color: var(--best-color);
 }
 
@@ -221,6 +223,7 @@ ul li{
 .nav .nav-left .col h4{
     text-wrap: nowrap;
     font-weight: 500;
+    font-size: .8rem;
     width: 8em;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -279,6 +282,7 @@ ul li{
 }
 
 .nav .menu{
+    margin-left: 1em;
     font-size: 1.2rem;
     color: var(--small-text-color);
     display: none;
