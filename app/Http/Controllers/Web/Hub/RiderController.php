@@ -39,15 +39,18 @@ class RiderController extends Controller
         
     }
 
-    public function riderAccount()
-    {
-        $customerId = auth('customer')->id();
 
-        $rider = Rider::where('customer_id', $customerId)
-            ->firstOrFail();
+public function riderAccount()
+{
+    $customerId = auth('customer')->id();
 
-        return view('Hub.rider', compact('rider'));
-    }
+    $rider = Rider::where('customer_id', $customerId)
+        ->first();
+
+    return view('Hub.rider', compact('rider'));
+}
+
+
 
 
     public function editRider()

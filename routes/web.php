@@ -343,7 +343,7 @@ use App\Models\Customer\Cart;
                 ->name('account.rider.index');
 
             Route::get('/team/rider/edit', [RiderController::class, 'editRider'])
-                ->name('account.rider.index');
+                ->name('account.rider.edit');
 
 // Route::put(
 //     '/account/rider/update',

@@ -83,7 +83,7 @@
                     </a>
 
                     <a
-                        href="{{ route('hub.account.rider-application') }}"
+                        href="{{ route('hub.account.rider.index') }}"
                         class="shortcut"
                         style="color: #079d9f; background: #d7fdff;"
                     >
