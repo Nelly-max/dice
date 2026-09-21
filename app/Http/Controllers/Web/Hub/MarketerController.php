@@ -15,7 +15,7 @@ class MarketerController extends Controller
      */
     // public function marketer()
     // {
-    //     return view('hub.marketer');
+    //     return view('Hub.marketer');
     // }
     public function marketer()
     {
@@ -23,7 +23,7 @@ class MarketerController extends Controller
 
         $marketer = Marketer::where('customer_id', $customer->id)->first();
 
-        return view('hub.marketer', compact(
+        return view('Hub.marketer', compact(
             'customer',
             'marketer'
         ));
@@ -188,7 +188,7 @@ class MarketerController extends Controller
 
         $marketer = Marketer::where('customer_id', $customerId)
             ->firstOrFail();
-            
+
         return view('hub.editMarketer', compact('marketer'));
     }
 
