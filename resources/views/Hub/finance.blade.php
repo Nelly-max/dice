@@ -32,21 +32,21 @@
                                 <h5>Fund Disbursed for profile RCG00A - <label>sucess</label></h5>
                                 <h6>4 -May || 12:00AM</h6>
                             </span>
-                            <h5>Ksh 800</h5>
+                            <h5>Ksh800</h5>
                         </div>
                         <div class="activity pending">
                             <span>
                                 <h5>Fund Disbursed for profile RCG00A - <label>pending</label></h5>
                                 <h6>4 -May || 12:00AM</h6>
                             </span>
-                            <h5>Ksh 800</h5>
+                            <h5>Ksh800</h5>
                         </div>
                         <div class="activity failed">
                             <span>
                                 <h5>Fund Disbursed for profile RCG00A - <label>failed</label></h5>
                                 <h6>4 -May || 12:00AM</h6>
                             </span>
-                            <h5>Ksh 800</h5>
+                            <h5>Ksh800</h5>
                         </div>
                     </div>
                 </div>
