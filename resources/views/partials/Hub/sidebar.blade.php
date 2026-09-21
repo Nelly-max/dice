@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar active">
     <!-- <div class="links-holder"> -->
     <div class="activate-sidebar remove">
         <i class="fa-solid fa-xmark remove-sidebar" id="removeSidebar"></i>

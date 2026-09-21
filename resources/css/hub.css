@@ -2815,7 +2815,6 @@ td img,
     .sidebar{
         left: .5em;
         width: 0;
-        height: calc(100% - 2em);
         transition: .5s ease;
     }
 
