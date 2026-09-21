@@ -925,6 +925,20 @@ td img,
     box-shadow: 0px 0px 20px 0px var(--color-lighter);
 }
 
+.sidebar .activate-sidebar{
+    text-align: right;
+    display: none;
+}
+
+.sidebar .remove-sidebar{
+    position: relative;
+    margin: 0 1em;
+    right: 0;
+    font-size: 1.2em;
+    color: var(--sweet-color);
+    cursor: pointer;
+}
+
 .sidebar::after{
     content: '';
     position: absolute;
@@ -2799,12 +2813,19 @@ td img,
     }
 
     .sidebar{
+        left: .5em;
         width: 0;
+        height: calc(100% - 2em);
         transition: .5s ease;
     }
 
     .sidebar.active{
         width: 18em;
+    }
+
+    .sidebar .activate-sidebar{
+        text-align: right;
+        display: block;
     }
 
     .hub-container{
@@ -2847,5 +2868,12 @@ td img,
         left: .5em;
         width: calc(100% - 1em);
         height: calc(100% - 7.5em);
+    }
+
+}
+
+@media screen and (max-width: 600px){
+    .sidebar.active{
+        width: calc(100% - 1em);
     }
 }

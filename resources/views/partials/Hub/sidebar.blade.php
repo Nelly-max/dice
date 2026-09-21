@@ -1,5 +1,8 @@
 <aside class="sidebar">
     <!-- <div class="links-holder"> -->
+    <div class="activate-sidebar remove">
+        <i class="fa-solid fa-xmark remove-sidebar" id="removeSidebar"></i>
+    </div>
     @php $customer = auth('customer')->user(); @endphp
     <ul class="main-links">
         <div class="logo-details">

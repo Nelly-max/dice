@@ -30,10 +30,10 @@ document.addEventListener("DOMContentLoaded", () =>{
   })
 })
 
+
 // ===================================================
 //     menu Close
 // ===================================================
-
 
 const menu = document.getElementById('menu'); // Use getElementById to select a single element
 const sidebar = document.querySelectorAll('.sidebar'); // Use querySelectorAll to select multiple elements
@@ -44,4 +44,67 @@ menu.addEventListener('click', () => {
   sidebar.forEach(sidebarItem => {
     sidebarItem.classList.toggle('close');
   });
+});
+
+
+
+
+let sidebars = document.querySelectorAll(".sidebar");
+
+let sidebarBtns = document.querySelectorAll(".close-sidebar");
+
+let menuSidebarBtns = document.querySelectorAll(".menu-sidebar");
+
+// ==========================================================================
+// CLOSE SIDEBAR
+// ==========================================================================
+
+sidebarBtns.forEach((sidebarBtn, index) => {
+
+    sidebarBtn.addEventListener("click", () => {
+
+        sidebars[index]?.classList.remove("active");
+
+        sidebars[index]?.classList.toggle("close");
+
+    });
+
+});
+
+
+// ==========================================================================
+// OPEN SIDEBAR
+// ==========================================================================
+
+menuSidebarBtns.forEach((menuSidebarBtn, index) => {
+
+    menuSidebarBtn.addEventListener("click", () => {
+
+        sidebars[index]?.classList.add("active");
+
+        sidebars[index]?.classList.remove("close");
+
+    });
+
+});
+
+
+// ==========================================================================
+// REMOVE SIDEBAR ACTIVE
+// ==========================================================================
+
+document.querySelectorAll(".remove-sidebar").forEach((removeSidebarBtn) => {
+
+    removeSidebarBtn.addEventListener("click", () => {
+
+        const sidebar = removeSidebarBtn.closest(".sidebar");
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.classList.remove("active");
+
+    });
+
 });
