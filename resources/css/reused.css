@@ -254,6 +254,56 @@ input[type="date"]:not(:focus):before {
 }
 
 
+/* ========Empty cart============= */
+.no-account{
+    margin-top: 2em;
+    text-align: center;
+}
+
+.no-account h3{
+    color: var(--hold);
+    font-size: 1.2rem;
+}
+
+.no-account img{
+    width: auto;
+    height: 20em;
+}
+
+.no-account h2{
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.no-account p{
+    font-size: .8rem;
+    font-weight: 500;
+    margin: .5em 0;
+    margin-bottom: 2em;
+    color: var(--theme-clr);
+}
+
+.no-account a{
+    font-size: 1rem;
+    font-weight: 600;
+    padding: .5em;
+    margin: 10em 0;
+    margin-top: 10em;
+    border-radius: .5em;
+    color: var(--bg-primary);
+    background: var(--light-card-bg);
+    cursor: pointer;
+    opacity: .8;
+    transition: .3s ease;
+}
+
+.no-account a:hover{
+    color: var(--white);
+    background: var(--bg-primary);
+}
+
+
 /* =============================================
         Search Box
 ============================================= */

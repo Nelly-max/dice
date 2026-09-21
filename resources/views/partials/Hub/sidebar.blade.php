@@ -1,9 +1,15 @@
 <aside class="sidebar">
     <!-- <div class="links-holder"> -->
+    @php $customer = auth('customer')->user(); @endphp
     <ul class="main-links">
         <div class="logo-details">
             <a href="{{ route('hub.index') }}" class="logo">
-                <img src="/customer/public/img/user.png" alt="">
+                <img
+                    src="{{ $customer->profile_image
+                        ? rtrim(config('app.media_url'), '/') . '/' . ltrim($customer->profile_image, '/')
+                        : rtrim(config('app.media_url'), '/') . '/media/img/Customer/Profiles/user.png' }}"
+                    alt="Customer Profile"
+                >
             </a>
         </div>
 
@@ -35,11 +41,20 @@
             </div>
         </li>
 
-        <li class="link extra-link">
+        <li class="link">
             <div class="icon-link arrowOpen">
                 <a href="qcity.html" class="link">
                     <i class="fa-solid fa-bag-shopping icon" style="color: #fc744a"></i>
                     <span class="link_name">Purchases</span>
+                </a>
+            </div>
+        </li>
+
+        <li class="link">
+            <div class="icon-link arrowOpen">
+                <a href="qcity.html" class="link">
+                    <i class='bx bx-link icon'  style="color: #fc4aa0"></i>
+                    <span class="link_name">Referals</span>
                 </a>
             </div>
         </li>

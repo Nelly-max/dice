@@ -26,4 +26,9 @@ class Marketer extends Model
         'date_of_birth' => 'date',
         'discount_percentage' => 'decimal:2',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(CustomerAccount::class, 'customer_id');
+    }
 }

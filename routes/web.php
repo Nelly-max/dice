@@ -23,6 +23,7 @@ use App\Http\Controllers\Web\OrderPayment\StatusController;
 use App\Http\Controllers\Web\OrderPayment\MpesaC2BPaymentController;
 use App\Http\Controllers\Web\Order\OrderController;
 
+use App\Http\Controllers\Web\Hub\ProfileController;
 use App\Http\Controllers\Web\Hub\DeliveryController;
 use App\Http\Controllers\Web\Hub\MarketerController;
 use App\Http\Controllers\Web\Hub\RiderController;
@@ -305,7 +306,7 @@ use App\Models\Customer\Cart;
             Route::get('/orders', [OrderController::class, 'index'])
                 ->name('orders');
 
-            Route::get('/account', fn () => view('Hub.account'))
+            Route::get('/account', [ProfileController::class, 'index'])
                 ->name('account.index');
 
             Route::get('/account/join-team', fn () => view('Hub.joinTeam'))
@@ -326,6 +327,10 @@ use App\Models\Customer\Cart;
 
             Route::post('/marketer/store', [MarketerController::class, 'storeMarketer'])
                 ->name('marketer.store');
+            
+            Route::get('/team/marketer/edit', [MarketerController::class, 'editMarketer'])
+                ->name('account.marketer.edit');
+
 
 
             /*
@@ -333,13 +338,36 @@ use App\Models\Customer\Cart;
             | RIDER APPLICATION
             |--------------------------------------------------------------------------
             */
+                                                
+            Route::get('/team/rider', [RiderController::class, 'riderAccount'])
+                ->name('account.rider.index');
 
-            Route::get('/account/rider-application', [RiderController::class, 'riderApplication'])
+            Route::get('/team/rider/edit', [RiderController::class, 'editRider'])
+                ->name('account.rider.index');
+
+// Route::put(
+//     '/account/rider/update',
+//     [RiderController::class, 'updateRider']
+// )->name('hub.account.rider.update');
+
+
+
+            Route::get('/team/rider-application', [RiderController::class, 'riderApplication'])
                 ->name('account.rider-application');
 
-            Route::post('/account/rider-application/apply', [RiderController::class, 'apply'])
+            Route::post('/rider-application/apply', [RiderController::class, 'apply'])
                 ->name('account.rider-application.apply');
 
+            Route::get('/team/rider-application/view', [RiderController::class, 'viewApplication'])
+                ->name('account.view-application');
+
+            /*
+            |--------------------------------------------------------------------------
+            | FINANCE
+            |--------------------------------------------------------------------------
+            */
+            Route::get('/account/finance', fn () => view('Hub.finance'))
+                ->name('account.finance');
 
             /*
             |--------------------------------------------------------------------------

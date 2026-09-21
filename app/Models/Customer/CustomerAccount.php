@@ -36,6 +36,11 @@ class CustomerAccount extends Authenticatable
         'remember_token',
     ];
 
+    public function marketer()
+    {
+        return $this->hasOne(Marketer::class, 'customer_id');
+    }
+
     /**
      * Eloquent Boot Model Hook
      */

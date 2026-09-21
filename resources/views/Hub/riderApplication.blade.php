@@ -123,7 +123,9 @@
                             <input type="date"
                                    name="date_of_birth"
                                    value="{{ old('date_of_birth') }}"
-                                   class="custom-date-picker">
+                                   class="custom-date-picker"
+                                   min="{{ now()->subYears(80)->format('Y-m-d') }}"
+                                   max="{{ now()->subYears(18)->format('Y-m-d') }}">
     
                         </span>
     
@@ -794,26 +796,14 @@
             </div>
         </div>
 
-
-
         <div class="button submit-data">
-
-
             <button type="submit"
                     id="submit-application">
-
                 Apply
-
             </button>
-
-
         </div>
 
-
-
     </form>
-
-
 </div>
 
 

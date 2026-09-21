@@ -29,6 +29,9 @@
                                     name="name"
                                     value="{{ old('name') }}"
                                     placeholder="Your Name"
+                                    maxlength="50"
+                                    pattern="[A-Za-z0-9 ]{1,50}"
+                                    oninput="this.value = this.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 50);"
                                     required
                                 >
 
@@ -46,9 +49,9 @@
                             <inv class="required-input">
                                 <input
                                     type="text"
-                                    name="phone"
+                                    name="phone_number"
                                     class="mobile-number"
-                                    value="{{ old('phone') }}"
+                                    value="{{ old('phone_number') }}"
                                     placeholder="eg. 0701234567"
                                     required
                                 >
@@ -124,6 +127,8 @@
                                 name="date_of_birth"
                                 class="custom-date-picker"
                                 value="{{ old('date_of_birth') }}"
+                                max="{{ now()->subYears(15)->format('Y-m-d') }}"
+                                required
                             >
 
                             @error('date_of_birth')

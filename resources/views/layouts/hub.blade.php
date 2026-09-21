@@ -20,6 +20,7 @@
             'resources/js/modal.js',
             'resources/js/select.js',
             'resources/js/riderLocation.js',
+            'resources/js/calendar.js',
             ])
 
     <!-- Favicon -->

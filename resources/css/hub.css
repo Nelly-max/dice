@@ -8,8 +8,8 @@
 
 :root{
     /* Colors */
-    --hold: #302d77;
-    --text-color: #0e0e0e;
+    --hold: #1a6394;
+    --text-color: #242424;
     --soft-color: #3f3f3f;
     --white:#ffffff;
     --theme-clr: #1d3869;
@@ -1166,9 +1166,10 @@ td img,
 }
 
 .sidebar .main-links li a .link_name{
-    font-size: 1.1rem;
-    font-weight: 400;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--color-gray-dark);
+    color: var(--hold);
     transition: all 0.3s ease;
 }
 
@@ -1361,6 +1362,7 @@ td img,
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1em;
+    padding-bottom: 1em;
 }
 
 .middle-content .main-tiles{
@@ -1569,6 +1571,16 @@ td img,
     box-shadow: 0px 0px 50px 0px var(--color-lighter);
 }
 
+.account-details .account-detail .profile img{
+    height: 10em;
+    border-radius: .5em;
+    cursor: pointer;
+}
+
+.account-details .account-detail .profile #fileInput{
+      display: none;
+}
+
 .account-details .account-detail.top-area img{
     display: block;
     margin: 0 auto;
@@ -1705,13 +1717,19 @@ td img,
 .account-details .account-detail span .file-select{
     width: 100%;
     display: block;
-    height: 10em;
+    padding: .2em;
+    height: 14em;
     border-radius: .5em;
     text-align: center;
     align-content: center;
     border: .1em dashed var(--primary);
     cursor: pointer;
     background: var(--tb-bground);
+}
+
+.account-details .account-detail span .file-select img{
+    height: 13.4em;
+    border-radius: .5em;
 }
 
 
@@ -1767,6 +1785,203 @@ td img,
     font-weight: 500;
     color: var(--soft-color);
 }
+
+/* =============Wallet============= */
+
+.wallet{
+}
+
+.wallet .options-holder{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.wallet-head{
+    padding: 1em;
+    background: var(--hold);
+    border-radius: .5em;
+}
+
+.wallet-head h1{
+    margin: .2em 0;
+    font-size: 1.2rem;
+    font-weight: 500;  
+}
+
+.wallet-options{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8em, 1fr));
+    gap: 1em;
+}
+
+.wallet-options .wallet-option{
+    padding: .5em;
+    background: var(--bg-white);
+    border-radius: 1em;
+}
+
+.wallet-options .wallet-option span{
+    display: flex;
+    gap: .2em;
+    align-items: center;
+}
+
+.wallet-options .wallet-option span i{
+    padding: .2em;
+    border-radius: 50%;
+    color: var(--theme-clr);
+    background: var(--theme-bgclr);
+}
+
+.wallet-options .wallet-option span h6{
+    color: var(--primary);
+}
+
+.wallet-options .wallet-option h2{
+    color: var(--hold);
+    margin-top: 1.5em;
+    font-size: 1.2rem;
+}
+
+.wallet-options .wallet-option h5{
+    color: var(--static-text);
+    font-size: .8rem;
+    font-weight: 500;
+}
+
+.wallet-body .wallet-buttons{
+    margin: 1em;
+}
+
+.wallet-body .wallet-buttons button{
+    padding: .3em;
+    border: .1em solid var(--green-color);
+    background: var(--bg-white);
+    color: #089d4b;
+    border-radius: .5em;
+    opacity: .8;
+    transition: .3s ease;
+    cursor: pointer;
+}
+
+.wallet-body .wallet-buttons button:hover{
+    opacity: 1;
+}
+
+.wallet-body .recents{
+    max-width: 25em;
+    margin: 1em;
+    margin-top: 3em;
+}
+
+.wallet-body .recents h4{
+    color: var(--hold);
+}
+
+.wallet-body .recents .activities{
+    margin: .5em 0;
+}
+
+.wallet-body .recents .activities .activity{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .4em;
+    margin: .6em 0;
+    border-radius: .6em;
+    background: var(--color-lighter);
+    background: #e5ffed;
+}
+
+.wallet-body .recents .activities .activity.pending{
+    background: #e5f8ff;
+}
+
+.wallet-body .recents .activities .activity.failed{
+    background: #ffe9e5;
+}
+
+.wallet-body .recents .activities .option{
+    cursor: pointer;
+}
+
+.wallet-body .recents .activities .option.active{
+    background: var(--best-bg);
+}
+
+.wallet-body .recents .activities .activity h5{
+    font-size: .9rem;
+    font-weight: 700;
+    color: #156415;
+}
+
+.wallet-body .recents .activities .activity.pending h5{
+    color: #154664;
+}
+
+.wallet-body .recents .activities .activity.failed h5{
+    color: #642615;
+}
+
+.wallet-body .recents .activities .activity h6{
+    font-size: .7rem;
+    font-weight: 500;
+    color: var(--static-text);
+}
+
+.wallet .payment-details{
+    margin: 1em;
+    border-radius: 1em;
+    border: .1em dashed var(--before-color);
+    /* padding: 1em; */
+    /* background: red; */
+}
+
+.wallet .payment-details p{
+    font-size: .9rem;
+    color: var(--small-text-color);
+}
+
+.wallet .payment-details .payment-detail{
+    padding: 1em;
+    border-radius: 1em;
+    background: var(--tb-bground);
+}
+
+.wallet .payment-details .payment-detail button{
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: .5em;
+    padding: .2em;
+    color: var(--white);
+    margin: 1em 0;
+    background: var(--hold);
+    cursor: pointer;
+}
+
+.wallet .payment-details .payment-detail span{
+    display: grid;
+    /* grid-template-columns: 1fr 1fr; */
+    margin: 1em 0;
+}
+
+.wallet .payment-details .payment-detail span h4{
+    font-size: 1rem;
+    color: var(--orange-color);
+}
+
+.wallet .payment-details .payment-detail span input{
+    width: 100%;
+    color: var(--static-text);
+    font-size: 1rem;
+    padding: 0 .2em;
+    border-radius: .5em;
+    border: 1px solid var(--orange-color);
+    outline: .1em solid var(--tb-bground);
+    background: transparent;
+}
+
 
 
 .activities-card{

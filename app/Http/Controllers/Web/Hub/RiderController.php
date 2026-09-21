@@ -38,7 +38,212 @@ class RiderController extends Controller
     {
         
     }
+
+    public function riderAccount()
+    {
+        $customerId = auth('customer')->id();
+
+        $rider = Rider::where('customer_id', $customerId)
+            ->firstOrFail();
+
+        return view('Hub.rider', compact('rider'));
+    }
+
+
+    public function editRider()
+    {
+        $customerId = auth('customer')->id();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get rider belonging to the logged-in customer
+        |--------------------------------------------------------------------------
+        */
+        $rider = Rider::where('customer_id', $customerId)
+            ->firstOrFail();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Show edit page
+        |--------------------------------------------------------------------------
+        */
+        return view('Hub.editRider', compact('rider'));
+    }
+
+
+
+
+
+public function updateRider(Request $request)
+{
+    $customerId = auth('customer')->id();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get authenticated customer's rider
+    |--------------------------------------------------------------------------
+    */
+    $rider = Rider::where('customer_id', $customerId)
+        ->firstOrFail();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate
+    |--------------------------------------------------------------------------
+    */
+    $validated = $request->validate([
+
+        'name' => [
+            'required',
+            'string',
+            'max:50',
+            'regex:/^[A-Za-z0-9 ]+$/',
+        ],
+
+        'phone' => [
+            'required',
+            'string',
+            'max:20',
+        ],
+
+        'email' => [
+            'required',
+            'email',
+            'max:255',
+        ],
+
+        'national_id' => [
+            'required',
+            'string',
+            'max:20',
+        ],
+
+        'license_number' => [
+            'nullable',
+            'string',
+            'max:50',
+        ],
+
+        'date_of_birth' => [
+            'required',
+            'date',
+            'before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
+            'after_or_equal:' . now()->subYears(80)->format('Y-m-d'),
+        ],
+
+        'mpesa_number' => [
+            'required',
+            'string',
+            'max:20',
+        ],
+
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update rider
+    |--------------------------------------------------------------------------
+    */
+    $rider->update([
+
+        'name' => $validated['name'],
+
+        'phone' => $validated['phone'],
+
+        'email' => $validated['email'],
+
+        'national_id' => $validated['national_id'],
+
+        'license_number' => $validated['license_number'] ?? null,
+
+        'date_of_birth' => $validated['date_of_birth'],
+
+        'mpesa_number' => $validated['mpesa_number'],
+
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect
+    |--------------------------------------------------------------------------
+    */
+    return redirect()
+        ->route('hub.account.rider')
+        ->with('success', 'Rider details updated successfully.');
+}
+
     
+
+
+    public function viewApplication()
+    {
+        $customerId = auth('customer')->id();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rider
+        |--------------------------------------------------------------------------
+        */
+        $rider = Rider::where('customer_id', $customerId)
+            ->firstOrFail();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Personal Documents
+        |--------------------------------------------------------------------------
+        */
+        $personalDetails = RiderPersonalDetail::where('rider_id', $rider->id)
+            ->first();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Vehicle Details
+        |--------------------------------------------------------------------------
+        */
+        $carDetails = RiderCarDetail::where('rider_id', $rider->id)
+            ->first();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Locality
+        |--------------------------------------------------------------------------
+        */
+        $counties = DB::table('physical_counties')
+            ->orderBy('name')
+            ->get();
+
+        $town = $rider->town_id
+            ? DB::table('physical_towns')
+                ->where('id', $rider->town_id)
+                ->first()
+            : null;
+
+        $place = $rider->place_id
+            ? DB::table('physical_places')
+                ->where('id', $rider->place_id)
+                ->first()
+            : null;
+
+
+        return view('Hub.viewRiderApplication', compact(
+            'rider',
+            'personalDetails',
+            'carDetails',
+            'counties',
+            'town',
+            'place'
+        ));
+
+
+    }
+
 
     public function riderApplication()
     {

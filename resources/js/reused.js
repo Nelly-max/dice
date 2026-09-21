@@ -330,6 +330,60 @@ document.addEventListener('DOMContentLoaded', function () {
     initThumbnails();
 });
 
+// ===================================
+//     Business Profile
+// ===================================
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const profilePic = document.getElementById('profile-pic');
+    const fileInput = document.getElementById('fileInput');
+
+    if (!profilePic || !fileInput) {
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Click Profile → Open File Picker
+    |--------------------------------------------------------------------------
+    */
+
+    profilePic.addEventListener('click', function () {
+        fileInput.click();
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Preview Selected Profile
+    |--------------------------------------------------------------------------
+    */
+
+    fileInput.addEventListener('change', function () {
+
+        const file = this.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            profilePic.src = event.target.result;
+        };
+
+        reader.readAsDataURL(file);
+    });
+
+});
 
 
 
@@ -362,156 +416,105 @@ document.addEventListener('DOMContentLoaded', () => {
 //  #upload images
 // ===============================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', function () {
 
-    const FORM_KEY = "rider_application";
+    document.querySelectorAll('.file-select').forEach(function (fileSelect) {
 
-    const fileContainers = document.querySelectorAll(".file-select");
-
-    const formInputs = document.querySelectorAll(
-        "input:not([type='file']), select, textarea"
-    );
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Local Storage Helpers
-    |--------------------------------------------------------------------------
-    */
-
-    function getData() {
-        return JSON.parse(localStorage.getItem(FORM_KEY) || "{}");
-    }
-
-    function saveData(data) {
-        localStorage.setItem(
-            FORM_KEY,
-            JSON.stringify(data)
+        const input = fileSelect.querySelector(
+            'input[type="file"]'
         );
-    }
 
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Restore Text Inputs
-    |--------------------------------------------------------------------------
-    */
-
-    const saved = getData();
-
-    formInputs.forEach(input => {
-
-        if (!input.name) return;
-
-        if (saved[input.name] !== undefined) {
-            input.value = saved[input.name];
-        }
-
-        input.addEventListener("input", () => {
-
-            const data = getData();
-
-            data[input.name] = input.value;
-
-            saveData(data);
-
-        });
-
-    });
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Upload Images
-    |--------------------------------------------------------------------------
-    */
-
-    function applyImage(container, image) {
-
-        container.style.backgroundImage = `url('${image}')`;
-
-        container.style.backgroundSize = "cover";
-
-        container.style.backgroundPosition = "center";
-
-        container.style.backgroundRepeat = "no-repeat";
-
-        const icon = container.querySelector("i");
-        const text = container.querySelector("h6");
-
-        if (icon) icon.style.opacity = "0";
-        if (text) text.style.opacity = "0";
-    }
-
-
-
-    fileContainers.forEach(container => {
-
-        const key = container.dataset.storage;
-
-        const fileInput = container.querySelector("input[type=file]");
-
-        if (!key || !fileInput) return;
-
-
-        if (saved[key]) {
-            applyImage(container, saved[key]);
+        if (!input) {
+            return;
         }
 
 
-        fileInput.addEventListener("change", e => {
+        input.addEventListener('change', function (event) {
 
-            const file = e.target.files[0];
+            const file = event.target.files[0];
 
-            if (!file) return;
+            if (!file) {
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Only images
+            |--------------------------------------------------------------------------
+            */
+
+            if (!file.type.startsWith('image/')) {
+
+                input.value = '';
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Read selected image
+            |--------------------------------------------------------------------------
+            */
 
             const reader = new FileReader();
 
-            reader.onload = event => {
 
-                const data = getData();
+            reader.onload = function (e) {
 
-                data[key] = event.target.result;
+                /*
+                |--------------------------------------------------------------------------
+                | Remove the old image/icon/text
+                |--------------------------------------------------------------------------
+                */
 
-                saveData(data);
+                fileSelect.innerHTML = '';
 
-                applyImage(container, event.target.result);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Create new image
+                |--------------------------------------------------------------------------
+                */
+
+                const image = document.createElement('img');
+
+                image.src = e.target.result;
+
+                image.alt = 'Selected image';
+
+                fileSelect.appendChild(image);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Re-attach the file input
+                |
+                | Because we replaced innerHTML, the original input would
+                | otherwise be lost.
+                |--------------------------------------------------------------------------
+                */
+
+                fileSelect.appendChild(input);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Mark as changed
+                |--------------------------------------------------------------------------
+                */
+
+                fileSelect.classList.add('has-new-file');
 
             };
+
 
             reader.readAsDataURL(file);
 
         });
 
     });
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Submit
-    |--------------------------------------------------------------------------
-    */
-
-    const submitButton = document.getElementById("submit-application");
-
-    if (submitButton) {
-
-        submitButton.addEventListener("click", () => {
-
-            console.log(getData());
-
-            // Later:
-            // send getData() using fetch()
-
-        });
-
-    }
 
 });
 

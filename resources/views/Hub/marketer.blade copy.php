@@ -3,9 +3,6 @@
 @section('content')
 
 <div class="hub-content hub-dash no-sidebar fullground">
-
-@if($marketer)
-
     <div class="left">
         <div class="account-details">
 
@@ -22,6 +19,15 @@
                     >
                         <i class="fa-solid fa-user-pen"></i>
                         Edit
+                    </a>
+
+                    <a
+                        href="{{ route('hub.account.marketer.join') }}"
+                        class="shortcut"
+                        style="color: #079d9f; background: #d7fdff;"
+                    >
+                        <i class="fa-solid fa-person-circle-plus"></i>
+                        Join
                     </a>
 
                 </div>
@@ -85,7 +91,7 @@
                     <h4>Date Of Birth</h4>
                     <h3>
                         {{ $marketer->date_of_birth
-                            ? $marketer->date_of_birth->format('d/m/Y')
+                            ? \Carbon\Carbon::parse($marketer->date_of_birth)->format('d/m/Y')
                             : '-' }}
                     </h3>
                 </span>
@@ -106,39 +112,6 @@
 
     <div class="right">
     </div>
-
-    @else
-
-        {{-- No Marketer Account --}}
-        <div class="no-account">
-
-            <h3>Team</h3>
-
-            <p>HUB \ MARKETER</p>
-
-            <img
-                src="{{ asset('img/gif/marketer.gif') }}"
-                alt="No Account"
-            >
-
-            <h2>You do not have a marketer account!</h2>
-
-            <p>
-                click the link below to create a marketer team account
-            </p>
-
-            <a
-                href="{{ route('hub.account.marketer.join') }}"
-                class="btn-continue"
-            >
-                Join Team
-            </a>
-
-        </div>
-
-    @endif
-
-
 </div>
 
 @endsection

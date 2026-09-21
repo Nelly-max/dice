@@ -13,9 +13,20 @@ class MarketerController extends Controller
     /**
      * Show marketer registration form.
      */
+    // public function marketer()
+    // {
+    //     return view('hub.marketer');
+    // }
     public function marketer()
     {
-        return view('hub.marketer');
+        $customer = auth('customer')->user();
+
+        $marketer = Marketer::where('customer_id', $customer->id)->first();
+
+        return view('hub.marketer', compact(
+            'customer',
+            'marketer'
+        ));
     }
 
     public function joinMarketing()
@@ -43,7 +54,7 @@ class MarketerController extends Controller
                 'max:255',
             ],
 
-            'phone' => [
+            'phone_number' => [
                 'required',
                 'string',
                 'max:30',
@@ -114,7 +125,7 @@ class MarketerController extends Controller
             'customer_id' => $customer->id,
 
             'name' => $request->name,
-            'phone' => $request->phone,
+            'phone_number' => $request->phone_number,
             'email' => $request->email,
 
             'gender' => $request->gender,
@@ -145,8 +156,8 @@ class MarketerController extends Controller
         |
         */
 
-        $urlLink = 'https://billing.smartmarket.co.ke/account/create?ref='
-            . $marketer->id;
+        $urlLink = 'https://business.smartmarket.co.ke/account/register?ref='
+            . $marketer->referral_code;
 
         /*
         |--------------------------------------------------------------------------
@@ -170,4 +181,15 @@ class MarketerController extends Controller
             ->with('referral_code', $marketer->referral_code)
             ->with('url_link', $marketer->url_link);
     }
+
+    public function editMarketer()
+    {
+        $customerId = auth('customer')->id();
+
+        $marketer = Marketer::where('customer_id', $customerId)
+            ->firstOrFail();
+            
+        return view('hub.editMarketer', compact('marketer'));
+    }
+
 }

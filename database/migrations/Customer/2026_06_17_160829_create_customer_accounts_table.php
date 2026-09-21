@@ -31,6 +31,11 @@ return new class extends Migration
             $table->string('name')
                 ->comment('Full name or display name of the customer');
 
+            $table->string('username')
+                ->unique()
+                ->nullable()
+                ->comment('Unique customer username');
+
             $table->string('email')
                 ->unique()
                 ->comment('Primary contact and login email');
@@ -47,9 +52,18 @@ return new class extends Migration
             | Demographics & Profile
             |--------------------------------------------------------------------------
             */
+            $table->string('national_id')
+                ->nullable()
+                ->index()
+                ->comment('Customer national identification number');
+
             $table->string('gender', 30)
                 ->nullable()
                 ->comment('Customer gender designation');
+
+            $table->date('date_of_birth')
+                ->nullable()
+                ->comment('Customer date of birth');
 
             $table->string('profile_image')
                 ->nullable()
@@ -114,3 +128,4 @@ return new class extends Migration
         Schema::connection('customer')->dropIfExists('customer_accounts');
     }
 };
+

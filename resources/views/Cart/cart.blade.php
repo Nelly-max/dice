@@ -16,7 +16,7 @@
         <h3>MY BASKET</h3>
         <p>HOME \ CART</p>
 
-        <img src="{{ asset('img/empty-cart.gif') }}" alt="Empty Cart">
+        <img src="{{ asset('img/gif/empty-cart.gif') }}" alt="Empty Cart">
 
         <h2>Your Cart Is Currently Empty !</h2>
 
