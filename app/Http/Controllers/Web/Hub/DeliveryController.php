@@ -17,7 +17,7 @@ class DeliveryController extends Controller
         $rider = Rider::where('customer_id', $customer->id)->first();
 
         if (!$rider) {
-            return view('hub.deliveries', [
+            return view('Hub.deliveries', [
                 'deliveries' => collect(),
             ]);
         }
@@ -27,6 +27,6 @@ class DeliveryController extends Controller
             ->latest('created_at')
             ->get();
 
-        return view('hub.deliveries', compact('deliveries'));
+        return view('Hub.deliveries', compact('deliveries'));
     }
 }

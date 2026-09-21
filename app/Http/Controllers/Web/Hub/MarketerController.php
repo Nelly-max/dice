@@ -31,7 +31,7 @@ class MarketerController extends Controller
 
     public function joinMarketing()
     {
-        return view('hub.joinTeam');
+        return view('Hub.joinTeam');
     }
 
     /**
@@ -189,7 +189,7 @@ class MarketerController extends Controller
         $marketer = Marketer::where('customer_id', $customerId)
             ->firstOrFail();
 
-        return view('hub.editMarketer', compact('marketer'));
+        return view('Hub.editMarketer', compact('marketer'));
     }
 
 }

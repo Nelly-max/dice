@@ -174,7 +174,7 @@ public function updateRider(Request $request)
     |--------------------------------------------------------------------------
     */
     return redirect()
-        ->route('hub.account.rider')
+        ->route('Hub.account.rider')
         ->with('success', 'Rider details updated successfully.');
 }
 

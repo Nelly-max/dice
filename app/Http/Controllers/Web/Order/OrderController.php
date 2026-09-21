@@ -27,7 +27,7 @@ class OrderController extends Controller
             ->latest('placed_at')
             ->paginate(15);
 
-        return view('hub.orders', compact('orders'));
+        return view('Hub.orders', compact('orders'));
     }
 
     /**
