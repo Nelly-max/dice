@@ -11,8 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('customer')
-            ->create('checkout_invoices', function (Blueprint $table) {
+        Schema::connection('customer')->create('checkout_invoices', function (Blueprint $table) {
 
                 $table->id();
 

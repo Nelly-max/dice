@@ -55,21 +55,7 @@ let sidebarBtns = document.querySelectorAll(".close-sidebar");
 
 let menuSidebarBtns = document.querySelectorAll(".menu-sidebar");
 
-// ==========================================================================
-// CLOSE SIDEBAR
-// ==========================================================================
 
-sidebarBtns.forEach((sidebarBtn, index) => {
-
-    sidebarBtn.addEventListener("click", () => {
-
-        sidebars[index]?.classList.remove("active");
-
-        sidebars[index]?.classList.toggle("close");
-
-    });
-
-});
 
 
 // ==========================================================================
