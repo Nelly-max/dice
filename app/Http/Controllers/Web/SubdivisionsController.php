@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\MajorDivision; 
-use App\Models\SubDivision; 
+use App\Models\Subdivision; 
 
 class SubdivisionsController extends Controller
 {
@@ -23,7 +23,7 @@ class SubdivisionsController extends Controller
     public function handleWeblink($weblink)
     {
         // Find the subdivision by its weblink attribute
-        $subdivision = SubDivision::where('weblink', $weblink)
+        $subdivision = Subdivision::where('weblink', $weblink)
             ->where('status', 1)
             ->firstOrFail();
 
