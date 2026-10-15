@@ -76,47 +76,47 @@
     <section class="category-icons main-cat-icons">
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/hot_sale.png" alt="Hot Sales">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/hot_sale.png" alt="Hot Sales">
             <span>Hot Sales</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/discount_banner_1.png" alt="Online Exclusive">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/discount_banner_1.png" alt="Online Exclusive">
             <span>Online Exclusive</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FR001_HM.png" alt="Foods">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FR001_HM.png" alt="Foods">
             <span>Foods</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FD001_HM.png" alt="House Hold">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FD001_HM.png" alt="House Hold">
             <span>House Hold</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FD002_HM.png" alt="Detergent">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FD002_HM.png" alt="Detergent">
             <span>Detergent</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FC001_HM.png" alt="Confectionery">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FC001_HM.png" alt="Confectionery">
             <span>Confectionery</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FDR001_HM.png" alt="Dairies">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FDR001_HM.png" alt="Dairies">
             <span>Dairies</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FB001_HM.png" alt="Beverages">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FB001_HM.png" alt="Beverages">
             <span>Beverages</span>
         </a>
 
         <a href="#" class="category-icon">
-            <img src="{{ $categoryBaseUrl }}/media/img/homeMarket/Category_icons/FH001_HM.png" alt="Hygene">
+            <img src="{{ $categoryBaseUrl }}/img/homeMarket/Category_icons/FH001_HM.png" alt="Hygene">
             <span>Hygene</span>
         </a>
 
