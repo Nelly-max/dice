@@ -21,7 +21,7 @@
                 @endphp
 
                 <div class="item">
-                    <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Sliders/{{ rawurlencode($fileName) }}" alt="{{ pathinfo($fileName, PATHINFO_FILENAME) }}">
+                    <img src="{{ $mediaBaseUrl }}/img/homeMarket/Sliders/{{ rawurlencode($fileName) }}" alt="{{ pathinfo($fileName, PATHINFO_FILENAME) }}">
                 </div>
             @empty
                 <div class="item">
@@ -142,7 +142,7 @@
 
                 <li class="card">
                     <div class="img">
-                        <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_1/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
+                        <img src="{{ $mediaBaseUrl }}/img/homeMarket/Carousel_1/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
                     </div>
                 </li>
             @empty
@@ -190,7 +190,7 @@
 
                 <li class="card">
                     <div class="img">
-                        <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_2/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
+                        <img src="{{ $mediaBaseUrl }}/img/homeMarket/Carousel_2/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
                     </div>
                 </li>
             @empty
@@ -248,7 +248,7 @@
             @endphp
 
             <div class="static-banner">
-                <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_1/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
+                <img src="{{ $mediaBaseUrl }}/img/homeMarket/StaticBanners_1/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
             </div>
         @empty
             <div class="static-banner">
@@ -288,7 +288,7 @@
             @endphp
 
             <div class="static-banner">
-                <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_2/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
+                <img src="{{ $mediaBaseUrl }}/img/homeMarket/StaticBanners_2/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
             </div>
         @empty
             <div class="static-banner">
@@ -318,7 +318,7 @@
 
                 <li class="card">
                     <div class="img">
-                        <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/Carousel_3/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
+                        <img src="{{ $mediaBaseUrl }}/img/homeMarket/Carousel_3/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}" draggable="false">
                     </div>
                 </li>
             @empty
@@ -375,7 +375,7 @@
             @endphp
 
             <div class="static-banner">
-                <img src="{{ $mediaBaseUrl }}/media/img/homeMarket/StaticBanners_3/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
+                <img src="{{ $mediaBaseUrl }}/img/homeMarket/StaticBanners_3/{{ rawurlencode($fileName) }}" alt="{{ $imageName }}">
             </div>
         @empty
             <div class="static-banner">
