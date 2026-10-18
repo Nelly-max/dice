@@ -178,7 +178,7 @@
 
                     {{-- Username --}}
                     @error('username')
-                        <small class="error">{{ $message }}</small>
+                        <small class="form-error">{{ $message }}</small>
                     @enderror
                     <span>
                         <h4>Username</h4>
@@ -196,7 +196,7 @@
 
                     {{-- Phone --}}
                     @error('phone_number')
-                        <small class="error">{{ $message }}</small>
+                        <small class="form-error">{{ $message }}</small>
                     @enderror
                     <span>
                         <h4>Phone</h4>
@@ -211,7 +211,7 @@
 
                     {{-- Email --}}
                     @error('email')
-                        <small class="error">{{ $message }}</small>
+                        <small class="form-error">{{ $message }}</small>
                     @enderror
                     <span>
                         <h4>Email</h4>
@@ -225,7 +225,7 @@
 
                     {{-- Gender --}}
                     @error('gender')
-                        <small class="error">{{ $message }}</small>
+                        <small class="form-error">{{ $message }}</small>
                     @enderror
                     <span>
                         <h4>Gender</h4>
@@ -257,7 +257,7 @@
 
                     {{-- Date Of Birth --}}
                     @error('date_of_birth')
-                        <small class="error">{{ $message }}</small>
+                        <small class="form-error">{{ $message }}</small>
                     @enderror
                     <span>
                         <h4>Date Of Birth</h4>

@@ -27,6 +27,7 @@ class ProfileController extends Controller
 
 
 
+
 public function updateAccount(Request $request)
 {
     $authenticatedCustomer = Auth::guard('customer')->user();
@@ -41,8 +42,11 @@ public function updateAccount(Request $request)
         'phone_number' => 'required|string|max:20',
         'email' => 'required|email|max:255',
         'gender' => 'nullable|in:male,female',
-        'date_of_birth' => 'nullable|date|before_or_equal:' .
-            now()->subYears(18)->toDateString(),
+        'date_of_birth' => [
+            'nullable',
+            'date',
+            'before_or_equal:' . now()->subYears(18)->toDateString(),
+        ],
     ]);
 
     $customer = CustomerAccount::find($authenticatedCustomer->id);
@@ -52,15 +56,16 @@ public function updateAccount(Request $request)
     }
 
     $customer->name = $validated['name'];
-    $customer->username = $validated['username'];
+    $customer->username = $validated['username'] ?? null;
     $customer->phone_number = $validated['phone_number'];
     $customer->email = $validated['email'];
-    $customer->gender = $validated['gender'];
-    $customer->date_of_birth = $validated['date_of_birth'];
+    $customer->gender = $validated['gender'] ?? null;
+    $customer->date_of_birth = $validated['date_of_birth'] ?? null;
 
     $customer->save();
 
     return back()->with('success', 'Profile updated successfully.');
 }
+
 
 }
