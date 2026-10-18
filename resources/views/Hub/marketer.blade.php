@@ -50,10 +50,10 @@
                     </a>
                 </span>
 
-                <span>
+                <!-- <span>
                     <h4>Discount</h4>
                     <h3>{{ $marketer->discount_percentage ?? 0 }}%</h3>
-                </span>
+                </span> -->
 
                 <span>
                     <h4>Status</h4>

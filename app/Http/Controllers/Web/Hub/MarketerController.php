@@ -178,7 +178,7 @@ class MarketerController extends Controller
         |--------------------------------------------------------------------------
         */
     return redirect()
-        ->route('account.marketer.index')
+        ->route('hub.account.marketer.index')
         ->with('success', 'Marketing account created successfully.')
         ->with('referral_code', $marketer->referral_code)
         ->with('url_link', $marketer->url_link);
