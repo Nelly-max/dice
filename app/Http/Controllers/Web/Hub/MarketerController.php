@@ -201,54 +201,54 @@ class MarketerController extends Controller
 
 
 
-public function referrals()
-{
-    $customer = auth('customer')->user();
+    public function referrals()
+    {
+        $customer = auth('customer')->user();
 
-    if (!$customer) {
-        return redirect()->route('login');
-    }
+        if (!$customer) {
+            return redirect()->route('login');
+        }
 
-    $marketer = Marketer::where('customer_id', $customer->id)->first();
+        $marketer = Marketer::where('customer_id', $customer->id)->first();
 
-    if (!$marketer) {
-        return view('hub.referrals', [
-            'marketer' => null,
-            'referrals' => collect(),
-        ]);
-    }
+        if (!$marketer) {
+            return view('Hub.referrals', [
+                'marketer' => null,
+                'referrals' => collect(),
+            ]);
+        }
 
-    $referrals = BusinessReferral::where('marketer_id', $marketer->id)
-        ->latest()
-        ->get();
+        $referrals = BusinessReferral::where('marketer_id', $marketer->id)
+            ->latest()
+            ->get();
 
-    // Resolve each business to its subdivision database.
-    $subdivisions = DB::connection('hub')
-        ->table('sub_divisions')
-        ->where('status', 'active')
-        ->get(['name', 'db_connection']);
+        // Resolve each business to its subdivision database.
+        $subdivisions = DB::connection('hub')
+            ->table('sub_divisions')
+            ->where('status', 'active')
+            ->get(['name', 'db_connection']);
 
-    foreach ($referrals as $referral) {
-        $referral->subdivision_name = null;
+        foreach ($referrals as $referral) {
+            $referral->subdivision_name = null;
 
-        foreach ($subdivisions as $subdivision) {
-            try {
-                $business = DB::connection($subdivision->db_connection)
-                    ->table('business')
-                    ->where('account', $referral->business_account)
-                    ->first(['account']);
+            foreach ($subdivisions as $subdivision) {
+                try {
+                    $business = DB::connection($subdivision->db_connection)
+                        ->table('business')
+                        ->where('account', $referral->business_account)
+                        ->first(['account']);
 
-                if ($business) {
-                    $referral->subdivision_name = $subdivision->name;
-                    break;
+                    if ($business) {
+                        $referral->subdivision_name = $subdivision->name;
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    // Skip unavailable subdivision connections.
+                    continue;
                 }
-            } catch (\Throwable $e) {
-                // Skip unavailable subdivision connections.
-                continue;
             }
         }
-    }
 
-    return view('hub.referrals', compact('referrals', 'marketer'));
-}
+        return view('hub.referrals', compact('referrals', 'marketer'));
+    }
 }
