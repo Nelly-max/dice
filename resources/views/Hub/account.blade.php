@@ -238,7 +238,6 @@
                                     name="gender"
                                     value="male"
                                     {{ old('gender', $customer->gender) === 'male' ? 'checked' : '' }}
-                                    required
                                 >
                                 <h5>Male</h5>
                             </div>
