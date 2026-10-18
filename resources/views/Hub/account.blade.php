@@ -124,165 +124,164 @@
 
             {{-- Profile --}}
 
+
             <form action="{{ route('hub.account.update') }}" method="POST">
                 @csrf
                 @method('PUT')
-                    <div class="account-detail">
 
-                        <div class="head-area">
+                <div class="account-detail">
 
-                            <h2>Profile</h2>
+                    <div class="head-area">
+                        <h2>Profile</h2>
+                        <div></div>
+                    </div>
 
-                            <div></div>
-
+                    {{-- Success Message --}}
+                    @if (session('success'))
+                        <div class="success-message">
+                            {{ session('success') }}
                         </div>
+                    @endif
 
+                    {{-- General Error Message --}}
+                    @if (session('error'))
+                        <div class="error-message">
+                            {{ session('error') }}
+                        </div>
+                    @endif
 
-                        {{-- Account --}}
-                        <span>
+                    {{-- Account --}}
+                    <span>
+                        <h4>Account</h4>
+                        <h3>{{ $customer->account }}</h3>
+                    </span>
 
-                            <h4>Account</h4>
+                    {{-- Name --}}
+                    
+                    @error('name')
+                        <small class="form-error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Name</h4>
 
-                            <h3>
-                                {{ $customer->account }}
-                            </h3>
+                        <input
+                            type="text"
+                            name="name"
+                            value="{{ old('name', $customer->name) }}"
+                            maxlength="15"
+                            pattern="[A-Za-z0-9 ]{1,15}"
+                            title="Name can only contain letters, numbers and spaces, with a maximum of 15 characters."
+                            oninput="this.value = this.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 15);"
+                        >
 
-                        </span>
+                    </span>
 
+                    {{-- Username --}}\
+                    @error('username')
+                        <small class="error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Username</h4>
 
-                        {{-- Name --}}
-                        <span>
+                        <input
+                            type="text"
+                            name="username"
+                            value="{{ old('username', $customer->username) }}"
+                            maxlength="15"
+                            pattern="[A-Za-z0-9 ]{1,15}"
+                            title="Username can only contain letters, numbers and spaces, with a maximum of 15 characters."
+                            oninput="this.value = this.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 15);"
+                        >
+                    </span>
 
-                            <h4>Name</h4>
+                    {{-- Phone --}}
+                    @error('phone_number')
+                        <small class="error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Phone</h4>
 
-                            <input
-                                type="text"
-                                name="name"
-                                value="{{ old('name', $customer->name) }}"
-                                maxlength="50"
-                                pattern="[A-Za-z0-9 ]{1,15}"
-                                oninput="this.value = this.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 15);"
-                            >
+                        <input
+                            type="text"
+                            name="phone_number"
+                            class="mobile-number"
+                            value="{{ old('phone_number', $customer->phone_number) }}"
+                        >
+                    </span>
 
-                        </span>
+                    {{-- Email --}}
+                    @error('email')
+                        <small class="error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Email</h4>
 
+                        <input
+                            type="email"
+                            name="email"
+                            value="{{ old('email', $customer->email) }}"
+                        >
+                    </span>
 
-                        {{-- Username --}}
-                        <span>
+                    {{-- Gender --}}
+                    @error('gender')
+                        <small class="error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Gender</h4>
 
-                            <h4>Username</h4>
+                        <div class="grid-checker">
 
-                            <input
-                                type="text"
-                                name="username"
-                                value="{{ old('username', $customer->username) }}"
-                                maxlength="15"
-                                pattern="[A-Za-z0-9 ]{1,15}"
-                                title="Username can only contain letters, numbers and spaces, with a maximum of 15 characters."
-                                oninput="this.value = this.value.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 15);"
-                            >
-
-                        </span>
-
-
-                        {{-- Phone --}}
-                        <span>
-
-                            <h4>Phone</h4>
-
-                            <input
-                                type="text"
-                                name="phone_number"
-                                class="mobile-number"
-                                value="{{ old('phone_number', $customer->phone_number) }}"
-                            >
-
-                        </span>
-
-
-                        {{-- Email --}}
-                        <span>
-
-                            <h4>Email</h4>
-
-                            <input
-                                type="email"
-                                name="email"
-                                value="{{ old('email', $customer->email) }}"
-                            >
-
-                        </span>
-
-
-                        {{-- Gender --}}
-                        <span>
-
-                            <h4>Gender</h4>
-
-                            <div class="grid-checker">
-
-                                <div class="grid-check">
-
-                                    <input
-                                        type="radio"
-                                        name="gender"
-                                        value="male"
-                                        {{ old('gender', $customer->gender) === 'male' ? 'checked' : '' }}
-                                    >
-
-                                    <h5>Male</h5>
-
-                                </div>
-
-
-                                <div class="grid-check">
-
-                                    <input
-                                        type="radio"
-                                        name="gender"
-                                        value="female"
-                                        {{ old('gender', $customer->gender) === 'female' ? 'checked' : '' }}
-                                    >
-
-                                    <h5>Female</h5>
-
-                                </div>
-
+                            <div class="grid-check">
+                                <input
+                                    type="radio"
+                                    name="gender"
+                                    value="male"
+                                    {{ old('gender', $customer->gender) === 'male' ? 'checked' : '' }}
+                                    required
+                                >
+                                <h5>Male</h5>
                             </div>
 
-                            @error('gender')
-                                <small class="error">
-                                    {{ $message }}
-                                </small>
-                            @enderror
-
-                        </span>
-
-
-                        {{-- Date Of Birth --}}
-
-                        <span>
-                            <h4>Date Of Birth</h4>
-
-                            <input
-                                type="date"
-                                name="date_of_birth"
-                                value="{{ old('date_of_birth', $customer->date_of_birth) }}"
-                                class="custom-date-picker"
-                                max="{{ now()->subYears(18)->format('Y-m-d') }}"
-                            >
-                        </span>
-
-
-
-                        <div class="button submit-data">
-
-                             <button type="submit">Update Profile</button>
+                            <div class="grid-check">
+                                <input
+                                    type="radio"
+                                    name="gender"
+                                    value="female"
+                                    {{ old('gender', $customer->gender) === 'female' ? 'checked' : '' }}
+                                >
+                                <h5>Female</h5>
+                            </div>
 
                         </div>
+                    </span>
 
+                    {{-- Date Of Birth --}}
+                    @error('date_of_birth')
+                        <small class="error">{{ $message }}</small>
+                    @enderror
+                    <span>
+                        <h4>Date Of Birth</h4>
+
+                        <input
+                            type="date"
+                            name="date_of_birth"
+                            value="{{ old('date_of_birth', $customer->date_of_birth ? \Illuminate\Support\Carbon::parse($customer->date_of_birth)->format('Y-m-d') : '') }}"
+                            class="custom-date-picker"
+                            max="{{ now()->subYears(18)->format('Y-m-d') }}"
+                        >
+
+
+                    </span>
+
+                    {{-- Submit --}}
+                    <div class="button submit-data">
+                        <button type="submit">Update Profile</button>
                     </div>
+
+                </div>
             </form>
+
         </div>
 
     </div>

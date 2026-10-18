@@ -37,11 +37,11 @@ public function updateAccount(Request $request)
 
     $validated = $request->validate([
         'name' => 'required|string|max:50|regex:/^[A-Za-z0-9 ]+$/',
-        'username' => 'required|string|max:15|regex:/^[A-Za-z0-9 ]+$/',
+        'username' => 'nullable|string|max:15|regex:/^[A-Za-z0-9 ]+$/',
         'phone_number' => 'required|string|max:20',
         'email' => 'required|email|max:255',
-        'gender' => 'required|in:male,female',
-        'date_of_birth' => 'required|date|before_or_equal:' .
+        'gender' => 'nullable|in:male,female',
+        'date_of_birth' => 'nullable|date|before_or_equal:' .
             now()->subYears(18)->toDateString(),
     ]);
 
