@@ -176,7 +176,7 @@
 
                     </span>
 
-                    {{-- Username --}}\
+                    {{-- Username --}}
                     @error('username')
                         <small class="error">{{ $message }}</small>
                     @enderror
