@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 
+use App\Models\Hub\Marketer;
+
 // 2. CRITICAL: Extend Authenticatable instead of standard Model
 class CustomerAccount extends Authenticatable 
 {

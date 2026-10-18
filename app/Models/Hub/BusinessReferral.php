@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BusinessReferral extends Model
 {
-    protected $connection = 'hub';
+    protected $connection = 'customer';
 
     protected $table = 'business_referrals';
 
@@ -15,6 +15,7 @@ class BusinessReferral extends Model
         'referral_code',
         'business_account',
         'discount',
+        'status',
     ];
 
     protected function casts(): array

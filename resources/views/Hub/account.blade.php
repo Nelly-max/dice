@@ -44,28 +44,45 @@
                     </div>
 
 
-                    <div>
+                    <div>                        
+                        @php
+                            $hasRiderAccount = \App\Models\Customer\Rider::where(
+                                'customer_id',
+                                auth('customer')->id()
+                            )->exists();
+                        @endphp
 
-                        <div class="wallet-area">
+                        @if($hasRiderAccount)
+                            <div class="wallet-area">
 
-                            <i class="fa-solid fa-wallet"></i>
+                                <i class="fa-solid fa-wallet"></i>
 
-                            <h4>Rider Payout</h4>
+                                <h4>Rider Payout</h4>
 
-                            <h3>Ksh2000</h3>
+                                <h3>Ksh0</h3>
 
-                        </div>
+                            </div>
+                        @endif
 
-                        <div class="wallet-area">
+                        @php
+                            $hasMarketerAccount = \App\Models\Hub\Marketer::where(
+                                'customer_id',
+                                auth('customer')->id()
+                            )->exists();
+                        @endphp
 
-                            <i class="fa-solid fa-wallet"></i>
+                        @if($hasMarketerAccount)
+                            <div class="wallet-area">
 
-                            <h4>Commission</h4>
+                                <i class="fa-solid fa-wallet"></i>
 
-                            <h3>Ksh2500</h3>
+                                <h4>Commission</h4>
 
-                        </div>
+                                <h3>Ksh0</h3>
 
+                            </div>
+                         @endif
+                         
                     </div>
 
                 </div>
@@ -91,14 +108,14 @@
                         Rider
                     </a>
 
-                    <a
+                    <!-- <a
                         href="{{ route('hub.account.finance') }}"
                         class="shortcut"
                         style="color: #9f6007; background: #fff0d7;"
                     >
                         <i class="fa-solid fa-coins"></i>
                         Finance
-                    </a>
+                    </a> -->
 
                 </div>
 

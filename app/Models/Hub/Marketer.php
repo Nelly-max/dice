@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Models\Customer;
+namespace App\Models\Hub;
 
 use Illuminate\Database\Eloquent\Model;
+
+use App\Models\Customer\CustomerAccount;
 
 class Marketer extends Model
 {

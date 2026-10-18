@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\Customer\Marketer;
+use App\Models\Hub\Marketer;
 use App\Models\Hub\BusinessReferral;
 
 class MarketerController extends Controller
@@ -128,7 +128,7 @@ class MarketerController extends Controller
             'customer_id' => $customer->id,
 
             'name' => $request->name,
-            'phone_number' => $request->phone_number,
+            'phone' => $request->phone_number,
             'email' => $request->email,
 
             'gender' => $request->gender,
@@ -177,12 +177,11 @@ class MarketerController extends Controller
         | Return success
         |--------------------------------------------------------------------------
         */
-
-        return redirect()
-            ->back()
-            ->with('success', 'Marketing account created successfully.')
-            ->with('referral_code', $marketer->referral_code)
-            ->with('url_link', $marketer->url_link);
+    return redirect()
+        ->route('account.marketer.index')
+        ->with('success', 'Marketing account created successfully.')
+        ->with('referral_code', $marketer->referral_code)
+        ->with('url_link', $marketer->url_link);
     }
 
     public function editMarketer()

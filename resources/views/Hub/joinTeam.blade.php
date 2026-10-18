@@ -95,7 +95,6 @@
                                         name="gender"
                                         value="Male"
                                         {{ old('gender') === 'Male' ? 'checked' : '' }}
-                                        required
                                     >
 
                                     <h5>Male</h5>
@@ -128,7 +127,6 @@
                                 class="custom-date-picker"
                                 value="{{ old('date_of_birth') }}"
                                 max="{{ now()->subYears(15)->format('Y-m-d') }}"
-                                required
                             >
 
                             @error('date_of_birth')

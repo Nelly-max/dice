@@ -48,7 +48,7 @@
 
 
         @php
-            $hasMarketerAccount = \App\Models\Customer\Marketer::where(
+            $hasMarketerAccount = \App\Models\Hub\Marketer::where(
                 'customer_id',
                 auth('customer')->id()
             )->exists();
@@ -111,7 +111,7 @@
                                 style="color: #00b3d7"
                             ></i>
 
-                            <h4 class="counter order">12</h4>
+                            <h4 class="counter order"></h4>
 
                         </div>
 

@@ -9,7 +9,7 @@
                 <div class="wallet-options">
                     <div class="wallet-option">
                         <span><i class='bx bx-git-branch'></i><h6>Comission</h6></span>
-                        <h2>Ksh 30000</h2>
+                        <h2>Ksh 0</h2>
                         <h5>RCG001A</h5>
                     </div>
                     <!-- <div class="wallet-option">
