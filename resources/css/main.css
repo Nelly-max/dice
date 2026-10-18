@@ -1342,7 +1342,6 @@ td img,
     width: 100%;
     margin: auto .5em;
     background: var(--bg-white);
-    background: red;
     border-radius: 1em;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
@@ -1356,11 +1355,10 @@ td img,
 }
 
 .centered-forms-container .main-form{
-    width: 23em;
-    padding: 2em;
+    width: 100%;
+    padding: 1.5em;
     border-radius: 1em;
     background: var(--bg-white);
-    background: red;
     transition: margin-left 0.18s ease;
 }
 
@@ -1479,6 +1477,7 @@ td img,
 
 .main-form .checkbox-text{
     display: flex;
+    gap: 2em;
     align-items: center;
     justify-content: space-between;
     margin-top: 2em;
