@@ -21,7 +21,7 @@
                                 id="profile-pic"
                                 src="{{ $customer->profile_image
                                     ? rtrim(config('app.media_url'), '/') . '/' . ltrim($customer->profile_image, '/')
-                                    : rtrim(config('app.media_url'), '/') . '/media/img/Customer/Profiles/user.png' }}"
+                                    : rtrim(config('app.media_url'), '/') . '/img/Customer/Profiles/user.png' }}"
                                 alt="Customer Profile"
                             >
 

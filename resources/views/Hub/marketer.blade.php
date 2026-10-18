@@ -43,7 +43,11 @@
 
                 <span>
                     <h4>Referral Link</h4>
-                    <h3>{{ $marketer->url_link ?? '-' }}</h3>
+                    <a href="{{ Str::startsWith($marketer->url_link ?? '', ['http://', 'https://']) ? $marketer->url_link : 'https://' . $marketer->url_link }}"
+                    target="_blank"
+                    rel="noopener noreferrer">
+                        {{ $marketer->url_link ?: '-' }}
+                    </a>
                 </span>
 
                 <span>
