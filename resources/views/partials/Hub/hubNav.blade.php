@@ -6,7 +6,7 @@
         </a>
     </div>
     @php
-        $hasRiderAccount = \App\Models\Customer\Rider::where(
+        $hasRiderAccount = \App\Models\Hub\Rider::where(
             'customer_id',
             auth('customer')->id()
         )->exists();
@@ -19,7 +19,7 @@
             </button>
         </div>
     @endif
-    
+
     <div class="right">
         <h5>Welcome</h5>
         <h4>{{ auth('customer')->user()?->name ?? 'Welcome' }}</h4>

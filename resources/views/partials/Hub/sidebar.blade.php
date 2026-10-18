@@ -90,7 +90,7 @@
 
 
         @php
-            $hasRiderAccount = \App\Models\Customer\Rider::where(
+            $hasRiderAccount = \App\Models\Hub\Rider::where(
                 'customer_id',
                 auth('customer')->id()
             )->exists();
