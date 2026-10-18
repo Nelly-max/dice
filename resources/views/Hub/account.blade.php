@@ -46,7 +46,7 @@
 
                     <div>                        
                         @php
-                            $hasRiderAccount = \App\Models\Customer\Rider::where(
+                            $hasRiderAccount = \App\Models\Hub\Rider::where(
                                 'customer_id',
                                 auth('customer')->id()
                             )->exists();
@@ -82,7 +82,7 @@
 
                             </div>
                          @endif
-                         
+
                     </div>
 
                 </div>
@@ -301,16 +301,24 @@
                 </h4>
 
 
-                <span>
+                @php
+                    $hasRiderAccount = \App\Models\Hub\Rider::where(
+                        'customer_id',
+                        auth('customer')->id()
+                    )->exists();
+                @endphp
 
-                    <h4>Rider</h4>
+                @if($hasRiderAccount)
+                    <span>
 
-                    <a href="#">
-                        View
-                    </a>
+                        <h4>Rider</h4>
 
-                </span>
+                        <a href="#">
+                            View
+                        </a>
 
+                    </span>
+                @endif
 
                 <span>
 
