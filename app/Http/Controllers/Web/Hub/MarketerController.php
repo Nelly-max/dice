@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Web\Hub;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer\Marketer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+
+use App\Models\Customer\Marketer;
+use App\Models\Hub\BusinessReferral;
 
 class MarketerController extends Controller
 {
@@ -192,4 +195,61 @@ class MarketerController extends Controller
         return view('Hub.editMarketer', compact('marketer'));
     }
 
+
+
+
+
+
+
+
+public function referrals()
+{
+    $customer = auth('customer')->user();
+
+    if (!$customer) {
+        return redirect()->route('login');
+    }
+
+    $marketer = Marketer::where('customer_id', $customer->id)->first();
+
+    if (!$marketer) {
+        return view('hub.referrals', [
+            'marketer' => null,
+            'referrals' => collect(),
+        ]);
+    }
+
+    $referrals = BusinessReferral::where('marketer_id', $marketer->id)
+        ->latest()
+        ->get();
+
+    // Resolve each business to its subdivision database.
+    $subdivisions = DB::connection('hub')
+        ->table('sub_divisions')
+        ->where('status', 'active')
+        ->get(['name', 'db_connection']);
+
+    foreach ($referrals as $referral) {
+        $referral->subdivision_name = null;
+
+        foreach ($subdivisions as $subdivision) {
+            try {
+                $business = DB::connection($subdivision->db_connection)
+                    ->table('business')
+                    ->where('account', $referral->business_account)
+                    ->first(['account']);
+
+                if ($business) {
+                    $referral->subdivision_name = $subdivision->name;
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // Skip unavailable subdivision connections.
+                continue;
+            }
+        }
+    }
+
+    return view('hub.referrals', compact('referrals', 'marketer'));
+}
 }

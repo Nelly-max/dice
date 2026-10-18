@@ -329,7 +329,7 @@ use App\Models\Customer\Cart;
             Route::get('/orders', [OrderController::class, 'index'])
                 ->name('orders');
 
-            Route::get('/referrals', fn () => view('Hub.referrals'))
+            Route::get('/referrals', [MarketerController::class, 'referrals'])
                 ->name('referrals');
 
             Route::get('/account', [ProfileController::class, 'index'])

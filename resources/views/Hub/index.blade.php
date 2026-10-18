@@ -7,84 +7,20 @@
                 <div class="main-tiles">
                     <div class="tile" style="--tbclr:#18CE77">
                         <h4>Purchases</h4>
-                        <h2>254</h2>
+                        <h2>0</h2>
                     </div>
                     <div class="tile" style="--tbclr:#89A3FF">
                         <h4>Bookings</h4>
-                        <h2>14</h2>
+                        <h2>0</h2>
                     </div>
                     <div class="tile" style="--tbclr:#FF7F7F">
                         <h4>Services</h4>
-                        <h2>64</h2>
+                        <h2>0</h2>
                     </div>
                 </div>
 
-                <div class="other-tiles">
-                    <div class="other-tile">
-                        <div class="header">
-                            <h5>Jobs</h5>
-                            <h3 style="--clr:#95EFC7">23</h3>
-                        </div>
-                        <div class="dougnut">
-                            <canvas class="my-chart" id="jobChart"></canvas>
-                        </div>
-                        <div class="footing">
-                            <div class="foot">
-                                <h4 class="foot-head">Completed</h4>
-                                <h4 style="--clr:#40DDFF">21</h4>
-                            </div>
-                            <div class="foot">
-                                <h4  class="foot-head">Pending</h4>
-                                <h4 style="--clr:#FF9393">3</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="other-tile">
-                        <div class="header">
-                            <h5>Invoices</h5>
-                            <h3 style="--clr:#AEBAE8">23</h3>
-                        </div>
-                        <div class="dougnut">
-                            <canvas class="my-chart" id="invoiceChart"></canvas>
-                        </div>
-                        <div class="footing">
-                            <div class="foot">
-                                <h4 class="foot-head">Paid</h4>
-                                <h4 style="--clr:#40DDFF">21</h4>
-                            </div>
-                            <div class="foot">
-                                <h4 class="foot-head">Unpaid</h4>
-                                <h4 style="--clr:#FF9393">3</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="other-tile">
-                        <div class="header">
-                            <h5>Ratings</h5>
-                            <h3 style="--clr:#F8C9C9">23</h3>
-                        </div>
-                        <div class="dougnut">
-                            <canvas class="my-chart" id="ratingChart"></canvas>
-                        </div>
-                        <div class="footing">
-                            <div class="foot">
-                                <h4 class="foot-head">Satisfied</h4>
-                                <h4 style="--clr:#40DDFF">21</h4>
-                            </div>
-                            <div class="foot">
-                                <h4 class="foot-head">Unsatisfied</h4>
-                                <h4 style="--clr:#FF9393">3</h4>
-                            </div>
-                        </div>
-                    </div>
 
-                </div> 
 
-                <div class="charts">
-                    <div class="graphs">
-                        <canvas class="line-graph" id="lineGraph"></canvas>
-                    </div>
-                </div>
 
             </div>
             <div class="right-content">

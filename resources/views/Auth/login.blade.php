@@ -79,7 +79,7 @@
                     <div class="login-signup">
                         <span class="text">
                             Don't Have an Account?
-                            <a href="{{ route('account.register') }}" class="text signup-link">
+                            <a href="{{ route('account.register') }}" class="text">
                                 Sign up now
                             </a>
                         </span>

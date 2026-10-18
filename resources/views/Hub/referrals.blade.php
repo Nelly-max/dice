@@ -2,16 +2,16 @@
 
 @section('content')
     <div class="hub-content no-sidebar">
-        <div class="">
+        <div>
             <div class="table-top">
                 <div class="top">
-                    <h2 class="table_heading">My Referals</h2>
+                    <h2 class="table_heading">My Referrals</h2>
 
                     <div class="right">
-                        <div class="search">
+                        <!-- <div class="search">
                             <i class="fa-solid fa-magnifying-glass"></i>
-                            <input type="text" id="deliverySearch" placeholder="search">
-                        </div>
+                            <input type="text" id="deliverySearch" placeholder="Search referrals...">
+                        </div> -->
                     </div>
                 </div>
 
@@ -21,41 +21,57 @@
                             <th>ID</th>
                             <th>Subdivision</th>
                             <th>Business</th>
-                            <th>Referal Code</th>
+                            <th>Referral Code</th>
                             <th>Percentage</th>
                             <th>Date</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <!-- <th>Actions</th> -->
                         </tr>
                     </thead>
 
                     <tbody>
-                        <tr>
-                            <td>REF001</td>
+                        @forelse ($referrals as $referral)
+                            <tr>
+                                <td>
+                                    {{ 'REF' . str_pad($referral->id, 3, '0', STR_PAD_LEFT) }}
+                                </td>
 
-                            <td>Home City</td>
+                                <td>{{ $referral->subdivision_name ?? 'Unknown subdivision' }}</td>
 
-                            <td>RHM001A</td>
+                                <td>
+                                    {{ $referral->business_account ?? '—' }}
+                                </td>
 
-                            <td>M001DM</td>
+                                <td>
+                                    {{ $referral->referral_code ?? '—' }}
+                                </td>
 
-                            <td>10%</td>
+                                <td>
+                                    {{ number_format((float) ($referral->discount ?? 0), 2) }}%
+                                </td>
 
-                            <td>14/11/2026</td>
-                            
-                            <td>Waiting</td>
+                                <td>
+                                    {{ $referral->created_at?->format('d/m/Y') ?? '—' }}
+                                </td>
 
-                            <td
-                                class="emptyBack"
-                                title="view"
-                            >
-                                <i class="fa-solid fa-square-arrow-up-right"></i>
-                            </td>
-                        </tr>
+                                <td>
+                                     {{ $referral->status ?? 'pending' }}
+                                </td>
+
+                                <!-- <td class="emptyBack" title="View">
+                                    <i class="fa-solid fa-square-arrow-up-right"></i>
+                                </td> -->
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    No referrals found.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 @endsection
-

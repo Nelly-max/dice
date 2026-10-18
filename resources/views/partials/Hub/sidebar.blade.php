@@ -39,7 +39,7 @@
 
         <li class="link">
             <div class="icon-link arrowOpen">
-                <a href="qcity.html" class="link">
+                <a href="" class="link">
                     <i class="fa-solid fa-bag-shopping icon" style="color: #fc744a"></i>
                     <span class="link_name">Purchases</span>
                 </a>
@@ -80,7 +80,7 @@
 
         <li class="link">
             <div class="icon-link arrowOpen">
-                <a href="booking.html" class="link">
+                <a href="" class="link">
                     <i class='bx bx-book' style="color: #0076d7"></i>
                     <span class="link_name">Bookings</span>
                 </a>

@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 use App\Mail\PasswordResetOtpMail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 use App\Models\Customer\Cart;
 use App\Models\Customer\CustomerAccount; 
@@ -45,38 +47,80 @@ class AuthController extends Controller
     /**
      * Handle an incoming customer registration request.
      */
-    public function register(Request $request)
-    {
-        // Removed the 'unique' database constraints from email and phone_number
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'email'        => ['required', 'string', 'email', 'max:255','unique:customer.customer_accounts,email'],
-            'phone_number' => ['required', 'string', 'max:20'],
-            'gender'       => ['string', 'in:male,female'],
-            'password'     => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
 
-        try {
-            // Save the customer using our Eloquent model
-            $customer = CustomerAccount::create([
+
+public function register(Request $request)
+{
+    $validated = $request->validate([
+        'name'         => ['required', 'string', 'max:255'],
+        'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
+        'phone_number' => ['required', 'string', 'max:20'],
+        'gender'       => ['nullable', 'string', 'in:male,female'],
+        'password'     => ['required', 'string', 'min:8', 'confirmed'],
+    ]);
+
+    try {
+        $customer = DB::connection('customer')->transaction(function () use ($validated) {
+            $now = now();
+
+            // Year continuity: 2026 = 1, 2027 = 2, etc.
+            $yearCode = $now->year - 2025;
+
+            // Month representation letters.
+            $monthCodes = [
+                1  => 'S', // January
+                2  => 'Q', // February
+                3  => 'R', // March
+                4  => 'H', // April
+                5  => 'T', // May
+                6  => 'U', // June
+                7  => 'V', // July
+                8  => 'W', // August
+                9  => 'X', // September
+                10 => 'N', // October
+                11 => 'Y', // November
+                12 => 'P', // December
+            ];
+
+            $monthCode = $monthCodes[$now->month];
+
+            // Count registrations for the current month and year.
+            $monthlyCount = CustomerAccount::whereYear('created_at', $now->year)
+                ->whereMonth('created_at', $now->month)
+                ->lockForUpdate()
+                ->count();
+
+            $sequence = str_pad($monthlyCount + 1, 3, '0', STR_PAD_LEFT);
+
+            // Example: 1001N
+            $account = $yearCode . $sequence . $monthCode;
+
+            return CustomerAccount::create([
+                'account'      => $account,
                 'name'         => $validated['name'],
                 'email'        => $validated['email'],
                 'phone_number' => $validated['phone_number'],
-                'gender'       => $validated['gender'],
+                'gender'       => $validated['gender'] ?? null,
                 'password'     => Hash::make($validated['password']),
                 'status'       => 'active',
             ]);
+        });
 
-            return redirect()->route('login')
-                ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
+        return redirect()->route('login')
+            ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
 
-        } catch (Exception $e) {
-            return back()
-                ->withInput()
-                ->withErrors(['error' => 'Database operation failed: ' . $e->getMessage()]);
-        }
+    } catch (Exception $e) {
+        Log::error('Customer registration failed', [
+            'error' => $e->getMessage(),
+        ]);
+
+        return back()
+            ->withInput($request->except('password', 'password_confirmation'))
+            ->withErrors([
+                'error' => 'Account registration failed. Please try again.',
+            ]);
     }
-
+}
 
     /**
      * Handle an incoming customer authentication attempt.

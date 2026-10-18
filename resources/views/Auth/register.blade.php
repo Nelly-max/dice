@@ -155,7 +155,7 @@
                     <div class="login-signup">
                         <span class="text">
                             Has an Account?
-                            <a href="{{ route('login') }}" class="text signup-link">
+                            <a href="{{ route('login') }}" class="text">
                                 Sign in now
                             </a>
                         </span>
