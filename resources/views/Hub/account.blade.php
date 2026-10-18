@@ -318,17 +318,19 @@
                         </a>
 
                     </span>
+
+                    
+                    <span>
+
+                        <h4>Status</h4>
+
+                        <h3>
+                            Pending
+                        </h3>
+
+                    </span>
                 @endif
 
-                <span>
-
-                    <h4>Status</h4>
-
-                    <h3>
-                        Pending
-                    </h3>
-
-                </span>
 
             </div>
 

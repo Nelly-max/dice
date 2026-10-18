@@ -70,7 +70,7 @@ class MarketerController extends Controller
             ],
 
             'gender' => [
-                'required',
+                'nullable',
                 'in:Male,Female',
             ],
 
