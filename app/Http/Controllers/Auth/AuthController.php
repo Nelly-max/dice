@@ -49,78 +49,78 @@ class AuthController extends Controller
      */
 
 
-public function register(Request $request)
-{
-    $validated = $request->validate([
-        'name'         => ['required', 'string', 'max:255'],
-        'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
-        'phone_number' => ['required', 'string', 'max:20'],
-        'gender'       => ['nullable', 'string', 'in:male,female'],
-        'password'     => ['required', 'string', 'min:8', 'confirmed'],
-    ]);
-
-    try {
-        $customer = DB::connection('customer')->transaction(function () use ($validated) {
-            $now = now();
-
-            // Year continuity: 2026 = 1, 2027 = 2, etc.
-            $yearCode = $now->year - 2025;
-
-            // Month representation letters.
-            $monthCodes = [
-                1  => 'S', // January
-                2  => 'Q', // February
-                3  => 'R', // March
-                4  => 'H', // April
-                5  => 'T', // May
-                6  => 'U', // June
-                7  => 'V', // July
-                8  => 'W', // August
-                9  => 'X', // September
-                10 => 'N', // October
-                11 => 'Y', // November
-                12 => 'P', // December
-            ];
-
-            $monthCode = $monthCodes[$now->month];
-
-            // Count registrations for the current month and year.
-            $monthlyCount = CustomerAccount::whereYear('created_at', $now->year)
-                ->whereMonth('created_at', $now->month)
-                ->lockForUpdate()
-                ->count();
-
-            $sequence = str_pad($monthlyCount + 1, 3, '0', STR_PAD_LEFT);
-
-            // Example: 1001N
-            $account = $yearCode . $sequence . $monthCode;
-
-            return CustomerAccount::create([
-                'account'      => $account,
-                'name'         => $validated['name'],
-                'email'        => $validated['email'],
-                'phone_number' => $validated['phone_number'],
-                'gender'       => $validated['gender'] ?? null,
-                'password'     => Hash::make($validated['password']),
-                'status'       => 'active',
-            ]);
-        });
-
-        return redirect()->route('login')
-            ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
-
-    } catch (Exception $e) {
-        Log::error('Customer registration failed', [
-            'error' => $e->getMessage(),
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name'         => ['required', 'string', 'max:255'],
+            'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
+            'phone_number' => ['required', 'string', 'max:20'],
+            'gender'       => ['nullable', 'string', 'in:male,female'],
+            'password'     => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        return back()
-            ->withInput($request->except('password', 'password_confirmation'))
-            ->withErrors([
-                'error' => 'Account registration failed. Please try again.',
+        try {
+            $customer = DB::connection('customer')->transaction(function () use ($validated) {
+                $now = now();
+
+                // Year continuity: 2026 = 1, 2027 = 2, etc.
+                $yearCode = $now->year - 2025;
+
+                // Month representation letters.
+                $monthCodes = [
+                    1  => 'S', // January
+                    2  => 'Q', // February
+                    3  => 'R', // March
+                    4  => 'H', // April
+                    5  => 'T', // May
+                    6  => 'U', // June
+                    7  => 'V', // July
+                    8  => 'W', // August
+                    9  => 'X', // September
+                    10 => 'N', // October
+                    11 => 'Y', // November
+                    12 => 'P', // December
+                ];
+
+                $monthCode = $monthCodes[$now->month];
+
+                // Count registrations for the current month and year.
+                $monthlyCount = CustomerAccount::whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->lockForUpdate()
+                    ->count();
+
+                $sequence = str_pad($monthlyCount + 1, 3, '0', STR_PAD_LEFT);
+
+                // Example: 1001N
+                $account = $yearCode . $sequence . $monthCode;
+
+                return CustomerAccount::create([
+                    'account'      => $account,
+                    'name'         => $validated['name'],
+                    'email'        => $validated['email'],
+                    'phone_number' => $validated['phone_number'],
+                    'gender'       => $validated['gender'] ?? null,
+                    'password'     => Hash::make($validated['password']),
+                    'status'       => 'active',
+                ]);
+            });
+
+            return redirect()->route('login')
+                ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
+
+        } catch (Exception $e) {
+            Log::error('Customer registration failed', [
+                'error' => $e->getMessage(),
             ]);
+
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors([
+                    'error' => 'Account registration failed. Please try again.',
+                ]);
+        }
     }
-}
 
     /**
      * Handle an incoming customer authentication attempt.
@@ -283,107 +283,6 @@ public function register(Request $request)
             ->with('success', 'Welcome back, ' . $customer->name . '!');
     }
 
-    
-
-
-
-
-
-
-
-    // public function login(Request $request)
-    // {
-    //     $credentials = $request->validate([
-    //         'login_identifier' => ['required', 'string'],
-    //         'password'         => ['required', 'string'],
-    //     ]);
-
-    //     $customer = CustomerAccount::where('email', $credentials['login_identifier'])
-    //         ->orWhere('account', $credentials['login_identifier'])
-    //         ->first();
-
-    //     if (!$customer || !Hash::check($credentials['password'], $customer->password)) {
-    //         return back()
-    //             ->withInput($request->only('login_identifier', 'remember'))
-    //             ->withErrors([
-    //                 'login_identifier' => 'The provided credentials do not match our records.',
-    //             ]);
-    //     }
-
-    //     if ($customer->status !== 'active') {
-    //         return back()
-    //             ->withInput($request->only('login_identifier'))
-    //             ->withErrors([
-    //                 'login_identifier' => 'Your account is inactive.',
-    //             ]);
-    //     }
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Capture Guest Session ID
-    //     |--------------------------------------------------------------------------
-    //     */
-    //     $sessionId = $request->session()->getId();
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Authenticate Customer
-    //     |--------------------------------------------------------------------------
-    //     */
-    //     Auth::guard('customer')->login(
-    //         $customer,
-    //         $request->boolean('remember')
-    //     );
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Move Guest Cart to Customer
-    //     |--------------------------------------------------------------------------
-    //     */
-    //     $guestItems = Cart::where('session_id', $sessionId)
-    //         ->whereNull('user_id')
-    //         ->get();
-
-    //     foreach ($guestItems as $guestItem) {
-
-    //         $existing = Cart::where('user_id', $customer->id)
-    //             ->where('stockable_id', $guestItem->stockable_id)
-    //             ->where('stockable_type', $guestItem->stockable_type)
-    //             ->where('business_account', $guestItem->business_account)
-    //             ->first();
-
-    //         if ($existing) {
-
-    //             $existing->increment(
-    //                 'quantity',
-    //                 $guestItem->quantity
-    //             );
-
-    //             $guestItem->delete();
-
-    //         } else {
-
-    //             $guestItem->update([
-    //                 'user_id'    => $customer->id,
-    //                 'session_id' => null,
-    //             ]);
-    //         }
-    //     }
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Prevent Session Fixation
-    //     |--------------------------------------------------------------------------
-    //     */
-    //     $request->session()->regenerate();
-
-    //     return redirect()->intended(route('login'))
-    //         ->with(
-    //             'success',
-    //             'Welcome back, ' . $customer->name . '!'
-    //         );
-    // }
-
 
 
 
@@ -407,9 +306,6 @@ public function register(Request $request)
 
         return view('Auth.resetPassKey');
     }
-
-
-
 
 
 
@@ -536,11 +432,6 @@ public function register(Request $request)
     }
 
 
-
-
-
-
-
     public function verifyOtp(Request $request)
     {
         $request->validate([
@@ -638,219 +529,216 @@ public function register(Request $request)
 
 
 
+    public function resendOtp(Request $request)
+    {
+        $email = session('password_reset_email');
+        $expires = session('password_reset_expires');
 
+        if (!$email || !$expires) {
+            return redirect()
+                ->route('account.resetpassword')
+                ->withErrors([
+                    'email' => 'Your password reset session has expired. Please start again.',
+                ]);
+        }
 
-
-public function resendOtp(Request $request)
-{
-    $email = session('password_reset_email');
-    $expires = session('password_reset_expires');
-
-    if (!$email || !$expires) {
-        return redirect()
-            ->route('account.resetpassword')
-            ->withErrors([
-                'email' => 'Your password reset session has expired. Please start again.',
+        // Only allow another code after the current code expires.
+        if (now()->lt(\Carbon\Carbon::parse($expires))) {
+            return back()->withErrors([
+                'otp' => 'Your current code has not expired yet. Please wait for the timer to finish.',
             ]);
+        }
+
+        // Confirm the customer account still exists and is active.
+        $customer = CustomerAccount::whereRaw('LOWER(email) = ?', [strtolower($email)])
+            ->where('status', 'active')
+            ->first();
+
+        if (!$customer) {
+            session()->forget([
+                'password_reset_email',
+                'password_reset_expires',
+                'password_reset_verified',
+            ]);
+
+            Cache::forget('password-reset-otp:' . sha1($email));
+
+            return redirect()
+                ->route('account.resetpassword')
+                ->withErrors([
+                    'email' => 'The account could not be found. Please try again.',
+                ]);
+        }
+
+        // Rate limit sending and resending.
+        $key = 'password-reset-send:' . sha1($email);
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return back()->withErrors([
+                'otp' => 'Too many requests. Please try again later.',
+            ]);
+        }
+
+        // Generate a new 6-character alphanumeric code.
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $otp = '';
+
+        for ($i = 0; $i < 6; $i++) {
+            $otp .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        $cacheKey = 'password-reset-otp:' . sha1($email);
+
+        // Replace the old code and start a fresh 2-minute expiry.
+        Cache::put(
+            $cacheKey,
+            Hash::make($otp),
+            now()->addMinutes(2)
+        );
+
+        session([
+            'password_reset_expires' => now()->addMinutes(2)->toIso8601String(),
+        ]);
+
+        // A new code must be verified before password reset.
+        session()->forget('password_reset_verified');
+
+        try {
+            Mail::raw(
+                "Your Smart Market password reset verification code is: {$otp}\n\n"
+                . "This code will expire in 2 minutes.\n\n"
+                . "If you did not request a password reset, please ignore this email.\n\n"
+                . "smartmarket_ke.",
+                function ($message) use ($customer) {
+                    $message
+                        ->from('support@smartmarket.co.ke', 'Smart Market Support')
+                        ->to($customer->email)
+                        ->subject('Smart Market Password Reset Verification Code');
+                }
+            );
+
+            RateLimiter::hit($key, 60);
+        } catch (\Throwable $e) {
+            report($e);
+
+            // Do not leave an unsent code active.
+            Cache::forget($cacheKey);
+
+            session()->forget([
+                'password_reset_expires',
+                'password_reset_verified',
+            ]);
+
+            return back()->withErrors([
+                'otp' => 'We could not send a new code. Please try again.',
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            'A new verification code has been sent to your email. It expires in 2 minutes.'
+        );
     }
 
-    // Only allow another code after the current code expires.
-    if (now()->lt(\Carbon\Carbon::parse($expires))) {
-        return back()->withErrors([
-            'otp' => 'Your current code has not expired yet. Please wait for the timer to finish.',
-        ]);
-    }
 
-    // Confirm the customer account still exists and is active.
-    $customer = CustomerAccount::whereRaw('LOWER(email) = ?', [strtolower($email)])
-        ->where('status', 'active')
-        ->first();
 
-    if (!$customer) {
-        session()->forget([
-            'password_reset_email',
-            'password_reset_expires',
-            'password_reset_verified',
+    public function updatePassword(Request $request)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Confirm OTP Was Verified
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !session('password_reset_verified') ||
+            !session('password_reset_user_id') ||
+            !session('password_reset_email')
+        ) {
+            return redirect()
+                ->route('account.resetpassword')
+                ->withErrors([
+                    'email' => 'Please verify your reset code first.',
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Password
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Customer Account
+        |--------------------------------------------------------------------------
+        */
+
+        $email = strtolower(trim(session('password_reset_email')));
+
+        $customer = CustomerAccount::query()
+            ->whereKey(session('password_reset_user_id'))
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->where('status', 'active')
+            ->first();
+
+        if (!$customer) {
+            session()->forget([
+                'password_reset_user_id',
+                'password_reset_email',
+                'password_reset_expires',
+                'password_reset_verified',
+            ]);
+
+            Cache::forget('password-reset-otp:' . sha1($email));
+
+            return redirect()
+                ->route('account.resetpassword')
+                ->withErrors([
+                    'email' => 'Your customer account could not be found. Please start again.',
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Customer Password
+        |--------------------------------------------------------------------------
+        */
+
+        $customer->password = Hash::make($request->password);
+        $customer->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear Password Reset Data
+        |--------------------------------------------------------------------------
+        */
 
         Cache::forget('password-reset-otp:' . sha1($email));
 
-        return redirect()
-            ->route('account.resetpassword')
-            ->withErrors([
-                'email' => 'The account could not be found. Please try again.',
-            ]);
-    }
-
-    // Rate limit sending and resending.
-    $key = 'password-reset-send:' . sha1($email);
-
-    if (RateLimiter::tooManyAttempts($key, 5)) {
-        return back()->withErrors([
-            'otp' => 'Too many requests. Please try again later.',
-        ]);
-    }
-
-    // Generate a new 6-character alphanumeric code.
-    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    $otp = '';
-
-    for ($i = 0; $i < 6; $i++) {
-        $otp .= $characters[random_int(0, strlen($characters) - 1)];
-    }
-
-    $cacheKey = 'password-reset-otp:' . sha1($email);
-
-    // Replace the old code and start a fresh 2-minute expiry.
-    Cache::put(
-        $cacheKey,
-        Hash::make($otp),
-        now()->addMinutes(2)
-    );
-
-    session([
-        'password_reset_expires' => now()->addMinutes(2)->toIso8601String(),
-    ]);
-
-    // A new code must be verified before password reset.
-    session()->forget('password_reset_verified');
-
-    try {
-        Mail::raw(
-            "Your Smart Market password reset verification code is: {$otp}\n\n"
-            . "This code will expire in 2 minutes.\n\n"
-            . "If you did not request a password reset, please ignore this email.\n\n"
-            . "smartmarket_ke.",
-            function ($message) use ($customer) {
-                $message
-                    ->from('support@smartmarket.co.ke', 'Smart Market Support')
-                    ->to($customer->email)
-                    ->subject('Smart Market Password Reset Verification Code');
-            }
-        );
-
-        RateLimiter::hit($key, 60);
-    } catch (\Throwable $e) {
-        report($e);
-
-        // Do not leave an unsent code active.
-        Cache::forget($cacheKey);
-
-        session()->forget([
-            'password_reset_expires',
-            'password_reset_verified',
-        ]);
-
-        return back()->withErrors([
-            'otp' => 'We could not send a new code. Please try again.',
-        ]);
-    }
-
-    return back()->with(
-        'success',
-        'A new verification code has been sent to your email. It expires in 2 minutes.'
-    );
-}
-
-
-
-public function updatePassword(Request $request)
-{
-    /*
-    |--------------------------------------------------------------------------
-    | Confirm OTP Was Verified
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-        !session('password_reset_verified') ||
-        !session('password_reset_user_id') ||
-        !session('password_reset_email')
-    ) {
-        return redirect()
-            ->route('account.resetpassword')
-            ->withErrors([
-                'email' => 'Please verify your reset code first.',
-            ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Validate Password
-    |--------------------------------------------------------------------------
-    */
-
-    $request->validate([
-        'password' => [
-            'required',
-            'string',
-            'min:8',
-            'confirmed',
-        ],
-    ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Find Customer Account
-    |--------------------------------------------------------------------------
-    */
-
-    $email = strtolower(trim(session('password_reset_email')));
-
-    $customer = CustomerAccount::query()
-        ->whereKey(session('password_reset_user_id'))
-        ->whereRaw('LOWER(email) = ?', [$email])
-        ->where('status', 'active')
-        ->first();
-
-    if (!$customer) {
         session()->forget([
             'password_reset_user_id',
             'password_reset_email',
+            'password_reset_otp',
             'password_reset_expires',
             'password_reset_verified',
         ]);
 
-        Cache::forget('password-reset-otp:' . sha1($email));
-
         return redirect()
-            ->route('account.resetpassword')
-            ->withErrors([
-                'email' => 'Your customer account could not be found. Please start again.',
-            ]);
+            ->route('login')
+            ->with(
+                'success',
+                'Your password has been updated successfully. You can now log in.'
+            );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Update Customer Password
-    |--------------------------------------------------------------------------
-    */
-
-    $customer->password = Hash::make($request->password);
-    $customer->save();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Clear Password Reset Data
-    |--------------------------------------------------------------------------
-    */
-
-    Cache::forget('password-reset-otp:' . sha1($email));
-
-    session()->forget([
-        'password_reset_user_id',
-        'password_reset_email',
-        'password_reset_otp',
-        'password_reset_expires',
-        'password_reset_verified',
-    ]);
-
-    return redirect()
-        ->route('login')
-        ->with(
-            'success',
-            'Your password has been updated successfully. You can now log in.'
-        );
-}
 
 }

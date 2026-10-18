@@ -335,6 +335,9 @@ use App\Models\Customer\Cart;
             Route::get('/account', [ProfileController::class, 'index'])
                 ->name('account.index');
 
+            Route::put('/account/update', [ProfileController::class, 'updateAccount'])
+                ->name('account.update');
+
             Route::get('/account/join-team', fn () => view('Hub.joinTeam'))
                 ->name('account.join-team');
 
