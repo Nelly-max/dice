@@ -249,6 +249,6 @@ class MarketerController extends Controller
             }
         }
 
-        return view('hub.referrals', compact('referrals', 'marketer'));
+        return view('Hub.referrals', compact('referrals', 'marketer'));
     }
 }
