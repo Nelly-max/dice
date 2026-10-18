@@ -1328,7 +1328,7 @@ td img,
 
 /* =============SiGN Forms ============== */
 .centered-forms{
-    height: 100vh;
+    height: 80vh;
     margin: auto;
     display: flex;
     align-items: center;
@@ -1339,9 +1339,10 @@ td img,
 .centered-forms-container{
     position: relative;
     max-width: 30em;
-    margin: auto .5em;
     width: 100%;
+    margin: auto .5em;
     background: var(--bg-white);
+    background: red;
     border-radius: 1em;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
 }
@@ -1355,10 +1356,11 @@ td img,
 }
 
 .centered-forms-container .main-form{
-    width: 100%;
+    width: 23em;
     padding: 2em;
     border-radius: 1em;
     background: var(--bg-white);
+    background: red;
     transition: margin-left 0.18s ease;
 }
 
@@ -1373,9 +1375,7 @@ td img,
     transition: opacity 0.09s ease;
 }
 
-.centered-forms-container.active .main-forms{
-    height: 43em;
-}
+
 
 .centered-forms-container.active .signup{
     opacity: 1;

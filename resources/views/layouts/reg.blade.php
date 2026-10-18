@@ -10,8 +10,8 @@
     <!-- Vite CSS -->
     @vite([
             'resources/css/reused.css',
-            'resources/css/main.css',
             'resources/css/modal.css',
+            'resources/css/main.css',
             
             'resources/js/signup.js',
             'resources/js/reused.js',

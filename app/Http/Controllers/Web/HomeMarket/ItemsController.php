@@ -488,23 +488,18 @@ class ItemsController extends Controller
             |------------------------------------------------------------------
             */
 
+
             $baseMediaUrl = rtrim(
-                env('MEDIA_URL'),
+                config('app.media_url'),
                 '/'
             );
 
             $product->image_url =
                 !empty($product->image_path)
-
-                    ? $baseMediaUrl .
-                        '/media/' .
-                        ltrim(
-                            $product->image_path,
-                            '/'
-                        )
-
+                    ? $baseMediaUrl . '/' .
+                        ltrim($product->image_path, '/')
                     : $baseMediaUrl .
-                        '/media/img/homeMarket/products/item_image.png';
+                        '/img/homeMarket/products/item_image.png';
 
 
             /*
