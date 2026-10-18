@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
-use App\Http\Controllers\Auth\AccountController;
+use App\Http\Controllers\Auth\AuthController;
 
 use App\Http\Controllers\Web\SubdivisionsController;
 use App\Http\Controllers\Web\LocationController;
@@ -43,20 +43,43 @@ use App\Models\Customer\Cart;
     Route::get('/setting', fn () => view('setting'))
         ->name('setting');
 
-    Route::get('/account', [AccountController::class, 'showLoginForm'])
+    Route::get('/account/login', [AuthController::class, 'showLoginForm'])
         ->name('login');
 
-    Route::post('/account/register', [AccountController::class, 'register'])
+    Route::get('/account/register', [AuthController::class, 'showRegistrationForm'])
+        ->name('account.register');
+
+    Route::post('/account/register', [AuthController::class, 'register'])
         ->name('account.register.create');
 
-    Route::post('/account/login', [AccountController::class, 'login'])
+    Route::post('/account/login', [AuthController::class, 'login'])
         ->name('account.login');
 
-    Route::post('/account/logout', [AccountController::class, 'logout'])
+    Route::post('/account/logout', [AuthController::class, 'logout'])
         ->name('logout');
 
-    Route::get('/account/password_reset', fn () => view('Auth.resetPassword'))
-        ->name('account.resetpassword');
+    Route::get('/account/password-reset', fn () => view('Auth.resetPassword'))
+        ->name('account.resetpassword');    
+
+    Route::post('/password/reset/request', [ AuthController::class, 'requestPasswordReset',])
+        ->name('password.reset.request');    
+        
+    Route::get('/password/reset/otp', [AuthController::class, 'showOtp'])
+            ->name('otp.page');
+
+    Route::post('/password/reset/verify-otp', [AuthController::class, 'verifyOtp'])
+        ->name('otp.verify');
+
+    Route::post('/password/reset/resend-otp', [AuthController::class, 'resendOtp'])
+        ->name('otp.resend');
+
+    Route::get('/account/new-pass', fn () => view('Auth.resetPassNew'))
+        ->name('account.newpassword');   
+    
+    Route::post('account/update-password', [AuthController::class, 'updatePassword'])
+        ->name('password.reset.update');
+
+
 
 
     /*

@@ -32,7 +32,6 @@
                                 placeholder="Enter UserId"
                                 value="{{ old('login_email') }}"
                                 class="@error('login_email') is-invalid @enderror"
-                                required
                             >
                             <i class="uil uil-user"></i>
                         </div>
@@ -43,7 +42,7 @@
                                 name="password"
                                 class="password"
                                 placeholder="Password"
-                                required
+
                             >
                             <i class="uil uil-lock icon"></i>
                             <i class="uil uil-eye-slash showHidePw"></i>

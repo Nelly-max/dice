@@ -73,6 +73,12 @@ body{
 /* ===========================
         Reused Styles
 =========================== */
+.form-error{
+    font-size: .9rem;
+    color: #cf0404;
+}
+
+
 .gm-ui-hover-effect {
     display: none !important;
 }

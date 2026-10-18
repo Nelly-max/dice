@@ -1328,12 +1328,11 @@ td img,
 
 /* =============SiGN Forms ============== */
 .centered-forms{
-    height: 80vh;
+    height: 100%;
     margin: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* background-color: var(--before-color); */
 }
 
 .centered-forms-container{
@@ -1355,7 +1354,7 @@ td img,
 }
 
 .centered-forms-container .main-form{
-    width: 100%;
+    width: 22em;
     padding: 1.5em;
     border-radius: 1em;
     background: var(--bg-white);
@@ -1437,7 +1436,7 @@ td img,
     position: absolute;
     height: 100%;
     width: 100%;
-    padding: 0 3em;
+    padding: 0 2em;
     outline: none;
     border: none;
     font-size: 1rem;

@@ -12,9 +12,9 @@ class SubdivisionsController extends Controller
     {
         // Only get major divisions that have at least one active subdivision
         $majorDivisions = MajorDivision::whereHas('subDivisions', function($query) {
-            $query->where('status', 1); // only active subdivisions
+            $query->where('status', 'active'); // only active subdivisions
         })->with(['subDivisions' => function($query) {
-            $query->where('status', 1); // only active subdivisions
+            $query->where('status', 'active'); // only active subdivisions
         }])->get();
 
         return view('home', compact('majorDivisions'));
@@ -24,7 +24,7 @@ class SubdivisionsController extends Controller
     {
         // Find the subdivision by its weblink attribute
         $subdivision = Subdivision::where('weblink', $weblink)
-            ->where('status', 1)
+            ->where('status', 'active')
             ->firstOrFail();
 
         // Return the specific view for the subdivision
