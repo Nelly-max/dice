@@ -5,11 +5,21 @@
             <h6>Home</h6>
         </a>
     </div>
-    <div class="activator rider">
-        <button id="riderOnlineBtn">
-            Loading...
-        </button>
-    </div>
+    @php
+        $hasRiderAccount = \App\Models\Customer\Rider::where(
+            'customer_id',
+            auth('customer')->id()
+        )->exists();
+    @endphp
+
+    @if($hasRiderAccount)
+        <div class="activator rider">
+            <button id="riderOnlineBtn">
+                Loading...
+            </button>
+        </div>
+    @endif
+    
     <div class="right">
         <h5>Welcome</h5>
         <h4>{{ auth('customer')->user()?->name ?? 'Welcome' }}</h4>
