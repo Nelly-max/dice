@@ -49,78 +49,110 @@ class AuthController extends Controller
      */
 
 
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
-            'phone_number' => ['required', 'string', 'max:20'],
-            'gender'       => ['nullable', 'string', 'in:male,female'],
-            'password'     => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
 
-        try {
-            $customer = DB::connection('customer')->transaction(function () use ($validated) {
-                $now = now();
+public function register(Request $request)
+{
+    $validated = $request->validate([
+        'name'         => ['required', 'string', 'max:255'],
+        'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
+        'phone_number' => ['required', 'string', 'max:20'],
+        'gender'       => ['nullable', 'string', 'in:male,female'],
+        'password'     => ['required', 'string', 'min:8', 'confirmed'],
+    ]);
 
-                // Year continuity: 2026 = 1, 2027 = 2, etc.
-                $yearCode = $now->year - 2025;
+    try {
+        $customer = DB::connection('customer')->transaction(function () use ($validated) {
+            $connection = DB::connection('customer');
+            $now = now();
 
-                // Month representation letters.
-                $monthCodes = [
-                    1  => 'S', // January
-                    2  => 'Q', // February
-                    3  => 'R', // March
-                    4  => 'H', // April
-                    5  => 'T', // May
-                    6  => 'U', // June
-                    7  => 'V', // July
-                    8  => 'W', // August
-                    9  => 'X', // September
-                    10 => 'N', // October
-                    11 => 'Y', // November
-                    12 => 'P', // December
-                ];
+            // Year code: 2026 = 01, 2027 = 02, etc.
+            $yearCode = str_pad($now->year - 2025, 2, '0', STR_PAD_LEFT);
 
-                $monthCode = $monthCodes[$now->month];
+            // Month representation letters.
+            $monthCodes = [
+                1  => 'S', // January
+                2  => 'Q', // February
+                3  => 'R', // March
+                4  => 'H', // April
+                5  => 'T', // May
+                6  => 'U', // June
+                7  => 'V', // July
+                8  => 'W', // August
+                9  => 'X', // September
+                10 => 'N', // October
+                11 => 'Y', // November
+                12 => 'P', // December
+            ];
 
-                // Count registrations for the current month and year.
-                $monthlyCount = CustomerAccount::whereYear('created_at', $now->year)
-                    ->whereMonth('created_at', $now->month)
-                    ->lockForUpdate()
-                    ->count();
+            $monthCode = $monthCodes[$now->month];
 
-                $sequence = str_pad($monthlyCount + 1, 3, '0', STR_PAD_LEFT);
-
-                // Example: 1001N
-                $account = $yearCode . $sequence . $monthCode;
-
-                return CustomerAccount::create([
-                    'account'      => $account,
-                    'name'         => $validated['name'],
-                    'email'        => $validated['email'],
-                    'phone_number' => $validated['phone_number'],
-                    'gender'       => $validated['gender'] ?? null,
-                    'password'     => Hash::make($validated['password']),
-                    'status'       => 'active',
-                ]);
-            });
-
-            return redirect()->route('login')
-                ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
-
-        } catch (Exception $e) {
-            Log::error('Customer registration failed', [
-                'error' => $e->getMessage(),
+            // Create the monthly counter if it does not exist.
+            $connection->table('account_monthly_counter')->insertOrIgnore([
+                'year'          => $now->year,
+                'month'         => $now->month,
+                'last_sequence' => 0,
+                'created_at'    => $now,
+                'updated_at'    => $now,
             ]);
 
-            return back()
-                ->withInput($request->except('password', 'password_confirmation'))
-                ->withErrors([
-                    'error' => 'Account registration failed. Please try again.',
+            // Lock this month's counter row.
+            $counter = $connection->table('account_monthly_counter')
+                ->where('year', $now->year)
+                ->where('month', $now->month)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$counter) {
+                throw new \RuntimeException('Unable to retrieve monthly account counter.');
+            }
+
+            $sequence = $counter->last_sequence + 1;
+
+            if ($sequence > 999) {
+                throw new \RuntimeException('Monthly account registration limit reached.');
+            }
+
+            // Increment the counter inside the transaction.
+            $connection->table('account_monthly_counter')
+                ->where('id', $counter->id)
+                ->update([
+                    'last_sequence' => $sequence,
+                    'updated_at'    => $now,
                 ]);
-        }
+
+            // Format: S001A02
+            $account = $monthCode
+                . str_pad($sequence, 3, '0', STR_PAD_LEFT)
+                . 'A'
+                . $yearCode;
+
+            return CustomerAccount::create([
+                'account'      => $account,
+                'name'         => $validated['name'],
+                'email'        => $validated['email'],
+                'phone_number' => $validated['phone_number'],
+                'gender'       => $validated['gender'] ?? null,
+                'password'     => Hash::make($validated['password']),
+                'status'       => 'active',
+            ]);
+        });
+
+        return redirect()->route('login')
+            ->with('success', "Account created successfully! Your Account Number is: {$customer->account}");
+
+    } catch (\Exception $e) {
+        Log::error('Customer registration failed', [
+            'error' => $e->getMessage(),
+        ]);
+
+        return back()
+            ->withInput($request->except('password', 'password_confirmation'))
+            ->withErrors([
+                'error' => 'Account registration failed. Please try again.',
+            ]);
     }
+}
+
 
     /**
      * Handle an incoming customer authentication attempt.
