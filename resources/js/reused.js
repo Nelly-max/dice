@@ -1,3 +1,6 @@
+import './notify.js';
+import './share.js';
+import './upload-shrink.js';
 
 
 
@@ -88,28 +91,46 @@ const light = document.querySelector('.light');
 const dark = document.querySelector('.dark');
 const body = document.body;
 
-let getMode = localStorage.getItem("mode");
+/*
+ | Theme: follows the device (prefers-color-scheme) until the visitor picks
+ | Light or Dark in Settings; that choice is saved as localStorage "mode".
+ | "Use device theme" in Settings clears it again. partials/theme-init applies
+ | the same rule before the page paints, so there is no light flash.
+ */
+const systemDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const readMode = () => { try { return localStorage.getItem('mode'); } catch (e) { return null; } };
+const writeMode = (value) => { try { value ? localStorage.setItem('mode', value) : localStorage.removeItem('mode'); } catch (e) { /* private mode */ } };
 
-if (getMode && getMode === "dark") {
-  body.classList.add("dark-mode");
-//   h5Text.textContent = "Light Mode";
-} else {
-//   h5Text.textContent = "Dark Mode";
+function applyTheme() {
+  const mode = readMode();
+  const isDark = mode === 'dark' || (mode !== 'light' && !!systemDark && systemDark.matches);
+  body.classList.toggle('dark-mode', isDark);
+  if (h5Text) h5Text.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  document.querySelectorAll('[data-theme-system]').forEach((el) => {
+    el.classList.toggle('active', mode !== 'dark' && mode !== 'light');
+  });
 }
 
-console.log(getMode);
+applyTheme();
+
+// device switched between light and dark: follow it unless a choice was made in Settings
+if (systemDark) {
+  const onSystemChange = () => { if (readMode() !== 'dark' && readMode() !== 'light') applyTheme(); };
+  systemDark.addEventListener ? systemDark.addEventListener('change', onSystemChange) : systemDark.addListener(onSystemChange);
+}
 
 themeBtns.forEach((themeBtn) => {
   themeBtn.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
-    h5Text.classList.toggle('dark-mode');
-    if (!body.classList.contains("dark-mode")) {
-      h5Text.textContent = "Dark Mode";
-      return localStorage.setItem("mode", "light");
-    }
+    writeMode(body.classList.contains('dark-mode') ? 'light' : 'dark');
+    applyTheme();
+  });
+});
 
-    h5Text.textContent = "Light Mode";
-    return localStorage.setItem("mode", "dark");
+document.querySelectorAll('[data-theme-system]').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    writeMode(null);
+    applyTheme();
   });
 });
 
@@ -683,6 +704,7 @@ document.addEventListener('DOMContentLoaded', function () {
  document.addEventListener("DOMContentLoaded", function () {
       const photoSlider = document.getElementById("imageSlider"); // the section.photo-grid
       const counter = document.getElementById("photoCounter");
+      if (!photoSlider || !counter) return;
       const images = photoSlider.querySelectorAll("a");
       const total = images.length;
 
@@ -1022,7 +1044,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const originalCards = [...track.querySelectorAll(".card-data")];
         if (!originalCards.length) return;
 
-        const itemSpacing = 6, padding = 6, minWidth = 160;
+        // Spacing and minimum card width can be set per slider: data-gap, data-pad, data-min,
+        // and for phones (< 600px wide) data-gap-sm, data-min-sm. Phones always show at least two cards.
+        const gapWide = Number(sliderWrapper.dataset.gap ?? 6),
+              gapSmall = Number(sliderWrapper.dataset.gapSm ?? 8),
+              padding = Number(sliderWrapper.dataset.pad ?? 6),
+              minWide = Number(sliderWrapper.dataset.min ?? 160),
+              minSmall = Number(sliderWrapper.dataset.minSm ?? 130);
+        let itemSpacing = gapWide, minWidth = minWide;
         let cardWidth = minWidth, cardPerView = 1;
         let timeoutId = null, isDragging = false, isTouchHolding = false;
         let startX, startScrollLeft;
@@ -1031,11 +1060,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const width = sliderWrapper.offsetWidth;
             if (!width) return;
 
-            cardPerView = Math.floor((width - padding * 2) / minWidth) || 2;
+            const small = width < 600;
+            itemSpacing = small ? gapSmall : gapWide;
+            minWidth = small ? minSmall : minWide;
+            cardPerView = Math.max(2, Math.floor((width - padding * 2 + itemSpacing) / (minWidth + itemSpacing)));
             cardWidth = (width - padding * 2 - itemSpacing * (cardPerView - 1)) / cardPerView;
 
             track.querySelectorAll(".card-data").forEach(card => {
                 card.style.width = `${cardWidth}px`;
+                card.style.flex = `0 0 ${cardWidth}px`;    // CSS has an 11rem fallback basis
                 card.style.marginRight = `${itemSpacing}px`;
                 card.style.flexShrink = "0";
             });
@@ -1078,7 +1111,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const dragging = e => {
-            if (isDragging) {
+            // touch screens scroll the row natively; moving it here as well made swipes jumpy
+            if (isDragging && !isTouchHolding) {
                 track.scrollLeft = startScrollLeft - (getPageX(e) - startX);
             }
         };
@@ -1134,5 +1168,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 const today = new Date().toISOString().split('T')[0];
-    document.getElementById('datePicker').setAttribute('min', today);
+    document.getElementById('datePicker')?.setAttribute('min', today);
 

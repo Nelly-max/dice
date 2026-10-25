@@ -43,6 +43,17 @@ use App\Models\Customer\Cart;
     Route::get('/setting', fn () => view('setting'))
         ->name('setting');
 
+    // Every subdivision in one list (the "Products" tab)
+    Route::get('/products', [SubdivisionsController::class, 'products'])
+        ->name('products');
+
+    // Shareable information pages: /about, /help, /contact, /terms, /privacy-policy
+    // (list in config/smartmarket.php). Constrained to those slugs, so it never
+    // catches a subdivision weblink.
+    Route::get('/{page}', [\App\Http\Controllers\Web\PageController::class, 'show'])
+        ->whereIn('page', array_keys(config('smartmarket.pages', [])))
+        ->name('page');
+
     Route::get('/account/login', [AuthController::class, 'showLoginForm'])
         ->name('login');
 
@@ -283,6 +294,9 @@ use App\Models\Customer\Cart;
         Route::get('/product/viewItem', fn () => view('HomeMarket.products.viewItem'))
             ->name('items.view');
 
+        Route::get('/search', [ItemsController::class, 'search'])
+            ->name('homemarket.search');
+
         Route::get('/product/viewItem/{inventoryId}', [ItemsController::class, 'ViewItem'])
             ->name('item.view');
     });
@@ -382,13 +396,13 @@ use App\Models\Customer\Cart;
 
 
             Route::get('/team/rider-application', [RiderController::class, 'riderApplication'])
-                ->name('account.rider-application');
+                ->name('account.rider.application');
 
             Route::post('/rider-application/apply', [RiderController::class, 'apply'])
-                ->name('account.rider-application.apply');
+                ->name('account.rider.apply');
 
             Route::get('/team/rider-application/view', [RiderController::class, 'viewApplication'])
-                ->name('account.view-application');
+                ->name('account.rider.view');
 
             /*
             |--------------------------------------------------------------------------

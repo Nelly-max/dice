@@ -16,6 +16,8 @@
                 {{-- Shortcuts --}}
                 <div class="shortcuts">
 
+                    @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'shortcut'])
+
                     <a
                         href="{{ route('hub.account.marketer.edit') }}"
                         class="shortcut"
@@ -43,9 +45,15 @@
 
                 <span>
                     <h4>Referral Link</h4>
-                    <a href="{{ Str::startsWith($marketer->url_link ?? '', ['http://', 'https://']) ? $marketer->url_link : 'https://' . $marketer->url_link }}"
+                    @php $refUrl = Str::startsWith($marketer->url_link ?? '', ['http://', 'https://']) ? $marketer->url_link : 'https://' . $marketer->url_link; @endphp
+                    {{-- tap: share sheet (WhatsApp, Instagram, TikTok, … copy link) with an "Open link" option --}}
+                    <a href="{{ $refUrl }}"
                     target="_blank"
-                    rel="noopener noreferrer">
+                    rel="noopener noreferrer"
+                    data-share data-share-open
+                    data-share-title="Join Smart Market"
+                    data-share-text="Register your business on Smart Market with my referral link"
+                    data-share-url="{{ $refUrl }}">
                         {{ $marketer->url_link ?: '-' }}
                     </a>
                 </span>
@@ -116,6 +124,12 @@
         {{-- No Marketer Account --}}
         <div class="no-account">
 
+            {{-- back to where they came from (My account if there is no history) --}}
+            <a href="{{ route('hub.account.index') }}" class="no-account-back"
+               onclick="if (history.length > 1) { history.back(); return false; }">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+            </a>
+
             <h3>Team</h3>
 
             <p>HUB \ MARKETER</p>
@@ -128,7 +142,7 @@
             <h2>You do not have a marketer account!</h2>
 
             <p>
-                click the link below to create a marketer team account
+                Click the link below to create a marketer team account
             </p>
 
             <a

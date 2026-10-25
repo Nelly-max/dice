@@ -7,9 +7,17 @@
             <div class="main-forms">
                 <div class="main-form login">
                     <span class="title">Log In</span>
+                    <p class="subtitle">Welcome back. Sign in to keep shopping.</p>
 
-                    <form action="{{ route('account.login') }}" method="POST">
+                    <form action="{{ route('account.login') }}" method="POST" data-notify-loading="Signing you in…">
                         @csrf
+
+                        {{-- e.g. "Account created successfully! Your Account Number is ..." --}}
+                        @if(session('success'))
+                            <div class="form-success">
+                                {{ session('success') }}
+                            </div>
+                        @endif
 
                         {{-- Login Error Messages --}}
                         @if(session('login_error'))
@@ -32,9 +40,9 @@
                                 placeholder="Enter Account / Email"
                                 value="{{ old('login_email') }}"
                                 class="@error('login_email') is-invalid @enderror"
-                                autocomplete="account"
+                                autocomplete="username"
                             >
-                            <i class="uil uil-user"></i>
+                            <i class="fa-regular fa-user icon"></i>
                         </div>
 
                         {{-- Password --}}
@@ -46,8 +54,8 @@
                                 placeholder="Password"
                                 autocomplete="current-password"
                             >
-                            <i class="uil uil-lock icon"></i>
-                            <i class="uil uil-eye-slash showHidePw"></i>
+                            <i class="fa-solid fa-lock icon"></i>
+                            <i class="fa-regular fa-eye-slash showHidePw"></i>
                         </div>
 
                         {{-- Remember Me / Forgot Password --}}

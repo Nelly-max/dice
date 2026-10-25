@@ -174,7 +174,7 @@ public function updateRider(Request $request)
     |--------------------------------------------------------------------------
     */
     return redirect()
-        ->route('Hub.account.rider')
+        ->route('hub.account.rider.index')
         ->with('success', 'Rider details updated successfully.');
 }
 
@@ -266,6 +266,16 @@ public function updateRider(Request $request)
 
     public function apply(Request $request)
     {
+        // one rider account per customer
+        $existing = Rider::where('customer_id', Auth::guard('customer')->id())->first();
+        if ($existing) {
+            return redirect()
+                ->route('hub.account.rider.index')
+                ->with('info', 'You already have a rider account.');
+        }
+
+        // photos: up to 5 MB each (the form also shrinks them in the browser before sending)
+        $photo = 'image|mimes:jpg,jpeg,png,webp|max:5120';
 
         $validated = $request->validate([
 
@@ -296,18 +306,32 @@ public function updateRider(Request $request)
 
 
             // Documents
-            'passport_photo' => 'nullable|image|max:2048',
-            'id_front_photo' => 'required|image|max:2048',
-            'id_back_photo' => 'required|image|max:2048',
-            'license_photo' => 'nullable|image|max:2048',
+            'passport_photo' => 'nullable|' . $photo,
+            'id_front_photo' => 'required|' . $photo,
+            'id_back_photo' => 'required|' . $photo,
+            'license_photo' => 'nullable|' . $photo,
 
 
             // Vehicle images
-            'front_photo' => 'required|image|max:2048',
-            'side_photo' => 'required|image|max:2048',
-            'back_photo' => 'required|image|max:2048',
-            'logbook_photo' => 'nullable|image|max:2048',
+            'front_photo' => 'required|' . $photo,
+            'side_photo' => 'required|' . $photo,
+            'back_photo' => 'required|' . $photo,
+            'logbook_photo' => 'nullable|' . $photo,
 
+        ], [
+            '*.uploaded' => 'The :attribute could not be uploaded. Please choose a smaller photo (under 5 MB).',
+            '*.max'      => 'The :attribute must be under 5 MB.',
+            '*.mimes'    => 'The :attribute must be a JPG, PNG or WebP photo.',
+            '*.image'    => 'The :attribute must be a photo (JPG, PNG or WebP).',
+        ], [
+            'county_id'      => 'county',
+            'town_id'        => 'town',
+            'id_front_photo' => 'ID front photo',
+            'id_back_photo'  => 'ID back photo',
+            'front_photo'    => 'vehicle front photo',
+            'side_photo'     => 'vehicle side photo',
+            'back_photo'     => 'vehicle back photo',
+            'mpesa_number'   => 'M-Pesa number',
         ]);
 
 
@@ -693,10 +717,10 @@ public function updateRider(Request $request)
 
 
         return redirect()
-            ->back()
+            ->route('hub.account.rider.index')
             ->with(
                 'success',
-                'Your rider application has been submitted successfully.'
+                'Your rider application has been submitted. We will review it shortly.'
             );
 
     }

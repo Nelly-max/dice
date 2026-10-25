@@ -148,6 +148,48 @@ function updateProductDisplay() {
 
 /* ------------------ Product Page: Add to Cart ------------------ */
 
+/* ------------------ "Start a new cart?" prompt ------------------ */
+/**
+ * Resolves true when the buyer agrees to replace the items in their cart
+ * with the new item's shop. Uses the shared #switchShopSheet markup
+ * (resources/views/partials/switch-shop-sheet.blade.php).
+ */
+function confirmReplaceCart(info) {
+    const sheet = document.getElementById('switchShopSheet');
+
+    if (!sheet) {
+        return Promise.resolve(
+            window.confirm('Your cart has items from another shop. Replace them with this item?')
+        );
+    }
+
+    sheet.querySelector('#switchShopCurrent').textContent = info.current_shop || 'Another shop';
+    sheet.querySelector('#switchShopNew').textContent = info.new_shop || 'This shop';
+    sheet.hidden = false;
+
+    return new Promise((resolve) => {
+        const finish = (answer) => {
+            sheet.hidden = true;
+            sheet.removeEventListener('click', onClick);
+            document.removeEventListener('keydown', onKey);
+            resolve(answer);
+        };
+
+        const onClick = (e) => {
+            const choice = e.target.closest('[data-switch-shop]')?.dataset.switchShop;
+            if (choice) finish(choice === 'replace');
+        };
+
+        const onKey = (e) => {
+            if (e.key === 'Escape') finish(false);
+        };
+
+        sheet.addEventListener('click', onClick);
+        document.addEventListener('keydown', onKey);
+        sheet.querySelector('.primary').focus();
+    });
+}
+
 /* ------------------ Shared Add to Cart ------------------ */
 function setupCart(csrfToken) {
 
@@ -321,106 +363,125 @@ function setupCart(csrfToken) {
 
             /*
              * =====================================================
-             * LOADING STATE
+             * ADD TO CART
              * =====================================================
+             *
+             * The server decides whether the item may be added and answers
+             * with a `code` when it may not:
+             *
+             *   location_required  -> open the delivery location picker
+             *   out_of_range       -> shop is beyond the maximum radius
+             *   different_shop     -> offer to start a new cart
              */
 
             const originalHTML = orderBtn.innerHTML;
 
-            orderBtn.innerHTML =
-                '<i class="fas fa-spinner fa-spin"></i>' +
-                (orderBtn.tagName === 'H4' ? ' Adding...' : '');
+            const setLoading = (loading) => {
+                orderBtn.innerHTML = loading
+                    ? '<i class="fas fa-spinner fa-spin"></i>' +
+                      (orderBtn.tagName === 'H4' ? ' Adding...' : '')
+                    : originalHTML;
 
-            orderBtn.style.pointerEvents = 'none';
+                orderBtn.style.pointerEvents = loading ? 'none' : 'auto';
+            };
 
+            let pending = null;
 
-            /*
-             * =====================================================
-             * ADD TO CART
-             * =====================================================
-             */
+            const send = async (extra = {}) => {
+                setLoading(true);
+                if (!pending && window.notify) pending = window.notify.loading('Adding to cart…');
 
-            fetch('/cart/add', {
-                method: 'POST',
+                try {
+                    const response = await fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({ ...productData, ...extra })
+                    });
 
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-
-                body: JSON.stringify(productData)
-            })
-
-            .then(response => {
-
-                if (!response.ok) {
-                    throw new Error(
-                        `Cart request failed: ${response.status}`
-                    );
+                    // 422 responses carry a JSON body we need to read
+                    return await response.json();
+                } finally {
+                    setLoading(false);
                 }
+            };
 
-                return response.json();
-            })
+            (async () => {
+                try {
+                    let result = await send();
 
-            .then(data => {
+                    if (result.code === 'different_shop') {
+                        pending?.close(); pending = null;
+                        if (!(await confirmReplaceCart(result))) return;
 
-                if (data.success) {
-
-                    showNotification(
-                        '✓ Added to cart!',
-                        'success'
-                    );
-
-                    /*
-                     * Update cart counter.
-                     */
-                    if (data.cart_count !== undefined) {
-                        updateCartCount(data.cart_count);
+                        result = await send({ replace_cart: true });
                     }
 
-                    /*
-                     * Reset product-page quantity after successful
-                     * addition.
-                     */
-                    window.currentQuantity = 1;
+                    if (result.success) {
+                        const label = baseProduct.product_name;
+                        const msg = label ? `${label} was added to your cart.` : 'Item added to your cart.';
+                        if (pending) { pending.success(msg, { title: 'Added to cart' }); pending = null; }
+                        else showNotification(msg, 'success', { title: 'Added to cart' });
 
-                    if (qtyInput) {
-                        qtyInput.value = 1;
+                        if (result.cart_count !== undefined) {
+                            updateCartCount(result.cart_count);
+                        }
+
+                        // Reset product-page quantity after a successful add.
+                        window.currentQuantity = 1;
+                        if (qtyInput) qtyInput.value = 1;
+
+                        // Added from "Popular picks" under an empty cart: show the cart with the item.
+                        if (document.querySelector('.fl-page .empty-cart')) {
+                            setTimeout(() => {
+                                if (window.softNavigate) window.softNavigate(location.href, { replace: true });
+                                else location.reload();
+                            }, 700);
+                        }
+
+                        return;
                     }
 
-                } else {
+                    const failMsg = result.message || 'Failed to add item to cart';
+                    if (pending) { pending.error(failMsg, { title: 'Not added' }); pending = null; }
+                    else showNotification(failMsg, 'error', { title: 'Not added' });
 
-                    showNotification(
-                        data.message || 'Failed to add item to cart',
-                        'error'
-                    );
+                    if (result.code === 'location_required' && window.showModal) {
+                        window.showModal('mapModal');
+                    }
+                } catch (err) {
+                    console.error('Add to cart error:', err);
+                    const netMsg = 'Check your connection and try again.';
+                    if (pending) { pending.error(netMsg, { title: 'Network error' }); pending = null; }
+                    else showNotification(netMsg, 'error', { title: 'Network error' });
                 }
-            })
-
-            .catch(err => {
-
-                console.error('Add to cart error:', err);
-
-                showNotification(
-                    'Network error',
-                    'error'
-                );
-            })
-
-            .finally(() => {
-
-                /*
-                 * Restore the original button/icon.
-                 */
-                orderBtn.innerHTML = originalHTML;
-                orderBtn.style.pointerEvents = 'auto';
-            });
+            })();
 
         });
 
     });
 }
+
+/* ------------------ Product page: - / + next to Add to cart ------------------ */
+// The product page uses .dec / .inc around input.quantity-val. Delegated, so it also
+// works after a soft navigation. Keeps window.currentQuantity in step, which the
+// add-to-cart code reads.
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('.pdp .btns .dec, .pdp .btns .inc');
+    if (!btn) return;
+    const input = btn.closest('.btns')?.querySelector('.quantity-val');
+    if (!input) return;
+    const min = parseInt(input.min, 10) || 1;
+    const max = parseInt(input.max, 10) || 999;
+    let qty = parseInt(input.value, 10) || min;
+    qty = btn.classList.contains('inc') ? Math.min(max, qty + 1) : Math.max(min, qty - 1);
+    input.value = qty;
+    window.currentQuantity = qty;
+    btn.closest('.btns').querySelector('.dec')?.toggleAttribute('disabled', qty <= min);
+});
 
 /* ------------------ Product Page: Quantity Controls ------------------ */
 function setupQuantityControls() {
@@ -596,51 +657,35 @@ function updateCartItem(itemId, action, form) {
 }
 
 /* ------------------ Notifications ------------------ */
-function showNotification(message, type = 'success') {
-    const oldNotification = document.getElementById('cart-notification');
-    if (oldNotification) oldNotification.remove();
+// Uses the site-wide toasts (resources/js/notify.js); falls back to a plain box.
+function showNotification(message, type = 'success', opts = {}) {
+    if (window.notify) return window.notify(String(message).replace(/^✓\s*/, ''), type, opts);
 
-    const notification = document.createElement('div');
-    notification.id = 'cart-notification';
-    notification.style.cssText = `
-        position: fixed; top: 20px; right: 20px;
-        background: ${type==='success'?'#28a745':type==='error'?'#dc3545':'#007bff'};
-        color: white; padding: 15px 20px; border-radius: 5px;
-        display: flex; align-items: center; gap: 10px; z-index: 9999;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideIn 0.3s ease;
-    `;
-    notification.innerHTML = `
-        <i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i>
-        <span>${message}</span>
-    `;
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn { from {transform: translateX(100%); opacity:0;} to {transform: translateX(0); opacity:1;} }
-    `;
-    document.head.appendChild(style);
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(()=>{notification.remove(); style.remove();}, 300);
-    }, 3000);
+    const old = document.getElementById('cart-notification');
+    if (old) old.remove();
+    const box = document.createElement('div');
+    box.id = 'cart-notification';
+    box.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:14px 18px;border-radius:10px;color:#fff;' +
+        'background:' + (type === 'error' ? '#dc2626' : '#16a34a');
+    box.textContent = message;
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 3000);
 }
 
 /* ------------------ Cart Count ------------------ */
 function updateCartCount(count) {
-    const cartCountEl = document.querySelector('.cart-count');
-    
-    if (!cartCountEl) return;
-    
-    cartCountEl.textContent = count;
-    
-    if (count > 0) {
-        cartCountEl.style.display = 'flex';
-    } else {
-        cartCountEl.style.display = 'none';
-    }
-    
+    const counters = document.querySelectorAll('.cart-count');
+
+    // header badge and the mobile floating cart bar both carry .cart-count
+    counters.forEach(el => {
+        el.textContent = count;
+        el.style.display = count > 0 ? 'flex' : 'none';
+    });
+
+    document.querySelectorAll('[data-cart-bar]').forEach(bar => {
+        bar.hidden = !(count > 0);
+    });
+
     window.cartCount = count;
 }
 
@@ -1116,3 +1161,33 @@ document.addEventListener("DOMContentLoaded", () => {
 //         console.error("AJAX Calculation Request Failed:", error);
 //     });
 // }
+
+/*
+ | Product page: on phones the Add-to-cart bar is moved to the end of the page (<main class="pdp">)
+ | so it can stick to the bottom of the screen across the whole page and stop just above the
+ | footer. On wider screens it goes back into the product details column.
+ */
+(() => {
+    const phone = () => window.matchMedia('(max-width: 40rem)').matches;
+    const place = () => {
+        const page = document.querySelector('main.pdp');
+        const bar = page?.querySelector('.btns');
+        if (!bar) return;
+        if (!bar._home) {
+            bar._home = bar.parentNode;
+            bar._next = bar.nextSibling;
+        }
+        if (phone()) {
+            if (bar.parentNode !== page || bar !== page.lastElementChild) {
+                page.appendChild(bar);
+                bar.classList.add('btns--page');
+            }
+        } else if (bar.parentNode !== bar._home) {
+            bar._home.insertBefore(bar, bar._next && bar._next.parentNode === bar._home ? bar._next : null);
+            bar.classList.remove('btns--page');
+        }
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place);
+    else place();
+    window.addEventListener('resize', place);
+})();

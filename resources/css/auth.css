@@ -1,0 +1,213 @@
+/*
+ |--------------------------------------------------------------------------
+ | Account pages (login, register, password reset, OTP)
+ |--------------------------------------------------------------------------
+ | Layout: layouts/reg.blade.php (body.auth-page): a centred card in a green
+ | theme with the Nunito font. Only restyles the
+ | existing markup: form names, ids and the signup.js hooks
+ | (.password, .showHidePw, .digit-input, #otp ...) are unchanged.
+ */
+
+body.auth-page {
+    --auth-accent: #16a34a;
+    --auth-accent-dark: #15803d;
+    --auth-tint: #e8f7ee;
+    --auth-ring: rgba(22, 163, 74, .18);
+    --font-display: 'Nunito', system-ui, sans-serif;
+    --font-body: 'Nunito', system-ui, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #f2f8f4;
+    color: #14281c;
+    font-family: 'Nunito', system-ui, sans-serif;
+}
+
+body.auth-page * { font-family: inherit; }
+body.auth-page i[class*="fa-"] { font-family: "Font Awesome 6 Free"; }
+body.auth-page i.fa-regular { font-weight: 400; }
+body.auth-page i.fa-solid { font-weight: 900; }
+
+.auth-shell { min-height: 100vh; min-height: 100dvh; display: flex; }
+.auth-shell > .auth-panel { flex: 1; }
+
+/* ---------- form panel ---------- */
+.auth-panel { display: flex; align-items: center; justify-content: center; padding: 2rem 1.25rem; }
+
+/* undo the page wrapper/spacing from main.css inside the panel */
+body.auth-page .centered-forms { width: 100%; height: auto; margin: 0; display: flex; justify-content: center; }
+body.auth-page .centered-forms > .wrapper,
+body.auth-page .auth-panel .wrapper { position: static; top: 0; width: 100%; min-height: 0; margin: 0; padding: 0; }
+
+body.auth-page .centered-forms-container {
+    width: 100%;
+    max-width: 27rem;
+    margin: 0 auto;
+    background: var(--bg-white, #fff);
+    border: 0;
+    border-radius: 1.25rem;
+    box-shadow: 0 1px 2px rgba(34, 20, 13, .05), 0 18px 40px rgba(34, 20, 13, .08);
+}
+body.auth-page .centered-forms-container .main-forms { height: auto; overflow: visible; }
+body.auth-page .centered-forms-container .main-form {
+    width: 100%;
+    padding: 2rem 1.75rem 1.75rem;
+    border-radius: inherit;
+    background: transparent;
+}
+
+body.auth-page .main-form .title {
+    display: block;
+    font: 800 1.65rem/1.2 var(--font-display, inherit);
+    color: #14281c;
+}
+body.auth-page .main-form .title::before { display: none; }
+body.auth-page .main-form .subtitle { margin: .35rem 0 1.25rem; color: #5b6f63; font-size: .9rem; }
+
+/* messages */
+body.auth-page .form-error,
+body.auth-page .form-success {
+    display: flex;
+    gap: .5rem;
+    margin: 0 0 .75rem;
+    padding: .65rem .85rem;
+    border-radius: .7rem;
+    font-size: .85rem;
+    line-height: 1.4;
+}
+body.auth-page .form-error { background: #fdecea; color: #b42318; }
+body.auth-page .form-error::before { content: "\f06a"; font: 900 .9rem "Font Awesome 6 Free"; margin-top: .1rem; }
+body.auth-page .form-success { background: #e8f6ee; color: #1b5e3a; }
+
+/* fields */
+body.auth-page .main-form .input-field { position: relative; height: 3.1rem; margin-top: .8rem; }
+body.auth-page .input-field input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0 2.9rem 0 2.75rem;
+    border: 1px solid #d7e5dc;
+    border-radius: .8rem;
+    background: var(--surface, #fff);
+    color: #14281c;
+    font-size: .95rem;
+    letter-spacing: 0;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+body.auth-page .input-field input::placeholder { color: #7b8f83; opacity: .8; }
+body.auth-page .input-field input:is(:focus, :valid) { border-color: #d7e5dc; }
+body.auth-page .input-field input:focus { outline: 0; border-color: var(--auth-accent); box-shadow: 0 0 0 3px var(--auth-ring); }
+body.auth-page .input-field input.is-invalid { border-color: #d92d20; }
+
+body.auth-page .input-field i { position: absolute; top: 50%; transform: translateY(-50%); color: #7b8f83; font-size: 1rem; }
+body.auth-page .input-field i.icon { left: 1rem; }
+body.auth-page .input-field input:focus ~ i.icon,
+body.auth-page .input-field input:is(:focus, :valid) ~ i { color: #7b8f83; }
+body.auth-page .input-field input:focus ~ i.icon { color: var(--auth-accent); }
+body.auth-page .input-field i.showHidePw { right: .35rem; left: auto; padding: .75rem; cursor: pointer; }
+body.auth-page .input-field i.showHidePw:hover { color: #14281c; }
+
+/* gender choice as two pills */
+body.auth-page .main-form .input-radio { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin: .8rem 0 0; }
+body.auth-page .main-form .input-radio span { position: relative; display: block; }
+body.auth-page .main-form .input-radio input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+body.auth-page .main-form .input-radio label {
+    display: grid;
+    place-items: center;
+    height: 2.75rem;
+    border: 1px solid #d7e5dc;
+    border-radius: .8rem;
+    background: var(--surface, #fff);
+    color: #5b6f63;
+    font-weight: 600;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+body.auth-page .main-form .input-radio input:checked + label { border-color: var(--auth-accent); background: var(--auth-tint); color: var(--auth-accent-dark); }
+body.auth-page .main-form .input-radio input:focus-visible + label { box-shadow: 0 0 0 3px var(--auth-ring); }
+
+/* remember me / forgot / helper text */
+body.auth-page .main-form .checkbox-text { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-top: 1rem; }
+body.auth-page .checkbox-content { display: flex; align-items: center; gap: .45rem; }
+body.auth-page .checkbox-content input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--auth-accent); }
+body.auth-page .main-form .text { color: #5b6f63; font-size: .85rem; }
+body.auth-page .main-form a.text { color: var(--auth-accent); font-weight: 600; text-decoration: none; }
+body.auth-page .main-form a.text:hover { text-decoration: underline; }
+
+/* submit */
+body.auth-page .main-form .input-field.button { height: 3.1rem; margin-top: 1.4rem; }
+body.auth-page .main-form .button input {
+    padding: 0;
+    border: 0;
+    border-radius: .8rem;
+    background: var(--auth-accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    opacity: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(22, 163, 74, .25);
+    transition: background .15s ease, transform .1s ease;
+}
+body.auth-page .main-form .button input:hover { background: var(--auth-accent-dark); letter-spacing: .01em; }
+body.auth-page .main-form .button input:active { transform: translateY(1px); }
+
+body.auth-page .main-form .login-signup { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #d7e5dc; text-align: center; }
+
+/* OTP boxes */
+body.auth-page .digit-container { gap: .5rem; margin-top: .5rem; }
+body.auth-page .digit-input {
+    width: 2.75rem;
+    height: 3.25rem;
+    margin: 0;
+    border: 1px solid #d7e5dc;
+    border-radius: .7rem;
+    background: var(--surface, #fff);
+    color: #14281c;
+    font: 700 1.25rem var(--font-display, inherit);
+}
+body.auth-page .digit-input:focus { border-color: var(--auth-accent); box-shadow: 0 0 0 3px var(--auth-ring); }
+body.auth-page .digit-input.filled { border-color: var(--auth-accent); background: var(--auth-tint); }
+body.auth-page .digit-input:disabled { opacity: .55; }
+
+/* ---------- dark mode ---------- */
+body.auth-page.dark-mode .centered-forms-container { box-shadow: 0 18px 40px rgba(0, 0, 0, .5); }
+body.auth-page.dark-mode .input-field input:not([type="submit"]),
+body.auth-page.dark-mode .main-form .input-radio label,
+body.auth-page.dark-mode .digit-input { background: #121212; border-color: #333; color: #eee; }
+body.auth-page.dark-mode .main-form .input-radio input:checked + label { background: #12301f; color: #6ee7a0; }
+body.auth-page.dark-mode .form-error { background: #3a1714; color: #ffb4ab; }
+body.auth-page.dark-mode .form-success { background: #12301f; color: #9be2b6; }
+body.auth-page.dark-mode .main-form .login-signup { border-color: #333; }
+
+/* ---------- phones & tablets ---------- */
+@media (max-width: 600px) {
+    .auth-panel { align-items: flex-start; padding: 1.25rem .9rem 2rem; }
+    body.auth-page .centered-forms-container .main-form { padding: 1.5rem 1.25rem 1.25rem; }
+}
+@media (max-width: 380px) {
+    body.auth-page .digit-input { width: 2.35rem; height: 2.9rem; font-size: 1.1rem; }
+    body.auth-page .digit-container { gap: .35rem; }
+}
+
+/* dark mode base */
+body.auth-page.dark-mode { background: #000; color: #e7efe9; }
+body.auth-page.dark-mode .main-form .title { color: #f2f7f3; }
+body.auth-page.dark-mode .main-form .text, body.auth-page.dark-mode .main-form .subtitle { color: #a9bcb0; }
+body.auth-page.dark-mode .main-form a.text { color: #4ade80; }
+
+/* gender pills with icons */
+body.auth-page .main-form .input-radio label { display: flex; align-items: center; justify-content: center; gap: .5rem; }
+body.auth-page .main-form .input-radio label i { font-size: 1rem; }
+body.auth-page .main-form .input-radio label[for="genderMale"] i { color: #2563eb; }
+body.auth-page .main-form .input-radio label[for="genderFemale"] i { color: #db2777; }
+
+/* small label (date of birth) */
+body.auth-page .field-label { display: block; margin: .9rem 0 -.45rem .2rem; color: #5b6f63; font-size: .8rem; font-weight: 700; }
+body.auth-page .field-label span { font-weight: 500; color: #7b8f83; }
+body.auth-page .input-field input[type="date"] { padding-right: 1rem; color: #14281c; }
+body.auth-page .input-field input[type="date"]:invalid, body.auth-page .input-field input[type="date"]:placeholder-shown { color: #7b8f83; }
+body.auth-page.dark-mode .input-field input[type="date"] { color-scheme: dark; color: #eee; }

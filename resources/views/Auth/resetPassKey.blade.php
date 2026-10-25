@@ -8,9 +8,10 @@
             <div class="main-forms">
                 <div class="main-form login">
                     <span class="title">Enter OTP</span>
+                    <p class="subtitle">Check your email for the 6-character code.</p>
 
                     @if(session('success'))
-                        <div class="text">
+                        <div class="form-success">
                             {{ session('success') }}
                         </div>
                     @endif
@@ -18,11 +19,11 @@
 
                     @error('otp')
                         <div class="form-error" role="alert">
-                            **{{ $message }}**
+                            {{ $message }}
                         </div>
                     @enderror
 
-                    <form
+                    <form data-notify-loading="Checking your code…"
                         action="{{ route('otp.verify') }}"
                         method="POST"
                         id="otp-form"

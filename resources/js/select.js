@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let dataList = JSON.parse(select.dataset.options || "[]");
         const selectedId = select.dataset.selected;
+        const placeholder = selectBtn.innerText;      // e.g. "County", "Town", "Place"
 
         function renderOptions() {
             optionsList.innerHTML = "";
@@ -34,11 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
         function attachEvents() {
             optionsList.querySelectorAll("li").forEach(li => {
                 li.onclick = () => {
+                    const changed = hiddenInput.value !== li.dataset.id;
                     hiddenInput.value = li.dataset.id;
                     selectBtn.innerText = li.dataset.name;
                     select.classList.remove("active");
+                    if (searchInp) searchInp.value = "";
                     renderOptions();
-                    hiddenInput.dispatchEvent(new Event("change"));
+                    // picking the same option again must not reset the selects below it
+                    if (changed) hiddenInput.dispatchEvent(new Event("change"));
                 };
             });
         }
@@ -66,8 +70,24 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!select.contains(e.target)) select.classList.remove("active");
         });
 
-        select.updateData = function (newData) {
-            dataList = newData;
+        // new list of options; the current choice is cleared unless keep = true
+        select.updateData = function (newData, keep = false) {
+            dataList = Array.isArray(newData) ? newData : [];
+            if (!keep) {
+                hiddenInput.value = "";
+                selectBtn.innerText = placeholder;
+            }
+            if (searchInp) searchInp.value = "";
+            renderOptions();
+        };
+
+        // clear the choice (and optionally the options) and show the placeholder again
+        select.reset = function (clearOptions = true) {
+            if (clearOptions) dataList = [];
+            hiddenInput.value = "";
+            selectBtn.innerText = placeholder;
+            if (searchInp) searchInp.value = "";
+            select.classList.remove("active");
             renderOptions();
         };
 
@@ -87,19 +107,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const placeSelect = document.querySelector("#placeSelect");
     const placeInput = document.querySelector("#place_id");
 
+    // Changing the county clears the town and place; changing the town clears the place.
+    // Cleared straight away (before the new list arrives), and a slow older request can
+    // never overwrite a newer one.
+    let townReq = 0, placeReq = 0;
+
+    const load = async (url) => {
+        try {
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            return res.ok ? await res.json() : [];
+        } catch (e) {
+            return [];
+        }
+    };
+
     county?.addEventListener("change", async () => {
-        const res = await fetch(`/locations/towns/${county.value}`);
-        const data = await res.json();
-        townSelect.updateData(data);
-        townInput.value = "";
-        placeSelect.updateData([]);
-        placeInput.value = "";
+        const req = ++townReq;
+        placeReq++;                      // cancel any place list still loading
+        townSelect?.reset();
+        placeSelect?.reset();
+        if (!county.value) return;
+        const data = await load(`/locations/towns/${county.value}`);
+        if (req === townReq) townSelect?.updateData(data);
     });
 
     townInput?.addEventListener("change", async () => {
-        const res = await fetch(`/locations/places/${townInput.value}`);
-        const data = await res.json();
-        placeSelect.updateData(data);
-        placeInput.value = "";
+        const req = ++placeReq;
+        placeSelect?.reset();
+        if (!townInput.value) return;
+        const data = await load(`/locations/places/${townInput.value}`);
+        if (req === placeReq) placeSelect?.updateData(data);
     });
 });

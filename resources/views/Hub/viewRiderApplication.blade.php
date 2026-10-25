@@ -4,7 +4,7 @@
 
 <div class="hub-content no-sidebar fullground">
     <form
-        action="{{ route('hub.account.rider-application.apply') }}"
+        action="{{ route('hub.account.rider.apply') }}"
         method="POST"
         enctype="multipart/form-data"
         id="riderApplicationForm"

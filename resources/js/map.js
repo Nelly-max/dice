@@ -1,93 +1,176 @@
+/*
+ |--------------------------------------------------------------------------
+ | Delivery location picker (resources/views/modals/map.blade.php)
+ |--------------------------------------------------------------------------
+ | One screen: search (Google Places suggestions drop down over the map),
+ | "Use current location", the map with a centred pin, Confirm.
+ | The map opens on the last saved location, or Nairobi area by default.
+ */
+
 let map;
-let marker;
 let geocoder;
-let autocomplete;
+let placesService;      // AutocompleteService
+let sessionToken;
+let searchTimer;
+let lastQuery = '';
 
+const DEFAULT_CENTER = { lat: -1.392, lng: 36.764 };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mapsReady = () => !!(window.google && google.maps && google.maps.places);
+
+function savedCenter() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('delivery_location') || 'null');
+        const lat = Number(saved?.latitude), lng = Number(saved?.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+    } catch (e) { /* ignore */ }
+    return DEFAULT_CENTER;
+}
+
+/* called by modal.js every time the sheet opens */
 window.initDeliveryMap = function () {
+    const input = $('place-search');
+    if (!input) return;
 
-    if (map) {
-        google.maps.event.trigger(map, "resize");
-        return;
+    if (!input.dataset.bound) {
+        input.dataset.bound = '1';
+        input.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => suggest(input.value.trim()), 220);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $('loc-results')?.querySelector('.loc-result')?.click();
+            }
+            if (e.key === 'Escape' && !$('loc-drop')?.hidden) {
+                e.stopPropagation();
+                closeDrop();
+            }
+        });
+        $('loc-results')?.addEventListener('click', (e) => {
+            const row = e.target.closest('.loc-result');
+            if (row) pickPrediction(row.dataset.placeId, row.dataset.label);
+        });
+        // tapping elsewhere in the sheet closes the suggestions
+        $('mapModal')?.addEventListener('pointerdown', (e) => {
+            if (!e.target.closest('.loc-searchbox')) closeDrop();
+        });
     }
 
-    const center = {
-        lat: -1.392,
-        lng: 36.764
-    };
+    if (!mapsReady()) return;
+    if (!map) {
+        ensureMap(savedCenter());
+    } else {
+        google.maps.event.trigger(map, 'resize');
+    }
+};
 
-    map = new google.maps.Map(document.getElementById("map"), {
+function closeDrop() {
+    const drop = $('loc-drop');
+    if (drop) drop.hidden = true;
+}
+
+function renderResults(predictions, query) {
+    const list = $('loc-results');
+    const empty = $('loc-empty');
+    const drop = $('loc-drop');
+    if (!list) return;
+
+    list.innerHTML = predictions.map((p) => {
+        const main = p.structured_formatting?.main_text || p.description;
+        const rest = p.structured_formatting?.secondary_text || '';
+        return `<li><button type="button" class="loc-result" role="option" data-place-id="${esc(p.place_id)}" data-label="${esc(p.description)}">` +
+            `<i class="fa-solid fa-location-dot" aria-hidden="true"></i>` +
+            `<span><strong>${esc(main)}</strong>${rest ? `<small>${esc(rest)}</small>` : ''}</span></button></li>`;
+    }).join('');
+
+    if (empty) empty.hidden = !(query && !predictions.length);
+    if (drop) drop.hidden = !query;
+}
+
+function suggest(query) {
+    lastQuery = query;
+    if (!query) { renderResults([], ''); return; }
+    if (!mapsReady()) return;
+
+    placesService ||= new google.maps.places.AutocompleteService();
+    sessionToken ||= new google.maps.places.AutocompleteSessionToken();
+
+    placesService.getPlacePredictions(
+        { input: query, componentRestrictions: { country: 'ke' }, sessionToken },
+        (predictions, status) => {
+            if (query !== lastQuery) return;     // an older request finished late
+            const ok = status === google.maps.places.PlacesServiceStatus.OK;
+            renderResults(ok && predictions ? predictions.slice(0, 6) : [], query);
+        }
+    );
+}
+
+function ensureMap(center) {
+    if (map) return;
+    map = new google.maps.Map($('map'), {
         center,
-        zoom: 19,
+        zoom: 17,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-        clickableIcons: false
+        clickableIcons: false,
+        gestureHandling: 'greedy',
     });
+    geocoder ||= new google.maps.Geocoder();
+    map.addListener('idle', () => reverseGeocode(map.getCenter()));
+}
 
-    // marker = new google.maps.Marker({
-    //     map,
-    //     position: center,
-    //     draggable: true
-    // });
+/* centres the map on `location` (the pin stays in the middle) */
+function moveTo(location, label) {
+    if (label) $('selected-address').textContent = label;
+    ensureMap(location);
+    google.maps.event.trigger(map, 'resize');
+    map.setCenter(location);
+    map.setZoom(18);
+}
 
-    geocoder = new google.maps.Geocoder();
+function pickPrediction(placeId, label) {
+    if (!placeId || !mapsReady()) return;
+    geocoder ||= new google.maps.Geocoder();
+    sessionToken = null;   // a pick ends the autocomplete session
+    closeDrop();
+    const input = $('place-search');
+    if (input) { input.value = label || ''; input.blur(); }
+    geocoder.geocode({ placeId }, (results, status) => {
+        if (status !== 'OK' || !results?.length) {
+            window.notify?.error?.('We could not open that place. Try another one.');
+            return;
+        }
+        moveTo(results[0].geometry.location, label);
+    });
+}
 
-    const input = document.getElementById("place-search");
+/* "Use current location" */
+window.useCurrentLocation = function () {
+    if (!navigator.geolocation) {
+        window.notify?.error?.('Your browser cannot share your location. Search for your street instead.');
+        return;
+    }
+    if (!mapsReady()) return;
 
-    autocomplete = new google.maps.places.Autocomplete(input, {
-        componentRestrictions: {
-            country: "ke"
+    const finding = window.notify ? window.notify.loading('Finding your location…') : null;
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            finding?.close?.();
+            closeDrop();
+            moveTo(new google.maps.LatLng(position.coords.latitude, position.coords.longitude), 'Finding address…');
         },
-        fields: [
-            "geometry",
-            "place_id",
-            "name"
-        ]
-    });
-
-    autocomplete.bindTo("bounds", map);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Search
-    |--------------------------------------------------------------------------
-    */
-    autocomplete.addListener("place_changed", () => {
-
-        const place = autocomplete.getPlace();
-
-        // if (!place.geometry || !place.geometry.location) {
-        //     alert("Please select one of the suggested locations.");
-        //     return;
-        // }
-
-        map.panTo(place.geometry.location);
-        map.setZoom(19);
-
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Click map
-    |--------------------------------------------------------------------------
-    */
-    map.addListener("click", (event) => {
-        reverseGeocode(event.latLng);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Drag marker
-    |--------------------------------------------------------------------------
-    */
-    map.addListener("idle", () => {
-        const center = map.getCenter();
-        reverseGeocode(center);
-    });
-
-    // Load the initial location
-    reverseGeocode(marker.getPosition());
-
+        () => {
+            if (finding) finding.error('We could not read your location. Search for your street instead.');
+            $('place-search')?.focus();
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
 };
 
 /*
@@ -97,6 +180,8 @@ window.initDeliveryMap = function () {
 */
 
 function reverseGeocode(location) {
+
+    geocoder ||= new google.maps.Geocoder();
 
     geocoder.geocode({
         location
@@ -219,8 +304,6 @@ function buildAddress(result) {
 
 function updateLocation(location, address, moveMap = false) {
 
-    // marker.setPosition(location);
-
     if (moveMap) {
         map.panTo(location);
         map.setZoom(15);
@@ -233,17 +316,10 @@ function updateLocation(location, address, moveMap = false) {
     document.getElementById("longitude").value = lng;
     document.getElementById("delivery_address").value = address.full;
 
-    const search = document.getElementById("place-search");
-
-    if (search) {
-        search.value = address.full;
-    }
-
     const label = document.getElementById("selected-address");
 
     if (label) {
-        label.innerHTML =
-            `<i class="fa-solid fa-map-pin"></i> ${address.full}`;
+        label.textContent = address.full || "Unnamed place";
     }
 
     // Keep for saving later
@@ -258,8 +334,6 @@ function updateLocation(location, address, moveMap = false) {
         longitude: lng
     };
 
-    console.log(window.currentDeliveryLocation);
-
 }
 
 /*
@@ -271,7 +345,7 @@ function updateLocation(location, address, moveMap = false) {
 window.confirmDeliveryLocation = function () {
 
     if (!window.currentDeliveryLocation) {
-        alert("Please choose a delivery location.");
+        (window.notify ? window.notify.error : alert)("Please choose a delivery location.");
         return;
     }
 
@@ -287,7 +361,7 @@ window.confirmDeliveryLocation = function () {
         !Number.isFinite(latitude) ||
         !Number.isFinite(longitude)
     ) {
-        alert(
+        (window.notify ? window.notify.error : alert)(
             "The selected delivery location does not have valid coordinates."
         );
 
@@ -324,9 +398,11 @@ window.confirmDeliveryLocation = function () {
 
     if (!csrfToken) {
         console.error("CSRF token not found.");
-        alert("Unable to save delivery location.");
+        (window.notify ? window.notify.error : alert)("Unable to save delivery location.");
         return;
     }
+
+    const saving = window.notify ? window.notify.loading("Saving your delivery location…") : null;
 
     fetch("/delivery-location", {
         method: "POST",
@@ -362,6 +438,7 @@ window.confirmDeliveryLocation = function () {
         }
 
         closeModal();
+        saving?.success("Showing shops that deliver to you.", { title: "Location saved" });
 
         /*
         |--------------------------------------------------------------------------
@@ -376,9 +453,14 @@ window.confirmDeliveryLocation = function () {
         url.searchParams.delete("latitude");
         url.searchParams.delete("longitude");
 
-        window.location.replace(
-            url.pathname + url.search
-        );
+        // swap in the refreshed page (shops near you replace the "set location" banner)
+        // without a full reload; falls back to a normal reload
+        const target = url.pathname + url.search;
+        if (window.softNavigate) {
+            window.softNavigate(target, { replace: true });
+        } else {
+            window.location.replace(target);
+        }
     })
     .catch(error => {
 
@@ -387,9 +469,8 @@ window.confirmDeliveryLocation = function () {
             error
         );
 
-        alert(
-            "Unable to save your delivery location. Please try again."
-        );
+        if (saving) saving.error("Unable to save your delivery location. Please try again.");
+        else alert("Unable to save your delivery location. Please try again.");
     });
 };
 

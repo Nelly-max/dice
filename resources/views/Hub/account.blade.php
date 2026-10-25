@@ -57,7 +57,7 @@
 
                                 <i class="fa-solid fa-wallet"></i>
 
-                                <h4>Rider Payout</h4>
+                                <h4>Delivery Payout</h4>
 
                                 <h3>Ksh0</h3>
 
@@ -108,14 +108,16 @@
                         Rider
                     </a>
 
-                    <!-- <a
-                        href="{{ route('hub.account.finance') }}"
-                        class="shortcut"
-                        style="color: #9f6007; background: #fff0d7;"
-                    >
-                        <i class="fa-solid fa-coins"></i>
-                        Finance
-                    </a> -->
+                    @if ($hasRiderAccount || $hasMarketerAccount)
+                        <a
+                            href="{{ route('hub.account.finance') }}"
+                            class="shortcut"
+                            style="color: #9f6007; background: #fff0d7;"
+                        >
+                            <i class="fa-solid fa-coins"></i>
+                            Finance
+                        </a>
+                    @endif
 
                 </div>
 
@@ -136,19 +138,7 @@
                         <div></div>
                     </div>
 
-                    {{-- Success Message --}}
-                    @if (session('success'))
-                        <div class="success-message">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-
-                    {{-- General Error Message --}}
-                    @if (session('error'))
-                        <div class="error-message">
-                            {{ session('error') }}
-                        </div>
-                    @endif
+                    {{-- Success / error messages appear as toasts (partials/notify-flash) --}}
 
                     {{-- Account --}}
                     <span>

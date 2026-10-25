@@ -15,7 +15,9 @@ use App\Models\CookingGas\BusinessGasInventory;
 use App\Models\HomeMarket\RetailInventory;
 use App\Models\SubDivision; 
 
+use App\Services\DeliveryLocationService;
 use App\Services\ShipmentService;
+use App\Services\HomeMarket\ShopDiscovery;
 class CartController extends Controller
 {
 
@@ -259,11 +261,20 @@ protected ShipmentService $shipmentService;
         // =====================================================
         $total = collect($formattedShipments)->sum('subtotal');
 
+        // empty cart: premium-listing items from the subdivision the customer came from
+        $picks = $cartItems->isEmpty()
+            ? app(\App\Services\CartPicks::class)->forShopping(
+                session(\App\Http\Middleware\RememberShoppingSubdivision::KEY),
+                request()
+            )
+            : collect();
+
         return view('Cart.cart', [
             'cartItems' => $cartItems,
             'shipments' => $formattedShipments,
             'total' => $total,
-            'expired' => $expired
+            'expired' => $expired,
+            'picks' => $picks,
         ]);
     }
 
@@ -440,8 +451,11 @@ protected ShipmentService $shipmentService;
     }
 
     // Add to cart
-    public function addToCart(Request $request)
-{
+    public function addToCart(
+    Request $request,
+    DeliveryLocationService $locationService,
+    ShopDiscovery $shops
+) {
     DB::beginTransaction();
 
     try {
@@ -453,10 +467,33 @@ protected ShipmentService $shipmentService;
             'subdivision_code' => 'required|string',
             'quantity'         => 'required|integer|min:1|max:99',
             'shipment_type'    => 'nullable|string',
+            'replace_cart'     => 'nullable|boolean',
         ]);
 
         $userId = auth('customer')->id();
         $sessionId = $request->session()->getId();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delivery Location Required
+        |--------------------------------------------------------------------------
+        |
+        | Nothing can be added to the cart until the buyer has told us where
+        | the order is going. Enforced here, not only in the browser.
+        |
+        */
+
+        $location = $locationService->get($request);
+
+        if (!$location) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'code'    => 'location_required',
+                'message' => 'Please set your delivery location before adding items to your cart.',
+            ], 422);
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -545,26 +582,57 @@ protected ShipmentService $shipmentService;
 
         /*
         |--------------------------------------------------------------------------
+        | Shop Must Be Within Delivery Range
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $typeKey === 'retail_inventory' &&
+            !$shops->shopInRange(
+                $businessAccount,
+                $location['latitude'],
+                $location['longitude']
+            )
+        ) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'code'    => 'out_of_range',
+                'message' => 'This shop is more than '
+                    . (config('homemarket.max_radius_m') / 1000)
+                    . ' km from your delivery location.',
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Check Existing Cart Shop
         |--------------------------------------------------------------------------
         |
         | A customer's active cart can only contain items belonging
-        | to ONE business/shop.
+        | to ONE business/shop. The buyer may choose to start a new cart
+        | (replace_cart) instead.
         |
         */
 
-        $existingCartQuery = Cart::active();
-
-        if ($userId) {
-            $existingCartQuery->where('user_id', $userId);
-        } else {
-            $existingCartQuery->where('session_id', $sessionId);
-        }
-
-        $cartShop = $existingCartQuery
+        $cartShop = Cart::forCurrent()
             ->whereNotNull('business_account')
             ->select('business_account')
             ->first();
+
+        if (
+            $cartShop &&
+            $cartShop->business_account !== $businessAccount &&
+            $request->boolean('replace_cart')
+        ) {
+            $cartIds = Cart::forCurrent()->pluck('id');
+
+            ItemReservation::whereIn('cart_id', $cartIds)->delete();
+            Cart::whereIn('id', $cartIds)->delete();
+
+            $cartShop = null;
+        }
 
         if ($cartShop && $cartShop->business_account !== $businessAccount) {
 
@@ -660,16 +728,7 @@ protected ShipmentService $shipmentService;
         |--------------------------------------------------------------------------
         */
 
-        $existing = Cart::active()
-            ->where(function ($query) use ($userId, $sessionId) {
-
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-
-            })
+        $existing = Cart::forCurrent()
             ->where('stockable_id', $request->stockable_id)
             ->where('stockable_type', $typeKey)
             ->where('business_account', $businessAccount)
@@ -767,17 +826,7 @@ protected ShipmentService $shipmentService;
         |--------------------------------------------------------------------------
         */
 
-        $cartCount = Cart::active()
-            ->where(function ($query) use ($userId, $sessionId) {
-
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-
-            })
-            ->sum('quantity');
+        $cartCount = Cart::forCurrent()->sum('quantity');
 
         return response()->json([
             'success' => true,

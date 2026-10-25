@@ -251,11 +251,11 @@
 
             <div class="lister-contacts">
                 <button class="lister-contact">
-                    <i class="ri-phone-line"></i>
+                    <i class="fa-solid fa-phone"></i>
                     <h5>Call</h5>
                 </button>
                 <button class="lister-contact">
-                    <i class="ri-chat-1-line"></i>
+                    <i class="fa-regular fa-comment"></i>
                     <h5>Chat</h5>
                 </button>
             </div>

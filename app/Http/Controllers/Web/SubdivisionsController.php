@@ -20,7 +20,29 @@ class SubdivisionsController extends Controller
         return view('home', compact('majorDivisions'));
     }
 
-    public function handleWeblink($weblink)
+    /**
+     * "Products": every active subdivision on one page (no grouping).
+     */
+    public function products()
+    {
+        $majorDivisions = MajorDivision::whereHas('subDivisions', function ($query) {
+            $query->where('status', 'active');
+        })->with(['subDivisions' => function ($query) {
+            $query->where('status', 'active')->orderBy('name');
+        }])->get();
+
+        $subdivisions = $majorDivisions
+            ->flatMap(fn ($major) => $major->subDivisions->map(function ($sub) use ($major) {
+                $sub->division_name = $major->name;
+                return $sub;
+            }))
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        return view('products', compact('subdivisions', 'majorDivisions'));
+    }
+
+        public function handleWeblink($weblink)
     {
         // Find the subdivision by its weblink attribute
         $subdivision = Subdivision::where('weblink', $weblink)

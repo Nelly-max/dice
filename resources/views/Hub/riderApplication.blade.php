@@ -4,17 +4,18 @@
 
 <div class="hub-content no-sidebar fullground">
 
-    <form action="{{ route('hub.account.rider-application.apply') }}"
+    @include('partials.Hub.back', ['fallback' => route('hub.account.rider.index')])
+
+    {{-- photos are resized in the browser before sending (resources/js/upload-shrink.js) --}}
+    <form action="{{ route('hub.account.rider.apply') }}"
           method="POST"
-          enctype="multipart/form-data">
+          enctype="multipart/form-data"
+          data-shrink-images
+          data-notify-loading="Submitting your application…">
 
         @csrf
 
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
+        {{-- success message appears as a toast (partials/notify-flash) --}}
 
         @if ($errors->any())
             <div class="alert alert-danger">

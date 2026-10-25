@@ -7,14 +7,15 @@
             <div class="main-forms">
                 <div class="main-form login">
                     <span class="title">Registration</span>
+                    <p class="subtitle">Create an account to order from shops near you.</p>
 
-                    <form action="{{ route('account.register.create') }}" method="POST">
+                    <form action="{{ route('account.register.create') }}" method="POST" data-notify-loading="Creating your account…">
                         @csrf
 
                         {{-- General Error Messages --}}
                         @if(session('register_error'))
                             <div class="form-error">
-                                **{{ session('register_error') }}**
+                                {{ session('register_error') }}
                             </div>
                         @endif
 
@@ -22,7 +23,7 @@
 
                         {{-- Name --}}
                         @error('name')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         <div class="input-field">
                             <input
@@ -34,14 +35,14 @@
                                 class="@error('name') is-invalid @enderror"
                                 autocomplete="name"
                             >
-                            <i class="uil uil-house-user"></i>
+                            <i class="fa-regular fa-user icon"></i>
                         </div>
 
 
                         {{-- Email --}}
 
                         @error('email')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         <div class="input-field">
                             <input
@@ -52,14 +53,14 @@
                                 class="@error('email') is-invalid @enderror"
                                 autocomplete="email"
                             >
-                            <i class="uil uil-envelope icon"></i>
+                            <i class="fa-regular fa-envelope icon"></i>
                         </div>
 
 
                         {{-- Mobile Number --}}
 
                         @error('phone_number')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         <div class="input-field">
                             <input
@@ -70,11 +71,11 @@
                                 class="@error('phone_number') is-invalid @enderror"
                                 autocomplete="tel"
                             >
-                            <i class="uil uil-phone"></i>
+                            <i class="fa-solid fa-phone icon"></i>
                         </div>
 
                         @error('gender')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         {{-- Gender --}}
                         <div class="input-radio">
@@ -86,7 +87,7 @@
                                     value="male"
                                     {{ old('gender') === 'male' ? 'checked' : '' }}
                                 >
-                                <label for="genderMale">Male</label>
+                                <label for="genderMale"><i class="fa-solid fa-mars" aria-hidden="true"></i> Male</label>
                             </span>
 
                             <span>
@@ -97,12 +98,31 @@
                                     value="female"
                                     {{ old('gender') === 'female' ? 'checked' : '' }}
                                 >
-                                <label for="genderFemale">Female</label>
+                                <label for="genderFemale"><i class="fa-solid fa-venus" aria-hidden="true"></i> Female</label>
                             </span>
                         </div>
 
+                        {{-- Date of birth (optional) --}}
+                        @error('date_of_birth')
+                            <div class="form-error">{{ $message }}</div>
+                        @enderror
+                        <label class="field-label" for="dateOfBirth">Date of birth <span>(optional)</span></label>
+                        <div class="input-field">
+                            <input
+                                type="date"
+                                name="date_of_birth"
+                                id="dateOfBirth"
+                                value="{{ old('date_of_birth') }}"
+                                max="{{ now()->subYears(10)->toDateString() }}"
+                                min="1900-01-01"
+                                class="@error('date_of_birth') is-invalid @enderror"
+                                autocomplete="bday"
+                            >
+                            <i class="fa-regular fa-calendar icon"></i>
+                        </div>
+
                         @error('password')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         {{-- Password --}}
                         <div class="input-field">
@@ -113,12 +133,12 @@
                                 placeholder="Password"
                                 autocomplete="new-password"
                             >
-                            <i class="uil uil-lock icon"></i>
-                            <i class="uil uil-eye-slash showHidePw"></i>
+                            <i class="fa-solid fa-lock icon"></i>
+                            <i class="fa-regular fa-eye-slash showHidePw"></i>
                         </div>
 
                         @error('password_confirmation')
-                            <div class="form-error">**{{ $message }}**</div>
+                            <div class="form-error">{{ $message }}</div>
                         @enderror
                         {{-- Confirm Password --}}
                         <div class="input-field">
@@ -129,8 +149,8 @@
                                 placeholder="Confirm Password"
                                 autocomplete="new-password"
                             >
-                            <i class="uil uil-lock icon"></i>
-                            <i class="uil uil-eye-slash showHidePw"></i>
+                            <i class="fa-solid fa-lock icon"></i>
+                            <i class="fa-regular fa-eye-slash showHidePw"></i>
                         </div>
 
                         {{-- Laravel's confirmed validation error is attached to password --}}

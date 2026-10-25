@@ -2,12 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use App\Models\CookingGas\BusinessGasStock;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\SubdivisionBranding;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SubdivisionBranding::class);
     }
 
     /**
@@ -24,48 +22,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Simply ensure the variable exists so the nav doesn't crash on view-gas, etc.
-        // View::composer('CookingGas.partials.nav', function ($view) {
-        //     $view->with('cylinders', []);
-        // });
-
         Relation::morphMap(config('stockables', []));
 
+        // Logo and name of the current subdivision, shared with every view.
         View::composer('*', function ($view) {
-            try {
-                // Extracts exactly 'home-market' from the first browser URL block segment
-                $currentLink = Request::segment(1); 
+            $view->with(
+                app(SubdivisionBranding::class)->forSegment(request()->segment(1))
+            );
+        });
 
-                // Pull row using your precise connection credentials matrix
-                $subdivision = DB::connection('hub')
-                    ->table('sub_divisions') // Verify if this is 'subdivisions' or 'sub_divisions'
-                    ->where('weblink', $currentLink)
-                    ->select(['name', 'image_path'])
-                    ->first();
-
-                $baseMediaUrl = rtrim(env('MEDIA_URL', 'http://127.0.0.1:8000'), '/');
-
-                if ($subdivision && !empty($subdivision->image_path)) {
-                    //  Combines directly into: http://127.0.0
-                    // Use asset() if the files live locally in your current public directory track instead
-                    $logoUrl = $baseMediaUrl . '/' . ltrim($subdivision->image_path, '/');
-                    $subdivisionName = $subdivision->name;
-                } else {
-                    // Fallback baseline layout tracking if no string match is resolved
-                    $logoUrl = asset('img/logo/homemarket.png');
-                    $subdivisionName = 'Marketplace';
-                }
-
-            } catch (\Throwable $e) {
-                $logoUrl = asset('img/logo/homemarket.png');
-                $subdivisionName = 'Marketplace';
-            }
-
-            $view->with([
-                'logoUrl' => $logoUrl,
-                'subdivisionName' => $subdivisionName
-            ]);
+        // Cart, checkout and payment pages: branded after the subdivision the
+        // customer came from (see RememberShoppingSubdivision), or Smart Market.
+        View::composer(['layouts.flow', 'Cart.*', 'Orders.*', 'OrderPayment.*', 'Payment.*'], function ($view) {
+            $view->with('shopping', app(SubdivisionBranding::class)->shopping(
+                session(\App\Http\Middleware\RememberShoppingSubdivision::KEY)
+            ));
         });
     }
-
 }

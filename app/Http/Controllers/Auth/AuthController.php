@@ -28,20 +28,76 @@ class AuthController extends Controller
 
     public function showRegistrationForm(Request $request)
     {
-        if (!session()->has('url.intended')) {
-            session(['url.intended' => url()->previous()]);
-        }
+        $this->rememberReturnUrl($request);
 
         return view('Auth.register');
     }
 
     public function showLoginForm(Request $request)
     {
-        if (!session()->has('url.intended')) {
-            session(['url.intended' => url()->previous()]);
-        }
+        $this->rememberReturnUrl($request);
 
         return view('Auth.login');
+    }
+
+    /**
+     * Remember the page the customer came from so login sends them back there.
+     *
+     * Order of preference:
+     *  1. ?redirect=/some/page on the login/register link
+     *  2. a target set by the auth middleware (e.g. they opened checkout while logged out)
+     *  3. the page they were on (Referer), refreshed on every visit so an
+     *     abandoned login attempt does not send them somewhere old
+     * Auth pages, other sites and file URLs are never used.
+     */
+    private function rememberReturnUrl(Request $request): void
+    {
+        $explicit = $this->safeReturnUrl($request->query('redirect'), $request);
+
+        if ($explicit) {
+            session(['url.intended' => $explicit, 'url.intended_from_login' => true]);
+            return;
+        }
+
+        // set by the auth middleware, not by us: keep it
+        if (session()->has('url.intended') && !session('url.intended_from_login')) {
+            return;
+        }
+
+        $previous = $this->safeReturnUrl($request->headers->get('referer'), $request);
+
+        if ($previous) {
+            session(['url.intended' => $previous, 'url.intended_from_login' => true]);
+        }
+    }
+
+    private function safeReturnUrl(?string $url, Request $request): ?string
+    {
+        if (!is_string($url) || $url === '') {
+            return null;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false) {
+            return null;
+        }
+
+        // same site only
+        if (isset($parts['host']) && strcasecmp($parts['host'], $request->getHost()) !== 0) {
+            return null;
+        }
+
+        $path = '/' . ltrim($parts['path'] ?? '/', '/');
+
+        // never return to auth pages, background endpoints or files
+        if (preg_match('#^/(account/(login|register|logout|new-pass|password-reset|update-password)|password/|logout)#i', $path)
+            || preg_match('#^/(cart/count|delivery-location|broadcasting|storage|build)(/|$)#i', $path)
+            || preg_match('#\.(js|css|map|json|png|jpe?g|gif|svg|webp|ico|woff2?)$#i', $path)) {
+            return null;
+        }
+
+        return url($path . (isset($parts['query']) ? '?' . $parts['query'] : ''));
     }
 
     /**
@@ -57,7 +113,13 @@ public function register(Request $request)
         'email'        => ['required', 'string', 'email', 'max:255', 'unique:customer.customer_accounts,email'],
         'phone_number' => ['required', 'string', 'max:20'],
         'gender'       => ['nullable', 'string', 'in:male,female'],
+        // optional, but anyone giving a date of birth must be at least 10 years old
+        'date_of_birth' => ['nullable', 'date', 'after:1900-01-01', 'before_or_equal:' . now()->subYears(10)->toDateString()],
         'password'     => ['required', 'string', 'min:8', 'confirmed'],
+    ], [
+        'date_of_birth.before_or_equal' => 'You must be at least 10 years old to register.',
+        'date_of_birth.after'           => 'Please enter a valid date of birth.',
+        'date_of_birth.date'            => 'Please enter a valid date of birth.',
     ]);
 
     try {
@@ -132,6 +194,7 @@ public function register(Request $request)
                 'email'        => $validated['email'],
                 'phone_number' => $validated['phone_number'],
                 'gender'       => $validated['gender'] ?? null,
+                'date_of_birth' => $validated['date_of_birth'] ?? null,
                 'password'     => Hash::make($validated['password']),
                 'status'       => 'active',
             ]);
@@ -310,6 +373,9 @@ public function register(Request $request)
         |--------------------------------------------------------------------------
         */
 
+        // back to the page they came from (see rememberReturnUrl), otherwise home
+        $request->session()->forget('url.intended_from_login');
+
         return redirect()
             ->intended(route('home'))
             ->with('success', 'Welcome back, ' . $customer->name . '!');
@@ -328,8 +394,9 @@ public function register(Request $request)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')
-            ->with('success', 'You have been successfully logged out.');
+        // back to the Smart Market home page; the toast confirms it
+        return redirect()->route('home')
+            ->with('success', 'You have been logged out.');
     }
 
     

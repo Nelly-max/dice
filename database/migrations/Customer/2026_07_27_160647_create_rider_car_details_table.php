@@ -26,8 +26,8 @@ return new class extends Migration
                 'truck'
             ]);
 
-            $table->string('vehicle_make');
-            $table->string('vehicle_model');
+            $table->string('vehicle_make')->nullable();
+            $table->string('vehicle_model')->nullable();
             $table->string('plate_number')->unique();
 
             $table->string('logbook_photo')->nullable();

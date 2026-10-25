@@ -1,8 +1,12 @@
-@extends('layouts.app')
+@extends('layouts.flow')
+
+@section('heading', 'My cart')
+@section('meta', $cartItems->count() . ' ' . \Illuminate\Support\Str::plural('item', $cartItems->count()))
+@section('back', $shopping['homeUrl'])
 
 @section('content')
 
-<main class="wrapper">
+<div class="wrapper fl-page">
 
     @if($expired)
         <div class="alert alert-warning">
@@ -13,21 +17,26 @@
     @if($cartItems->isEmpty())
 
     <div class="empty-cart">
-        <h3>MY BASKET</h3>
-        <p>HOME \ CART</p>
+        <span class="empty-cart-icon" aria-hidden="true">
+            <i class="fa-solid fa-basket-shopping"></i>
+        </span>
 
-        <img src="{{ asset('img/gif/empty-cart.gif') }}" alt="Empty Cart">
+        <h2>Your cart is empty</h2>
 
-        <h2>Your Cart Is Currently Empty !</h2>
+        <p>Add at least one item to continue to checkout.</p>
 
-        <p>
-            Your basket needs a minimum of one product so that you can proceed to check out
-        </p>
-
-        <a href="/" class="btn-continue">
-            Return To Shop
+        <a href="{{ $shopping['homeUrl'] }}" class="btn-continue">
+            <i class="fa-solid fa-store" aria-hidden="true"></i>
+            Shop {{ $shopping['name'] }}
         </a>
     </div>
+
+    {{-- premium-listing items from the subdivision the customer came from (App\Services\CartPicks) --}}
+    @foreach (($picks ?? collect()) as $row)
+        <section class="cart-picks" aria-label="{{ $row['title'] }}">
+            @include('HomeMarket.partials.product-row', ['title' => $row['title'], 'products' => $row['products']])
+        </section>
+    @endforeach
 
 @else
 
@@ -56,6 +65,14 @@
                     </span>
 
                 </div>
+
+                @php $shopName = optional($shipment['items']->first())->business_name; @endphp
+                @if (!empty($shopName))
+                    <div class="shop-chip">
+                        <span class="shop-chip-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($shopName, 0, 1)) }}</span>
+                        <span><small>Shopping from</small><strong>{{ $shopName }}</strong></span>
+                    </div>
+                @endif
 
                 <div class="cart-items">
 
@@ -94,7 +111,7 @@
                                     @if($shipment['shipment_type'] === 'quick')
 
                                         <div class="ind">
-                                            <i class="ri-e-bike-2-line"></i>
+                                            <i class="fa-solid fa-motorcycle"></i>
                                             quick
                                         </div>
 
@@ -183,7 +200,7 @@
                             class="btn-proceed-checkout"
                             data-checkout-url="{{ route('cart.checkout') }}">
 
-                            Checkout
+                            Go to checkout
 
                         </button>
 
@@ -202,7 +219,7 @@
         <div class="cart-shipment summary-items">
 
             <div class="summary">
-                <h3 class="title">Cart Summary</h3>
+                <h3 class="title">Cart summary</h3>
             </div>
 
             <div class="shipment-summary">
@@ -244,7 +261,7 @@
 
 @endif
 
-</main>
+</div>
 
 @endsection
 

@@ -14,7 +14,7 @@
         </div>
         <div class="main-nav-left">
             <a href="{{ auth('customer')->check() ? route('hub.index') : route('login') }}" class="col account">
-                <i class="ri-user-line"></i>
+                <i class="fa-regular fa-user"></i>
                 <span>{{ auth('customer')->user()?->name ?? 'Login & Register' }}</span>
             </a>
             <div class="col cart" onclick="showModal('cart')">

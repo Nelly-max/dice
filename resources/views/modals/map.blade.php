@@ -1,86 +1,56 @@
-   @extends('layouts.modal')
+{{--
+    Delivery location picker. Opened with showModal('mapModal'); behaviour lives in resources/js/map.js
+    One simple screen: search (suggestions drop down over the map), use current location,
+    the map with a centred pin to fine-tune, Confirm. The picked address is the sheet's title.
+--}}
+<div class="modal sheet loc-sheet" id="mapModal">
+    <div class="modal-overlay"></div>
 
-    @section('modal')
-    <main>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="locTitle">
+        <section class="loc-step">
+            <header class="loc-head">
+                <h2 id="locTitle" class="loc-title">
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                    <span id="selected-address">Move the map or search for your place</span>
+                </h2>
+                <button type="button" class="loc-x" onclick="closeModal()" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
 
-        <div class="modal" id="mapModal">
-            <div class="modal-overlay"></div>
+            <div class="loc-searchbox">
+                <label class="loc-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <input type="search" id="place-search" placeholder="Search for your street, estate or building" autocomplete="off" enterkeyhint="search" aria-label="Search for a location">
+                </label>
 
-            <div class="large-box no-sidebar">
-                <i class="fa-solid fa-xmark close" onclick="closeModal()"></i>
-
-                <div class="pop-up-data">
-                    <div class="map-container">
-
-                        <div class="map-head">
-                            <h4>Enter your delivery location</h4>
-                        </div>
-                        <input
-                            type="text"
-                            id="place-search"
-                            placeholder="Search for road or house ...">
-
-                        <!-- <div id="map-placeholder">
-                            <img src="/images/map_vector.svg" alt="Map">
-
-                            <h4>Where should we deliver?</h4>
-
-                            <p>Search for your delivery location to begin.</p>
-                        </div> -->
-
-                        <div class="map" id="map"></div>
-
-                        <div class="map-pin">
-                            <div class="pin-label">
-                                <h4>Deliver my order here</h4>
-                                <h5>drag map to the exact position</h5>
-                            </div>
-
-                            <i class="fa-solid fa-location-dot"></i>
-                        </div>
-
-                        <!-- Hidden values -->
-                        <input type="hidden" id="latitude" name="latitude">
-                        <input type="hidden" id="longitude" name="longitude">
-                        <input type="hidden" id="delivery_address" name="delivery_address">
-                            
-                        <div class="map-location">
-                            <h3>Deliver to</h3>
-
-                            <h4 id="selected-address">
-                                <i class="fa-solid fa-map-pin"></i>
-                                Kajiado, Ngong
-                            </h4>
-                        </div>
-
-                        <div>
-                            <button
-                                type="button"
-                                onclick="confirmDeliveryLocation()">
-                                Confirm Location
-                            </button>
-                        </div>
-
-                    </div>
+                <div class="loc-drop" id="loc-drop" hidden>
+                    <ul class="loc-results" id="loc-results" role="listbox" aria-label="Suggested places"></ul>
+                    <p class="loc-empty" id="loc-empty" hidden>
+                        <strong>No places found</strong>
+                        <span>Try a nearby road, estate or landmark.</span>
+                    </p>
                 </div>
             </div>
-        </div>
 
-    </main>
+            <button type="button" class="loc-here" onclick="useCurrentLocation()">
+                <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+                <span>Use current location</span>
+            </button>
 
+            <div class="loc-map">
+                <div id="map"></div>
+                <span class="loc-pin" aria-hidden="true">
+                    <small>Move the map to adjust</small>
+                    <i class="fa-solid fa-location-dot"></i>
+                </span>
+            </div>
 
+            <button type="button" class="loc-confirm" onclick="confirmDeliveryLocation()">Confirm location</button>
 
-<!-- <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvSf1irTRm6LmY2FhzvszcN40JQBb7xQc&libraries=places&callback=initMap"
-    async
-    defer>
-</script> -->
-<!-- 
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDuUztelzx_tx_oe8vSW4HYXvtL_DITbZo&libraries=places&callback=initMap"
-    async
-    defer>
-</script> -->
-    <!-- <script src="https://googleapis.com{{ config('services.google.maps_api_key') }}&libraries=places&callback=initMap" async defer></script> -->
+            <p class="loc-note">We show shops within {{ config('homemarket.max_radius_m', 3000) / 1000 }} km of you.</p>
+        </section>
 
-    @endsection
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+        <input type="hidden" id="delivery_address" name="delivery_address">
+    </div>
+</div>

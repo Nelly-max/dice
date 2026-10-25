@@ -132,6 +132,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("grand-total-display").textContent =
             `Ksh ${total.toLocaleString()}`;
 
+        document.querySelectorAll(".js-confirm-total").forEach(el => {
+            el.textContent = `Ksh ${total.toLocaleString()}`;
+        });
+
     } catch (error) {
 
         console.error("Delivery calculation failed:", error);
@@ -195,11 +199,11 @@ function loadAccountDetails() {
 }
 
 // Load automatically if checked by default
-if (checkbox.checked) {
+if (checkbox?.checked) {
     loadAccountDetails();
 }
 
-checkbox.addEventListener('change', function () {
+checkbox?.addEventListener('change', function () {
 
     if (this.checked) {
         loadAccountDetails();
@@ -244,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 |--------------------------------------------------------------------------
 */
 
-document.getElementById('confirm-order-btn').addEventListener('click', function (e) {
+document.getElementById('confirm-order-btn')?.addEventListener('click', function (e) {
 
     e.preventDefault();
 
