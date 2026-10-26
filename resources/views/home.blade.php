@@ -84,7 +84,6 @@
         <section class="sm-division" id="division-{{ $major->id }}" data-sm-division>
             <header class="sm-division-head">
                 <h2>{{ $major->name }}</h2>
-                <a href="{{ route('products.byMajorDivision', $major->id) }}" class="sm-view-all">See all</a>
             </header>
 
             <div class="sm-tiles">
