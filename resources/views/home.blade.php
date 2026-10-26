@@ -30,7 +30,7 @@
         <div class="sm-deal-text">
             <span class="sm-deal-kicker">Fast delivery</span>
             <h2>From shops near you to your door</h2>
-            <p>We only show shops within {{ config('homemarket.max_radius_m', 3000) / 1000 }} km of you, so a local rider brings your order quickly. Pay with M-Pesa.</p>
+            <p>We only show shops within {{ config('homemarket.max_radius_m', 3000) / 1000 }} km of you, so a local rider brings your order quickly.</p>
         </div>
         <a href="{{ route('homemarket.home') }}" class="sm-deal-btn">Start shopping</a>
         <i class="fa-solid fa-motorcycle sm-deal-art" aria-hidden="true"></i>

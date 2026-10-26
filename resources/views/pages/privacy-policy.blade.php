@@ -12,10 +12,6 @@
     who we share it with, and the choices and rights available to you.
 </p>
 
-<p>
-    We aim to handle personal data responsibly and in accordance with applicable Kenyan data protection
-    laws, including the Data Protection Act, 2019, where applicable.
-</p>
 
 <nav class="sm-toc" aria-label="On this page">
     <strong>On this page</strong>
@@ -36,19 +32,15 @@
 </nav>
 
 <h2 id="who-we-are">1. Who we are</h2>
+ 
 <p>
-    Smart Market is an online marketplace operating in Kenya. Through our services, you may order products
-    from shops, including Home Market, find homes and other services, make payments using supported payment
-    methods, and interact with participating businesses and service providers.
+    Smart Market is a digital marketplace and business platform that connects customers, businesses, and service providers through a range of online services. Our goal is to make it easier for people to discover products, shop from participating businesses, access services, and conduct business through one convenient platform.
 </p>
 <p>
-    Independent shops, service providers, riders and marketers may use Smart Market to provide services
-    or conduct business. {{ $company }} is responsible for determining how and why personal data is
-    processed for the activities described in this policy, where it acts as the data controller.
+    Through Smart Market, customers can browse and order products from participating shops through Home Market, discover houses and other property-related opportunities through HomeCity, explore accommodation and property listings through our Airbnb services, access cooking gas products and services, and connect with participating businesses and service providers. The platform may also support deliveries, payments through supported payment methods, and other marketplace services as they become available.
 </p>
 <p>
-    A participating business or service provider may also have its own responsibilities for personal data
-    it processes. The applicable responsibilities depend on the service and the parties involved.
+    Smart Market also provides opportunities for businesses, business owners, independent service providers, riders, and marketers to participate in the marketplace, promote their offerings, manage business activities, provide delivery or other services, and connect with potential customers.
 </p>
 
 <h2 id="what-we-collect">2. What we collect</h2>
