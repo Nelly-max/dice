@@ -15,7 +15,11 @@
 
 <h2>Shopping</h2>
 <ul>
+<<<<<<< HEAD
+    <li>Set your delivery location to see shops within {{ $radiusKm }} km from you.</li>
+=======
     <li>Set your delivery location to see shops within {{ $radiusKm }} km of you.</li>
+>>>>>>> 17e23ff28b57e0fd1ae7d9a48743b1140c30e506
     <li>Your cart holds items from <strong>one shop at a time</strong>.</li>
     <li>Items are held for you for a short while. If you leave your cart for too long, they may be released.</li>
     <li>Prices are set by the shops and shown in KES. Photos are for illustration.</li>
@@ -36,6 +40,10 @@
 <h2>Returns and refunds</h2>
 <ul>
     <li>Something missing, damaged or wrong? <a href="{{ route('page', 'contact') }}">Contact us</a> as soon as possible with your order number.</li>
+<<<<<<< HEAD
+    <li>Items Under Subdivisions; HomeMarket, Farm Market, Alene One and Liquor Hub must be reported within 2hrs of delivery .</li>
+=======
+>>>>>>> 17e23ff28b57e0fd1ae7d9a48743b1140c30e506
     <li>We'll work with the shop to replace it or refund you.</li>
     <li>Refunds go back to the M-Pesa number that paid.</li>
 </ul>
