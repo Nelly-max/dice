@@ -7,7 +7,10 @@
 
 <p class="sm-lede">
     We're here to help with orders, payments, deliveries and your account.
+<<<<<<< HEAD
+=======
     @if (!empty($c['hours'])) Support hours: <strong>{{ $c['hours'] }}</strong>. @endif
+>>>>>>> 17e23ff28b57e0fd1ae7d9a48743b1140c30e506
 </p>
 
 <div class="sm-contact-grid">

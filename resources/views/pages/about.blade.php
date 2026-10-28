@@ -3,8 +3,8 @@
 @endphp
 
 <p class="sm-lede">
-    Smart Market brings the shops, services and homes around you into one place. Order everyday items from
-    shops in your neighbourhood, find a home or a service, pay with M-Pesa and get it delivered by a local rider.
+    Smart Market is the brand name for Mosaic Cart (BN-L3SMKL32), an online trading platform in kenya where we bridge gap between businesses and customers,
+    We have a wide range of business partnerships under different categories which we term subdivisions, These include;
 </p>
 
 <h2>What you can do on Smart Market</h2>

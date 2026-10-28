@@ -22,9 +22,9 @@ return [
     'country' => 'Kenya',
 
     'contact' => [
-        'email'    => env('SMARTMARKET_SUPPORT_EMAIL'),
-        'phone'    => env('SMARTMARKET_SUPPORT_PHONE'),
-        'whatsapp' => env('SMARTMARKET_WHATSAPP'),        // digits only, e.g. 2547XXXXXXXX
+        'email'    => env('SMARTMARKET_SUPPORT_EMAIL', 'info@smartmarket.co.ke'),
+        'phone'    => env('SMARTMARKET_SUPPORT_PHONE', '0182553580'),
+        'whatsapp' => env('SMARTMARKET_WHATSAPP', '0182553580'),        // digits only, e.g. 2547XXXXXXXX
         'address'  => env('SMARTMARKET_ADDRESS'),
         'hours'    => env('SMARTMARKET_SUPPORT_HOURS', 'Monday to Saturday, 8:00 am – 8:00 pm'),
     ],
@@ -34,7 +34,7 @@ return [
 
     'socials' => [
         'instagram' => env('SMARTMARKET_INSTAGRAM', 'https://www.instagram.com/smartmarket_ke/'),
-        'tiktok'    => env('SMARTMARKET_TIKTOK'),
+        'tiktok'    => env('SMARTMARKET_TIKTOK', 'https://www.tiktok.com/@smartmarket_ke'),
         'youtube'   => env('SMARTMARKET_YOUTUBE'),
         'facebook'  => env('SMARTMARKET_FACEBOOK'),
         'x'         => env('SMARTMARKET_X'),

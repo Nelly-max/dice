@@ -12,6 +12,13 @@
     who we share it with, and the choices and rights available to you.
 </p>
 
+<<<<<<< HEAD
+<p>
+    We aim to handle personal data responsibly and in accordance with applicable Kenyan data protection
+    laws, including the Data Protection Act, 2019, where applicable.
+</p>
+=======
+>>>>>>> 17e23ff28b57e0fd1ae7d9a48743b1140c30e506
 
 <nav class="sm-toc" aria-label="On this page">
     <strong>On this page</strong>
@@ -32,6 +39,21 @@
 </nav>
 
 <h2 id="who-we-are">1. Who we are</h2>
+<<<<<<< HEAD
+<p>
+    Smart Market is an online marketplace operating in Kenya. Through our services, you may order products
+    from shops, including Home Market, find homes and other services, make payments using supported payment
+    methods, and interact with participating businesses and service providers.
+</p>
+<p>
+    Independent shops, service providers, riders and marketers may use Smart Market to provide services
+    or conduct business. {{ $company }} is responsible for determining how and why personal data is
+    processed for the activities described in this policy, where it acts as the data controller.
+</p>
+<p>
+    A participating business or service provider may also have its own responsibilities for personal data
+    it processes. The applicable responsibilities depend on the service and the parties involved.
+=======
  
 <p>
     Smart Market is a digital marketplace and business platform that connects customers, businesses, and service providers through a range of online services. Our goal is to make it easier for people to discover products, shop from participating businesses, access services, and conduct business through one convenient platform.
@@ -41,6 +63,7 @@
 </p>
 <p>
     Smart Market also provides opportunities for businesses, business owners, independent service providers, riders, and marketers to participate in the marketplace, promote their offerings, manage business activities, provide delivery or other services, and connect with potential customers.
+>>>>>>> 17e23ff28b57e0fd1ae7d9a48743b1140c30e506
 </p>
 
 <h2 id="what-we-collect">2. What we collect</h2>
