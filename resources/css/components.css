@@ -1,0 +1,537 @@
+/*
+|--------------------------------------------------------------------------
+| Shared components
+|--------------------------------------------------------------------------
+|
+| Pieces every subdivision reuses (context banner, "start a new cart?"
+| prompt). They only use tokens from tokens.css, so each subdivision gets its
+| own accent automatically.
+*/
+
+/* ---------- Context banner: no location / nothing in range / cart-locked shop ---------- */
+
+.context-banner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .75em 1em;
+    margin: 0 0 1.25em;
+    padding: .9em 1.1em;
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-m);
+    background: var(--accent-tint);
+    color: var(--ink);
+    font-size: .9rem;
+}
+
+.context-banner > i {
+    color: var(--accent-strong);
+    font-size: 1.2rem;
+}
+
+.context-banner p {
+    flex: 1 1 16em;
+    line-height: 1.5;
+}
+
+.context-banner button,
+.context-banner a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1.2em;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--surface-tint);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ---------- "Start a new cart?" prompt ---------- */
+
+.switch-shop[hidden] {
+    display: none;
+}
+
+.switch-shop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.switch-shop-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 20, 13, .6);
+}
+
+.switch-shop-card {
+    position: relative;
+    width: min(100%, 28em);
+    padding: 1.5em 1.5em 2em;
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    background: var(--surface);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: .75em;
+}
+
+.switch-shop-card h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.switch-shop-card p {
+    color: var(--ink-soft);
+    font-size: .9rem;
+    line-height: 1.55;
+}
+
+.switch-shop-card dl {
+    display: flex;
+    flex-direction: column;
+    gap: .6em;
+    margin: .5em 0;
+}
+
+.switch-shop-card dl > div {
+    padding: .8em 1em;
+    border: 1px solid var(--line);
+    border-radius: 1.1em;
+}
+
+.switch-shop-card dl > div.new {
+    border: var(--bw) solid var(--accent);
+    background: var(--surface-tint);
+}
+
+.switch-shop-card dt {
+    color: var(--ink-soft);
+    font-size: .75rem;
+}
+
+.switch-shop-card dd {
+    font-size: .95rem;
+    font-weight: 700;
+}
+
+.switch-shop-card button {
+    min-height: 54px;
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.switch-shop-card .primary {
+    border: 0;
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+.switch-shop-card .secondary {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+}
+
+@media (min-width: 640px) {
+    .switch-shop {
+        align-items: center;
+    }
+
+    .switch-shop-card {
+        border-radius: var(--radius-l);
+    }
+}
+
+/* ---------- Delivery location modal (modals/map.blade.php) ---------- */
+
+body[data-subdivision] #mapModal .map-head h4,
+body[data-subdivision] #mapModal .map-location h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--ink);
+}
+
+body[data-subdivision] #mapModal #place-search {
+    height: 3rem;
+    padding: 0 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--surface-tint);
+    color: var(--ink);
+    font: inherit;
+}
+
+body[data-subdivision] #mapModal #place-search:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+body[data-subdivision] #mapModal .map { border-radius: var(--r-card); overflow: hidden; }
+body[data-subdivision] #mapModal .pin-label { border-radius: var(--r-inner); background: var(--ink); color: var(--surface-tint); }
+body[data-subdivision] #mapModal .map-pin > i { color: var(--accent); }
+body[data-subdivision] #mapModal .map-location h4 { color: var(--ink-soft); font-weight: 600; }
+
+body[data-subdivision] #mapModal .map-sub { margin-top: .25rem; color: var(--ink-soft); font-size: .85rem; line-height: 1.45; }
+body[data-subdivision] #mapModal .map-actions { display: flex; flex-direction: column; gap: .6rem; }
+
+body[data-subdivision] #mapModal .map-actions button {
+    width: 100%;
+    min-height: 54px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+body[data-subdivision] #mapModal .map-actions .use-here {
+    border: var(--bw) solid var(--ink);
+    background: none;
+    color: var(--ink);
+}
+
+/* ---------- Shop banner on the shop-locked home page ---------- */
+
+.context-banner--shop {
+    border: 0;
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+.context-banner--shop > i { color: var(--on-accent); }
+.context-banner--shop p { font-size: .95rem; }
+.context-banner--shop a { background: #fff; color: var(--accent-strong); }
+
+body[data-subdivision] #mapModal :is(.pop-up-data, .map-container) { background: var(--surface); }
+body[data-subdivision] #mapModal #place-search { box-sizing: border-box; width: 100%; font-style: normal; }
+
+/* ---------- Bottom sheet (rolls up from the bottom of the screen) ---------- */
+/* Markup: <div class="modal sheet" id="..."> overlay + .sheet-panel. modal.js opens/closes it
+   with showModal(id) / closeModal(); it adds .closing so the sheet can roll back down. */
+
+.modal.sheet {
+    overflow: hidden;
+    background: transparent;
+    z-index: 10000;
+}
+
+.sheet .modal-overlay {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    background: rgba(34, 20, 13, .55);
+    opacity: 0;
+}
+
+.sheet.active .modal-overlay { animation: sheetFade .25s ease forwards; }
+.sheet.closing .modal-overlay { animation: sheetFade .22s ease reverse forwards; }
+
+.sheet-panel {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: min(100%, 34rem);
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-radius: var(--r-card) 1.75rem 0 0;
+    background: var(--surface, #fff);
+    color: var(--ink, #22140d);
+    box-shadow: 0 -12px 40px rgba(34, 20, 13, .3);
+    transform: translate(-50%, 100%);
+}
+
+.sheet.active .sheet-panel { animation: sheetUp .32s cubic-bezier(.2, .8, .2, 1) forwards; }
+.sheet.closing .sheet-panel { animation: sheetDown .24s ease-in forwards; }
+
+@keyframes sheetUp   { from { transform: translate(-50%, 100%); } to { transform: translate(-50%, 0); } }
+@keyframes sheetDown { from { transform: translate(-50%, 0); }    to { transform: translate(-50%, 100%); } }
+@keyframes sheetFade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .sheet.active .sheet-panel, .sheet.closing .sheet-panel,
+    .sheet.active .modal-overlay, .sheet.closing .modal-overlay { animation-duration: .01s; }
+}
+
+.sheet-head { position: sticky; top: 0; z-index: 3; padding: .55rem 1rem .25rem; background: inherit; touch-action: none; }
+.sheet-handle { display: block; width: 3rem; height: .3rem; margin: 0 auto; border-radius: var(--radius-pill); background: var(--line-strong, #deb99a); }
+
+.sheet-close {
+    position: absolute;
+    top: .55rem;
+    right: .85rem;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: var(--bw, 1.5px) solid var(--line-strong, #deb99a);
+    border-radius: 50%;
+    background: var(--surface, #fff);
+    color: var(--ink, #22140d);
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+
+.sheet .map-container { padding: .25rem 1.1rem 1.1rem; }
+.sheet .map-container .map-head { padding-right: 3.5rem; }
+
+/* location picker bits */
+body[data-subdivision] #mapModal #place-search { border: var(--bw) solid var(--line-strong); }
+body[data-subdivision] #mapModal .map-stage .map { border: var(--bw) solid var(--line-strong); }
+body[data-subdivision] #mapModal .map-actions .use-here { border-width: var(--bw); }
+
+/* ---- soft navigation progress bar ---- */
+.sn-bar { position: fixed; z-index: 100001; top: 0; left: 0; height: 3px; width: 0; background: var(--accent, #E8590C); box-shadow: 0 0 8px var(--accent, #E8590C); pointer-events: none; opacity: 1; }
+.sn-bar.run { width: 80%; transition: width 1.8s cubic-bezier(.1, .7, .2, 1); }
+.sn-bar.done { width: 100%; opacity: 0; transition: width .15s ease, opacity .25s ease .1s; }
+body > main, body > .hm-main { animation: sn-in .22s ease both; }
+@keyframes sn-in { from { opacity: .4; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sn-bar, body > main { transition: none; animation: none; } }
+
+/* ---- location sheet, laid out like the mock-up: map, address, search, actions ---- */
+body[data-subdivision] #mapModal .map-container { gap: .8rem; }
+body[data-subdivision] #mapModal .map-head h4 { font: 800 1.35rem/1.2 var(--font-display); }
+body[data-subdivision] #mapModal .map-stage { overflow: hidden; border-radius: var(--r-card); background: var(--accent-tint); }
+body[data-subdivision] #mapModal .map-stage .map { border: 0; border-radius: var(--r-card); height: clamp(12rem, 34vh, 19rem); }
+#mapModal .map-radius {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(62%, 13rem);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border: 2px dashed var(--accent, #E8590C);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent, #E8590C) 7%, transparent);
+    pointer-events: none;
+    z-index: 1;
+}
+#mapModal .map-radius-chip {
+    position: absolute;
+    top: .65rem;
+    right: .65rem;
+    z-index: 2;
+    padding: .25rem .6rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface, #fff);
+    color: var(--accent-strong, #c2410c);
+    font: 700 .72rem var(--font-body);
+    box-shadow: 0 2px 8px rgba(34, 20, 13, .12);
+    pointer-events: none;
+}
+#mapModal .map-pin { z-index: 2; }
+body[data-subdivision] #mapModal .map-location { display: flex; align-items: baseline; gap: .5rem; padding: 0 .15rem; }
+body[data-subdivision] #mapModal .map-location h3 { margin: 0; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); }
+body[data-subdivision] #mapModal .map-location h4 { margin: 0; font-size: .9rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body[data-subdivision] #mapModal .map-location h4 i { display: none; }
+
+#mapModal .place-search-wrap { position: relative; display: block; }
+#mapModal .place-search-wrap i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--accent, #E8590C); font-size: .9rem; pointer-events: none; }
+body[data-subdivision] #mapModal .place-search-wrap #place-search {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0 1rem 0 2.6rem;
+    border: 1px solid var(--accent, #E8590C);
+    border-radius: var(--radius-pill);
+    background: var(--surface, #fff);
+    color: var(--ink);
+    font: 500 .95rem var(--font-body);
+}
+body[data-subdivision] #mapModal .place-search-wrap #place-search:focus { outline: 0; box-shadow: 0 0 0 3px var(--accent-line); }
+body[data-subdivision] #mapModal .map-actions { position: static; padding-top: .1rem; }
+body[data-subdivision] #mapModal .map-actions button { width: 100%; }
+/* keep the sheet layout independent of older modal.css rules */
+#mapModal .map-stage { position: relative; }
+body[data-subdivision] #mapModal .place-search-wrap #place-search { position: static; top: auto; left: auto; transform: none; margin: 0; opacity: 1; box-sizing: border-box; }
+body[data-subdivision] #mapModal .map-container { display: flex; flex-direction: column; }
+
+/* sheets span the full screen width; their content stays readable in the middle on wide screens */
+.sheet-panel { left: 0; right: 0; width: 100%; border-radius: 1.5rem 1.5rem 0 0; transform: translateY(100%); }
+.sheet.active .sheet-panel { animation-name: sheetUpFull; }
+.sheet.closing .sheet-panel { animation-name: sheetDownFull; }
+@keyframes sheetUpFull   { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDownFull { from { transform: translateY(0); }    to { transform: translateY(100%); } }
+.sheet-panel > .pop-up-data, .sheet-panel > :not(.sheet-head) { max-width: 46rem; margin-inline: auto; }
+
+/* ---- location sheet: responsive layout ----
+   phones: one column (map, then controls)
+   tablets: one column, roomier map
+   desktop & landscape: map on the left, controls on the right, close button inside the content */
+.sheet-head { max-width: 64rem; margin-inline: auto; position: sticky; }
+.sheet-panel > :not(.sheet-head) { max-width: 64rem; }
+
+@media (min-width: 600px) and (max-width: 899.98px) {
+    body[data-subdivision] #mapModal .map-container { padding: .25rem 1.75rem 1.5rem; }
+    body[data-subdivision] #mapModal .map-stage .map { height: clamp(15rem, 40vh, 24rem); }
+    body[data-subdivision] #mapModal .map-actions { flex-direction: row; }
+    body[data-subdivision] #mapModal .map-actions button { flex: 1; }
+}
+
+@media (min-width: 900px), (min-width: 600px) and (max-height: 540px) {
+    body[data-subdivision] #mapModal .map-container {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 1fr);
+        grid-template-areas:
+            "map head"
+            "map location"
+            "map search"
+            "map actions"
+            "map .";
+        grid-template-rows: auto auto auto auto 1fr;
+        column-gap: 2rem;
+        row-gap: .9rem;
+        padding: .5rem 2rem 2rem;
+        align-items: start;
+    }
+    body[data-subdivision] #mapModal .map-head { grid-area: head; padding-right: 3rem; }
+    body[data-subdivision] #mapModal .map-head h4 { font-size: 1.6rem; }
+    body[data-subdivision] #mapModal .map-stage { grid-area: map; height: 100%; min-height: 20rem; }
+    body[data-subdivision] #mapModal .map-stage .map { height: 100%; min-height: 20rem; }
+    body[data-subdivision] #mapModal .map-location { grid-area: location; }
+    #mapModal .place-search-wrap { grid-area: search; }
+    body[data-subdivision] #mapModal .map-actions { grid-area: actions; }
+    .sheet-panel { max-height: 88dvh; }
+}
+
+/* landscape phones: keep everything on one screen */
+@media (min-width: 600px) and (max-height: 540px) {
+    body[data-subdivision] #mapModal .map-stage, body[data-subdivision] #mapModal .map-stage .map { min-height: 14rem; }
+    body[data-subdivision] #mapModal .map-sub { display: none; }
+    .sheet-panel { max-height: 96dvh; }
+}
+@media (min-width: 600px) and (max-height: 540px) {
+    body[data-subdivision] #mapModal .map-actions { flex-direction: column; }
+    body[data-subdivision] #mapModal .map-actions button { min-height: 2.75rem; }
+    body[data-subdivision] #mapModal .map-head h4 { font-size: 1.3rem; }
+}
+
+/* ===== Location picker v2: simple, Nunito (resources/views/modals/map.blade.php) ===== */
+#mapModal.loc-sheet {
+    --loc-font: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --loc-ink: var(--ink, #1f2a24);
+    --loc-soft: #7a847f;
+    --loc-line: #e6e9e7;
+    --loc-bg: #f4f5f9;
+    --loc-card: #ffffff;
+}
+body.dark-mode #mapModal.loc-sheet { --loc-soft: #9aa39e; --loc-line: #2c2c2c; --loc-bg: #121212; --loc-card: #1c1c1c; }
+
+#mapModal.loc-sheet .sheet-panel {
+    width: min(100%, 30rem);
+    max-height: 88dvh;
+    border-radius: 1.4rem 1.4rem 0 0;
+    background: var(--loc-bg);
+    color: var(--loc-ink);
+    font-family: var(--loc-font);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
+}
+#mapModal.loc-sheet .sheet-panel { left: 0; right: 0; margin-inline: auto; }
+@media (min-width: 640px) {
+    #mapModal.loc-sheet .sheet-panel { top: 50%; bottom: auto; border-radius: 1.4rem; transform: translateY(-50%); }
+    #mapModal.loc-sheet.active .sheet-panel { animation: locPop .22s ease forwards; }
+    #mapModal.loc-sheet.closing .sheet-panel { animation: locPop .18s ease reverse forwards; }
+}
+@keyframes locPop { from { opacity: 0; transform: translateY(-46%); } to { opacity: 1; transform: translateY(-50%); } }
+
+#mapModal.loc-sheet .loc-step { display: block; padding: 1.1rem 1rem calc(1rem + env(safe-area-inset-bottom)); }
+
+/* suggestions drop down over the map */
+#mapModal.loc-sheet .loc-searchbox { position: relative; z-index: 5; }
+#mapModal.loc-sheet .loc-drop {
+    position: absolute; left: 0; right: 0; top: calc(100% + .35rem);
+    max-height: min(19rem, 50dvh); overflow-y: auto; overscroll-behavior: contain;
+    border-radius: .8rem; background: var(--loc-card);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+}
+#mapModal.loc-sheet .loc-drop[hidden] { display: none; }
+#mapModal.loc-sheet .loc-drop .loc-results { margin: 0; border-radius: 0; }
+#mapModal.loc-sheet .loc-drop .loc-empty { margin: 0; padding: 1.1rem 1rem; border-radius: 0; }
+
+#mapModal.loc-sheet .loc-head { display: flex; align-items: center; gap: .5rem; margin: 0 0 .85rem; }
+#mapModal.loc-sheet .loc-head h2 { flex: 1; min-width: 0; margin: 0; font: 800 1.12rem/1.25 var(--loc-font); color: var(--loc-ink); letter-spacing: 0; }
+#mapModal.loc-sheet :is(.loc-x, .loc-back) {
+    display: grid; place-items: center; flex: none;
+    width: 2.1rem; height: 2.1rem; padding: 0; border: 0; border-radius: 50%;
+    background: var(--loc-card); color: var(--loc-ink); font-size: .95rem; cursor: pointer;
+}
+
+#mapModal.loc-sheet .loc-search { position: relative; display: block; margin: 0; }
+#mapModal.loc-sheet .loc-search i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--loc-soft); font-size: .9rem; pointer-events: none; }
+body[data-subdivision] #mapModal.loc-sheet .loc-search #place-search,
+#mapModal.loc-sheet .loc-search #place-search {
+    position: static; transform: none; opacity: 1;
+    box-sizing: border-box; width: 100%; height: 2.9rem; margin: 0;
+    padding: 0 1rem 0 2.6rem;
+    border: 1px solid var(--loc-line); border-radius: .8rem;
+    background: var(--loc-card); color: var(--loc-ink); box-shadow: none;
+    font: 600 .92rem var(--loc-font); font-style: normal;
+}
+#mapModal.loc-sheet .loc-search #place-search::placeholder { color: var(--loc-soft); font-weight: 500; }
+#mapModal.loc-sheet .loc-search #place-search:focus { outline: 0; border-color: var(--accent, #16a34a); }
+
+#mapModal.loc-sheet .loc-here {
+    display: flex; align-items: center; gap: .7rem; width: 100%;
+    margin: .6rem 0 0; padding: .85rem 1rem; border: 0; border-radius: .8rem;
+    background: var(--loc-card); color: var(--accent, #16a34a); text-align: left;
+    font: 700 .92rem var(--loc-font); cursor: pointer;
+}
+#mapModal.loc-sheet .loc-here i { font-size: 1.05rem; }
+
+#mapModal.loc-sheet .loc-results { margin: .6rem 0 0; padding: 0; list-style: none; border-radius: .8rem; overflow: hidden; background: var(--loc-card); }
+#mapModal.loc-sheet .loc-results:empty { display: none; }
+#mapModal.loc-sheet .loc-results li + li { border-top: 1px solid var(--loc-line); }
+#mapModal.loc-sheet .loc-result {
+    display: flex; align-items: flex-start; gap: .8rem; width: 100%;
+    padding: .8rem 1rem; border: 0; background: none; color: var(--loc-ink); text-align: left;
+    font-family: var(--loc-font); cursor: pointer;
+}
+#mapModal.loc-sheet .loc-result:hover, #mapModal.loc-sheet .loc-result:focus-visible { background: var(--loc-bg); outline: 0; }
+#mapModal.loc-sheet .loc-result i { margin-top: .2rem; color: var(--loc-soft); font-size: .9rem; }
+#mapModal.loc-sheet .loc-result span { min-width: 0; }
+#mapModal.loc-sheet .loc-result strong { display: block; font-size: .92rem; font-weight: 700; line-height: 1.3; }
+#mapModal.loc-sheet .loc-result small { display: block; margin-top: .1rem; color: var(--loc-soft); font-size: .8rem; line-height: 1.35; }
+
+#mapModal.loc-sheet .loc-empty { display: grid; justify-items: center; gap: .2rem; margin: .6rem 0 0; padding: 1.4rem 1rem; border-radius: .8rem; background: var(--loc-card); text-align: center; }
+#mapModal.loc-sheet .loc-empty[hidden] { display: none; }
+#mapModal.loc-sheet .loc-empty i { margin-bottom: .3rem; color: var(--loc-soft); font-size: 1.6rem; }
+#mapModal.loc-sheet .loc-empty strong { font-size: .95rem; }
+#mapModal.loc-sheet .loc-empty span { color: var(--loc-soft); font-size: .84rem; }
+
+#mapModal.loc-sheet .loc-note { margin: .6rem 0 0; color: var(--loc-soft); font-size: .78rem; text-align: center; }
+
+/* step 2 */
+#mapModal.loc-sheet .loc-map { position: relative; overflow: hidden; height: clamp(12rem, 34dvh, 17rem); margin-top: .6rem; border-radius: .9rem; background: var(--loc-card); }
+#mapModal.loc-sheet .loc-map #map { position: absolute; inset: 0; width: 100%; height: 100%; }
+#mapModal.loc-sheet .loc-pin {
+    position: absolute; left: 50%; top: 50%; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    transform: translate(-50%, -100%); pointer-events: none;
+}
+#mapModal.loc-sheet .loc-pin small { margin-bottom: .3rem; padding: .3rem .6rem; border-radius: .5rem; background: #1f2a24; color: #fff; font: 700 .72rem var(--loc-font); white-space: nowrap; }
+#mapModal.loc-sheet .loc-pin i { color: var(--accent, #16a34a); font-size: 2.1rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); }
+
+#mapModal.loc-sheet .loc-picked { display: flex; align-items: flex-start; gap: .6rem; margin: .75rem 0 0; padding: .8rem 1rem; border-radius: .8rem; background: var(--loc-card); font-size: .9rem; font-weight: 700; line-height: 1.35; }
+#mapModal.loc-sheet .loc-picked i { margin-top: .15rem; color: var(--accent, #16a34a); }
+
+#mapModal.loc-sheet .loc-confirm {
+    width: 100%; height: 2.9rem; margin: .75rem 0 0; border: 0; border-radius: .8rem;
+    background: var(--accent, #16a34a); color: var(--on-accent, #fff);
+    font: 800 .95rem var(--loc-font); cursor: pointer;
+}
+#mapModal.loc-sheet .loc-confirm:active { transform: scale(.99); }
+#mapModal.loc-sheet .loc-search #place-search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+/* the picked address is the sheet title */
+#mapModal.loc-sheet .loc-head h2.loc-title { display: flex; align-items: flex-start; gap: .5rem; font-size: 1rem; font-weight: 800; line-height: 1.35; }
+#mapModal.loc-sheet .loc-title i { flex: none; margin-top: .15rem; color: var(--accent, #16a34a); font-size: .95rem; }
+#mapModal.loc-sheet .loc-title span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

@@ -493,7 +493,9 @@ function setButtonStatus(
     ) {
 
         button.innerHTML =
-            '<i class="fa-solid fa-toggle-on"></i> GO OFFLINE';
+            '<i class="fa-solid fa-toggle-on" aria-hidden="true"></i><span class="rider-lbl">Go offline</span><span class="rider-lbl-short">Online</span>';
+        button.setAttribute('aria-label', 'You are online. Tap to go offline');
+        button.title = 'You are online. Tap to go offline';
 
         button.classList.add(
             status
@@ -502,7 +504,9 @@ function setButtonStatus(
     } else {
 
         button.innerHTML =
-            '<i class="fa-solid fa-toggle-off"></i> GO ONLINE';
+            '<i class="fa-solid fa-toggle-off" aria-hidden="true"></i><span class="rider-lbl">Go online</span><span class="rider-lbl-short">Offline</span>';
+        button.setAttribute('aria-label', 'You are offline. Tap to go online');
+        button.title = 'You are offline. Tap to go online';
 
         button.classList.add(
             'offline'
@@ -521,63 +525,128 @@ function setButtonStatus(
 
 function checkLocation(button)
 {
-
-    if (
-        !navigator.geolocation
-    ) {
-
-        showLocationModal();
-
-        return;
-
-    }
+    RiderPermission.goOnline(button);
+}
 
 
-    navigator.geolocation.getCurrentPosition(
+/*
+|--------------------------------------------------------------------------
+| LOCATION PERMISSION (how other apps do it)
+|--------------------------------------------------------------------------
+| 1. Not asked yet  -> explain why first ("Allow location"), then the
+|                      browser's own prompt appears.
+| 2. Allowed        -> straight online, no extra screens.
+| 3. Blocked        -> say it is blocked and how to allow it in the
+|                      browser / phone settings; "Try again" re-checks.
+| 4. GPS off / weak -> ask to turn on location; retries once with
+|                      network location before giving up.
+| Browsers only share location on https (or localhost). If permission is
+| revoked while online, the rider is taken offline.
+*/
 
-        position => {
+const RiderPermission = {
 
-            RiderState.latestPosition =
-                parseCoords(position);
+    status: null,          // PermissionStatus, when the browser supports it
+    pendingButton: null,
 
-
-            sendLocation(
-                RiderState.latestPosition
-            );
-
-
-            updateRiderStatus(
-                'online',
-                button
-            );
-
-        },
-
-        error => {
-
-            console.error(
-                '[GPS] Error:',
-                error
-            );
-
-
-            showLocationModal();
-
-        },
-
-        {
-            enableHighAccuracy:
-                true,
-
-            timeout:
-                15000,
-
-            maximumAge:
-                0
+    async state()
+    {
+        if (!navigator.geolocation) return 'unsupported';
+        if (!window.isSecureContext) return 'insecure';
+        try {
+            if (!this.status && navigator.permissions?.query) {
+                this.status = await navigator.permissions.query({ name: 'geolocation' });
+                this.status.onchange = () => this.changed();
+            }
+            return this.status ? this.status.state : 'unknown';   // granted | prompt | denied
+        } catch (e) {
+            return 'unknown';   // e.g. older Safari: just ask
         }
+    },
 
-    );
+    async goOnline(button)
+    {
+        this.pendingButton = button;
+        const state = await this.state();
 
+        if (state === 'unsupported') return showLocationModal('unsupported');
+        if (state === 'insecure') return showLocationModal('insecure');
+        if (state === 'denied') return showLocationModal('denied');
+        if (state === 'granted') return this.locate(button);
+
+        // prompt / unknown: explain first; the browser asks after "Allow"
+        showLocationModal('ask');
+    },
+
+    online(button, position)
+    {
+        setButtonBusy(button, false);
+        hideLocationModal();
+        RiderState.latestPosition = parseCoords(position);
+        sendLocation(RiderState.latestPosition);
+        updateRiderStatus('online', button);
+    },
+
+    locate(button)
+    {
+        setButtonBusy(button, true);
+
+        navigator.geolocation.getCurrentPosition(
+            position => this.online(button, position),
+            error => {
+                if (error.code === 1) {            // denied at the prompt
+                    setButtonBusy(button, false);
+                    return this.failed(error);
+                }
+                // weak GPS (indoors): one more try with network location
+                navigator.geolocation.getCurrentPosition(
+                    position => this.online(button, position),
+                    err2 => { setButtonBusy(button, false); this.failed(err2); },
+                    { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+                );
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    },
+
+    failed(error)
+    {
+        console.error('[GPS] Error:', error);
+        if (error && error.code === 1) return showLocationModal('denied');
+        if (error && error.code === 3) return showLocationModal('timeout');
+        showLocationModal('off');
+    },
+
+    // permission changed in the browser settings while the page is open
+    changed()
+    {
+        const state = this.status && this.status.state;
+        const button = document.getElementById('riderOnlineBtn');
+
+        if (state === 'denied' && button && ['online', 'busy'].includes(button.dataset.status)) {
+            stopRiderTracking();
+            updateRiderStatus('offline', button);
+            showLocationModal('revoked');
+        }
+        if (state === 'granted' && document.getElementById('locationModal')?.classList.contains('is-open')) {
+            hideLocationModal();
+            if (this.pendingButton) this.locate(this.pendingButton);
+        }
+    },
+};
+
+function setButtonBusy(button, busy)
+{
+    if (!button) return;
+    button.disabled = !!busy;
+    button.classList.toggle('is-locating', !!busy);
+    if (busy) {
+        if (!button.dataset.prevHtml) button.dataset.prevHtml = button.innerHTML;
+        button.innerHTML = '<i class="fa-solid fa-location-crosshairs fa-beat-fade" aria-hidden="true"></i><span class="rider-lbl">Locating…</span><span class="rider-lbl-short">…</span>';
+    } else if (button.dataset.prevHtml) {
+        button.innerHTML = button.dataset.prevHtml;
+        delete button.dataset.prevHtml;
+    }
 }
 
 
@@ -737,7 +806,7 @@ function startRiderTracking()
         !navigator.geolocation
     ) {
 
-        showLocationModal();
+        showLocationModal('unsupported');
 
         return;
 
@@ -761,27 +830,20 @@ function startRiderTracking()
                     error
                 );
 
-
-                stopRiderTracking();
-
-
-                const button =
-                    document.getElementById(
-                        'riderOnlineBtn'
-                    );
-
-
-                if (button) {
-
-                    updateRiderStatus(
-                        'offline',
-                        button
-                    );
-
+                // permission revoked: go offline and explain
+                if (error.code === 1) {
+                    stopRiderTracking();
+                    const button = document.getElementById('riderOnlineBtn');
+                    if (button) updateRiderStatus('offline', button);
+                    showLocationModal('revoked');
+                    return;
                 }
 
-
-                showLocationModal();
+                // weak signal / timeout: stay online with the last known position, warn once
+                if (!RiderState.gpsWarned && window.notify) {
+                    RiderState.gpsWarned = true;
+                    window.notify.warning('Your GPS signal is weak. Keep location on so customers can follow you.', { title: 'Weak location signal' });
+                }
 
             },
 
@@ -1947,81 +2009,119 @@ document.addEventListener(
 |--------------------------------------------------------------------------
 */
 
-function showLocationModal()
+function showLocationModal(kind = 'off')
 {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const steps = isIOS
+        ? '<ol><li>Open <b>Settings</b> → <b>Privacy &amp; Security</b> → <b>Location Services</b>.</li><li>Turn it on, then choose your browser and set it to <b>While Using</b>.</li><li>Come back and tap <b>Try again</b>.</li></ol>'
+        : '<ol><li>Tap the <b>lock</b> or <b>ⓘ</b> icon next to the web address.</li><li>Open <b>Permissions</b> / <b>Site settings</b> → <b>Location</b> → <b>Allow</b>.</li><li>Come back and tap <b>Try again</b>.</li></ol>';
 
-    let modal =
-        document.getElementById(
-            'locationModal'
-        );
+    const views = {
+        ask: {
+            icon: 'fa-location-dot', title: 'Allow location to go online',
+            body: '<p>Smart Market uses your location while you are online to send you nearby delivery requests and show customers where their order is.</p><p class="lm-small">Your browser will ask next. Location is only shared while you are online.</p>',
+            primary: ['Allow', 'allow'], secondary: ['Not now', 'close'],
+        },
+        denied: {
+            icon: 'fa-location-pin-lock', title: 'Location is blocked',
+            body: '<p>Your browser is blocking location for Smart Market, so you can not go online yet.</p>' + steps,
+            primary: ['Try again', 'retry'], secondary: ['Close', 'close'],
+        },
+        revoked: {
+            icon: 'fa-location-pin-lock', title: 'You are now offline',
+            body: '<p>Location access was turned off, so we took you offline. Allow location again to keep receiving deliveries.</p>' + steps,
+            primary: ['Try again', 'retry'], secondary: ['Close', 'close'],
+        },
+        off: {
+            icon: 'fa-satellite-dish', title: 'Turn on your location',
+            body: '<p>We could not get your location. Turn on your phone\'s <b>Location / GPS</b>, then try again.</p>',
+            primary: ['Try again', 'retry'], secondary: ['Close', 'close'],
+        },
+        timeout: {
+            icon: 'fa-satellite-dish', title: 'Still looking for you…',
+            body: '<p>Finding your location is taking too long. Check that <b>Location / GPS</b> is on, move near a window or outside, then try again.</p>',
+            primary: ['Try again', 'retry'], secondary: ['Close', 'close'],
+        },
+        insecure: {
+            icon: 'fa-lock-open', title: 'Location needs a secure connection',
+            body: '<p>Browsers only share location on secure (<b>https://</b>) pages. Open Smart Market with its https address to go online.</p>',
+            primary: ['OK', 'close'],
+        },
+        unsupported: {
+            icon: 'fa-circle-info', title: 'Location not available',
+            body: '<p>This browser can not share your location. Use an up-to-date Chrome, Safari or Firefox to go online.</p>',
+            primary: ['OK', 'close'],
+        },
+    };
+    const v = views[kind] || views.off;
 
+    if (!document.getElementById('lm-css')) {
+        const st = document.createElement('style');
+        st.id = 'lm-css';
+        st.textContent = `
+#locationModal{position:fixed;inset:0;z-index:100004;display:none;align-items:flex-end;justify-content:center;background:rgba(10,14,12,.45);font-family:"Nunito",system-ui,sans-serif}
+#locationModal.is-open{display:flex}
+#locationModal .lm-box{box-sizing:border-box;width:min(26rem,100%);margin:0;padding:1.4rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));border-radius:1.25rem 1.25rem 0 0;background:#fff;color:#17201b;box-shadow:0 -10px 40px rgba(0,0,0,.2);animation:lmUp .25s cubic-bezier(.2,.8,.2,1)}
+@media (min-width:640px){#locationModal{align-items:center}#locationModal .lm-box{border-radius:1.25rem}}
+@keyframes lmUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+#locationModal .lm-ico{display:grid;place-items:center;width:3.2rem;height:3.2rem;margin:0 0 .8rem;border-radius:50%;background:#e8f7ee;color:#16a34a;font-size:1.3rem}
+#locationModal h3{margin:0 0 .45rem;font-size:1.15rem;font-weight:900}
+#locationModal p{margin:0 0 .6rem;color:#4b5b52;font-size:.92rem;line-height:1.5}
+#locationModal .lm-small{font-size:.8rem;color:#7a867f}
+#locationModal ol{margin:.2rem 0 .8rem;padding-left:1.2rem;color:#4b5b52;font-size:.88rem;line-height:1.55}
+#locationModal .lm-btns{display:flex;gap:.6rem;margin-top:1rem}
+#locationModal .lm-btns button{flex:1;height:2.85rem;border:0;border-radius:.8rem;font:inherit;font-size:.95rem;font-weight:800;cursor:pointer}
+#locationModal .lm-primary{background:#16a34a;color:#fff}
+#locationModal .lm-secondary{background:#f1f4f2;color:#33413a}
+body.dark-mode #locationModal .lm-box{background:#18211c;color:#e7efe9}
+body.dark-mode #locationModal p,body.dark-mode #locationModal ol{color:#b6c3bb}
+body.dark-mode #locationModal .lm-ico{background:#0f2a1a;color:#4ade80}
+body.dark-mode #locationModal .lm-secondary{background:#243028;color:#d6e2da}`;
+        document.head.appendChild(st);
+    }
 
+    let modal = document.getElementById('locationModal');
     if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'locationModal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) hideLocationModal(); });
+    }
 
-        modal =
-            document.createElement(
-                'div'
-            );
-
-
-        modal.id =
-            'locationModal';
-
-
-        modal.innerHTML = `
-
-            <div class="location-box">
-
-                <i class="fa-solid fa-circle-info"></i>
-
-                <h3>
-                    Location Required
-                </h3>
-
-                <p>
-                    Please turn on your device
-                    location services to go online
-                    and receive deliveries.
-                </p>
-
-                <button id="locationOkBtn">
-                    OK
-                </button>
-
+    modal.innerHTML =
+        `<div class="lm-box">
+            <span class="lm-ico"><i class="fa-solid ${v.icon}" aria-hidden="true"></i></span>
+            <h3>${v.title}</h3>
+            ${v.body}
+            <div class="lm-btns">
+                ${v.secondary ? `<button type="button" class="lm-secondary" data-act="${v.secondary[1]}">${v.secondary[0]}</button>` : ''}
+                <button type="button" class="lm-primary" data-act="${v.primary[1]}">${v.primary[0]}</button>
             </div>
+        </div>`;
+    modal.classList.add('is-open');
+    modal.style.display = '';
 
-        `;
+    modal.querySelectorAll('[data-act]').forEach((b) => {
+        b.onclick = () => {
+            const act = b.dataset.act;
+            const button = RiderPermission.pendingButton || document.getElementById('riderOnlineBtn');
+            hideLocationModal();
+            if (act === 'allow') return RiderPermission.locate(button);   // the browser's own prompt appears now
+            if (act === 'retry') return RiderPermission.goOnline(button);
+        };
+    });
+    modal.querySelector('.lm-primary')?.focus();
+}
 
-
-        document.body.appendChild(
-            modal
-        );
-
+function hideLocationModal()
+{
+    const modal = document.getElementById('locationModal');
+    if (modal) {
+        modal.classList.remove('is-open');
+        modal.style.display = 'none';
     }
-
-
-    modal.style.display =
-        'flex';
-
-
-    const button =
-        document.getElementById(
-            'locationOkBtn'
-        );
-
-
-    if (button) {
-
-        button.onclick =
-            () => {
-
-                modal.style.display =
-                    'none';
-
-            };
-
-    }
-
 }
 
 
@@ -2086,6 +2186,11 @@ function hideDeliveryToast()
 
 function showToast(message)
 {
+
+    if (window.notify) {
+        window.notify(message, 'info');
+        return;
+    }
 
     alert(
         message

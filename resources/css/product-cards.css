@@ -1,0 +1,262 @@
+/*
+|--------------------------------------------------------------------------
+| Product cards + auto-sliding rows outside the HomeMarket layout
+|--------------------------------------------------------------------------
+| Used by the cart page ("Popular picks" under an empty cart). These are the
+| card / slider rules from homemrkt.css and homemarket-ui.css, in the same
+| order, with the HomeMarket-only scoping widened to any subdivision so the
+| cards follow the page's subdivision colours. Loaded by layouts/flow only.
+| If you restyle the cards in homemarket-ui.css, mirror the change here.
+*/
+
+
+/* ---- from homemrkt.css ---- */
+.item-container { position: relative; padding: 1em; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); transition: 0.3s; }
+.item-container::before { content: "-" attr(data-content); top: 0px; left: 0px; border-radius: var(--radius-m) 0 var(--radius-m) 0; color: rgb(255, 255, 255); font-weight: 700; width: 3em; height: 2em; padding: 0.2em; font-size: 0.8rem; position: absolute; background: var(--ink); align-items: center; justify-content: center; display: none; z-index: 999; }
+.item-container.active::before { display: grid; }
+.item-container img { display: block; margin: auto; height: 8em; transition: 0.3s; cursor: pointer; }
+.item-container:hover img { transform: scale(1.1); }
+.item-container span { display: flex; margin-top: 0.5em; align-items: center; justify-content: space-between; color: var(--hold); }
+.item-container span:hover { color: var(--accent-strong); }
+.item-container span i.add-to-cart-btn { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius-s); background: var(--accent); color: var(--on-accent); font-size: 1rem; cursor: pointer; }
+.item-container h4 { font-weight: 500; color: var(--static-text); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; }
+.item-container h5 { position: relative; font-weight: 500; color: var(--ink-soft); font-size: 0.8rem; text-decoration: line-through; }
+.item-container h5::after { content: attr(data-discount); right: 1em; color: var(--accent-strong); text-decoration: none; font-weight: 700; height: 1em; position: absolute; }
+.item-container span { }
+.item-container span .price { display: flex; align-items: center; gap: 0.2em; padding: 0.4em 0px; }
+.item-container span .price h4 { font-size: 0.8rem; font-weight: 700; color: var(--small-text-color); }
+.item-container span .price h4.cash { font-size: 1rem; font-weight: 500; color: var(--ink); }
+.item-container.active span .price h4.cash { color: var(--accent-strong); font-weight: 700; }
+@media screen and (max-width: 850px) { .item-container img { width: 6em; height: 6em; } }
+@media screen and (max-width: 850px) { .item-container h4 { font-size: 0.7rem; } }
+@media screen and (max-width: 850px) { .item-container span .price h4 { font-size: 0.7rem; font-weight: 500; } }
+@media screen and (max-width: 850px) { .item-container span .price h4.cash { font-size: 0.8rem; } }
+@media screen and (max-width: 500px) { .items-container { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(8em, 1fr)); gap: 0.5em; } }
+@media screen and (max-width: 500px) { .items-container.column-items { } }
+
+/* ---- from homemarket-ui.css ---- */
+body[data-subdivision] .cards-slider { margin: 0px; padding: 0px; background: none; }
+body[data-subdivision] .cards-slider .head { display: flex; align-items: center; justify-content: space-between; margin: 0px 0px 1rem; padding: 0px; }
+body[data-subdivision] .cards-slider .sub-heading, body[data-subdivision] .cards-slider .heading { margin: 0px; padding: 0px; color: var(--ink); font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 800; letter-spacing: -0.02em; }
+body[data-subdivision] .cards-slider .head span { display: flex; gap: 0.5rem; }
+body[data-subdivision] .cards-slider .head i { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); font-size: 1rem; cursor: pointer; }
+body[data-subdivision] .cards-slider .head i.fa-angle-right { border-color: var(--ink); background: var(--ink); color: var(--surface-tint); }
+body[data-subdivision] .cards-slider .column-cards { display: flex; flex-wrap: nowrap; gap: 0px; padding: 0px 0px 0.5rem; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; }
+.cards-slider .column-cards::-webkit-scrollbar { display: none; }
+.cards-slider .column-cards.no-transition { scroll-behavior: auto; }
+body[data-subdivision] .item-container { position: relative; display: flex; flex-direction: column; flex: 0 0 11rem; gap: 0.5rem; padding: 0.8rem; border: 0px; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-card); }
+body[data-subdivision] .item-container::before { content: none; }
+.item-container .badge { position: absolute; top: 1.2rem; left: 1.2rem; z-index: 1; padding: 0.28rem 0.6rem; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); font-size: 0.72rem; font-weight: 700; }
+.item-container .thumb { display: grid; place-items: center; height: 8rem; overflow: hidden; border-radius: var(--r-card); background: var(--surface-tint); }
+body[data-subdivision] .item-container .thumb img { width: 100%; height: 100%; object-fit: contain; transform: none; }
+.item-container .name { min-height: 2.15rem; color: var(--ink); font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
+.item-container .size { min-height: 1rem; color: var(--ink-soft); font-size: 0.75rem; }
+.item-container .buy { display: flex; flex-direction: column; gap: 0.6rem; margin-top: auto; }
+.item-container .prices { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.5rem; }
+.item-container .prices s { color: var(--ink-soft); font-size: 0.75rem; order: 2; }
+.item-container .prices .now { color: var(--ink); font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; }
+.item-container .prices .now.deal { color: var(--accent-strong); }
+body[data-subdivision] .item-container .add-to-cart-btn { display: flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%; height: 2.75rem; border: 0px; border-radius: var(--radius-pill); background: var(--ink); color: var(--surface-tint); font-style: inherit; font-variant: inherit; font-stretch: inherit; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.item-container .add-to-cart-btn:hover, .item-container:has(.badge) .add-to-cart-btn:hover { background: var(--accent); color: var(--on-accent); }
+body[data-subdivision] .pdp .btns .add-to-cart-btn { flex: 1 1 0%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3.25rem; margin: 0px; border: 0px; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+@media (max-width: 40rem) { body[data-subdivision] .pdp .btns .add-to-cart-btn { height: 3rem; } }
+@media (max-width: 40rem) { body[data-subdivision] .cards-slider .head i { width: 2.25rem; height: 2.25rem; } }
+body[data-subdivision] .pdp .btns .add-to-cart-btn, body[data-subdivision] .pdp .discount, body[data-subdivision] .pdp .js-discount-percentage { opacity: 1; }
+body[data-subdivision] .item-container { border: var(--card-border); box-shadow: rgba(34, 20, 13, 0.04) 0px 1px 0px; }
+body[data-subdivision] .item-container .thumb { border: var(--bw) solid var(--line); }
+body[data-subdivision] .cards-slider .head i { border: var(--card-border); }
+.slider .buttons button, body[data-subdivision] .carousel-container i, body[data-subdivision] .cards-slider .head i, .hm-shop-mark, body[data-subdivision] .pdp .shop-chip-mark, body[data-subdivision] .info-bar .info i, body[data-subdivision] .pdp .btns :is(.dec, .inc), .hm-floatbar .cart-count { border-radius: var(--r-inner); }
+.item-container .badge { border-radius: var(--r-inner); }
+body[data-subdivision] .item-container .add-to-cart-btn { border-radius: var(--r-inner); }
+body[data-subdivision] .item-container, body[data-subdivision] .carousel .card, body[data-subdivision] .info-bar .info, .hm-shop, body[data-subdivision] .pdp :is(.product-col, .product-details, .select-delivery), .context-banner { box-shadow: var(--card-shadow); }
+.hm-grid .item-container { width: auto; min-width: 0px; flex: 0 0 auto; }
+body[data-subdivision] .info-bar .info, body[data-subdivision] .hm-shop-mark, body[data-subdivision] .carousel .card, body[data-subdivision] .item-container .thumb, body[data-subdivision] .pdp .main-img, body[data-subdivision] .pdp .small-img-col, body[data-subdivision] .pdp .sold-by, body[data-subdivision] .pdp .specs, body[data-subdivision] .pdp .delivery-option.active, body[data-subdivision] .context-banner, body[data-subdivision] .slider { background: var(--bg-white, #fff); }
+body[data-subdivision] .item-container .thumb { border: 1px solid var(--line); }
+body[data-subdivision] .item-container .thumb, body[data-subdivision] .item-container .thumb img, body[data-subdivision] .carousel .card, body[data-subdivision] .carousel .card .img, body[data-subdivision] .pdp .main-img, body[data-subdivision] .pdp .main-img img, body[data-subdivision] .pdp .small-img-col, body[data-subdivision] .pdp .small-img-col img, body[data-subdivision] .category-icons .category-icon img, body[data-subdivision] .hm-sp-item img, body[data-subdivision] .slider { border: 0px; background: transparent; box-shadow: none; }
+
+/* ---- cart page: "Popular picks" section ---- */
+.fl-page .cart-picks { max-width: 76rem; margin: 2.5rem auto 0; }
+.fl-page .cart-picks + .cart-picks { margin-top: 1.5rem; }
+.fl-page .cart-picks .cards-slider .head .sub-heading { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--ink); }
+@media (max-width: 599.98px) {
+    .fl-page .cart-picks { margin-top: 1.75rem; }
+}
+
+/* =====================================================================
+   v59: product cards – price first, soft colours, Nunito, full-width photo
+   that zooms gently on hover. (Same block in homemarket-ui.css and
+   product-cards.css.)
+   ===================================================================== */
+body[data-subdivision] .item-container {
+    display: flex; flex-direction: column; gap: 0;
+    padding: 0; overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: none;
+    font-family: "Nunito", system-ui, sans-serif;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+body[data-subdivision] .item-container:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    box-shadow: 0 14px 28px -14px rgba(34, 20, 13, .28);
+}
+body[data-subdivision] .item-container .thumb {
+    position: relative; display: block;
+    width: 100%; height: auto; aspect-ratio: 1 / 1;
+    margin: 0; padding: 0;
+    border: 0; border-radius: 0;
+    background: transparent;
+    overflow: hidden;
+}
+body[data-subdivision] .item-container .thumb img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; transform: none;
+    transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+body[data-subdivision] .item-container:hover .thumb img { transform: scale(1.07); }
+body[data-subdivision] .item-container .badge {
+    position: absolute; top: .55rem; left: .55rem; z-index: 1;
+    padding: .2rem .5rem; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, #fff); color: var(--accent-strong);
+    font-family: "Nunito", system-ui, sans-serif; font-size: .72rem; font-weight: 900;
+}
+body[data-subdivision] .item-container .item-body {
+    display: flex; flex-direction: column; flex: 1 1 auto; gap: .2rem;
+    padding: .7rem .8rem .8rem;
+}
+body[data-subdivision] .item-container .prices { display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .45rem; }
+body[data-subdivision] .item-container .prices .now { color: var(--ink); font-family: "Nunito", system-ui, sans-serif; font-size: 1.08rem; font-weight: 900; }
+body[data-subdivision] .item-container .prices .now.deal { color: var(--accent-strong); }
+body[data-subdivision] .item-container .prices s { order: 0; color: var(--ink-soft); font-size: .76rem; font-weight: 600; opacity: .8; }
+body[data-subdivision] .item-container .name {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 2.5em; color: var(--ink); font-family: "Nunito", system-ui, sans-serif;
+    font-size: .88rem; font-weight: 700; line-height: 1.25; text-decoration: none;
+}
+body[data-subdivision] .item-container .size { min-height: 0; color: var(--ink-soft); font-family: "Nunito", system-ui, sans-serif; font-size: .76rem; font-weight: 600; }
+body[data-subdivision] .item-container .add-to-cart-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+    width: 100%; height: 2.3rem; min-height: 0; margin-top: auto;
+    border: 0; border-radius: .7rem;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--accent-strong);
+    font-family: "Nunito", system-ui, sans-serif; font-size: .85rem; font-weight: 800;
+    cursor: pointer; transition: background-color .2s ease, color .2s ease;
+}
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn { margin-top: .55rem; }
+body[data-subdivision] .item-container .add-to-cart-btn:hover,
+body[data-subdivision] .item-container:has(.badge) .add-to-cart-btn:hover { background: var(--accent); color: var(--on-accent); }
+@media (prefers-reduced-motion: reduce) {
+    body[data-subdivision] .item-container, body[data-subdivision] .item-container .thumb img { transition: none; }
+    body[data-subdivision] .item-container:hover, body[data-subdivision] .item-container:hover .thumb img { transform: none; }
+}
+
+/* =====================================================================
+   v60: cards without a border, greyish text, zoom on the photo only,
+   price with a small "KES" and the Add button beside it
+   ===================================================================== */
+body[data-subdivision] .item-container,
+body[data-subdivision] .item-container:hover {
+    border: 0;
+    box-shadow: none;
+    transform: none;
+    background: transparent;
+}
+body[data-subdivision] .item-container .thumb { border-radius: .9rem; background: var(--surface); }
+body[data-subdivision] .item-container:hover .thumb img { transform: none; }
+body[data-subdivision] .item-container .thumb:hover img { transform: scale(1.07); }
+body[data-subdivision] .item-container .item-body { gap: .15rem; padding: .6rem .15rem .2rem; }
+
+body[data-subdivision] .item-container .buy {
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: .5rem;
+    margin: 0 0 .15rem;
+}
+body[data-subdivision] .item-container .prices { flex: 1 1 auto; min-width: 0; gap: 0 .35rem; }
+body[data-subdivision] .item-container .prices .now { color: #4a5557; font-size: 1.05rem; font-weight: 900; white-space: nowrap; }
+body[data-subdivision] .item-container .prices .now small { font-size: .68em; font-weight: 800; letter-spacing: .02em; }
+body[data-subdivision] .item-container .prices .now.deal { color: var(--accent-strong); }
+body[data-subdivision] .item-container .prices s { color: var(--static-text, #889396); font-size: .72rem; }
+
+body[data-subdivision] .item-container .add-to-cart-btn,
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn {
+    flex: none; width: auto; height: 2rem; margin: 0; padding: 0 .75rem;
+    border-radius: 999px; font-size: .78rem; gap: .3rem;
+}
+body[data-subdivision] .item-container .add-to-cart-btn i { font-size: .7rem; }
+
+body[data-subdivision] .item-container .name { min-height: 2.5em; color: #5f6b6e; font-size: .86rem; font-weight: 700; }
+body[data-subdivision] .item-container .name:hover { color: var(--ink); }
+body[data-subdivision] .item-container .size { color: var(--static-text, #889396); font-size: .74rem; font-weight: 600; }
+
+/* row headings in Nunito too */
+body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { font-family: "Nunito", system-ui, sans-serif; font-weight: 900; letter-spacing: -.01em; }
+
+body.dark-mode[data-subdivision] .item-container .prices .now { color: #d5dcdd; }
+body.dark-mode[data-subdivision] .item-container .name { color: #b3bec0; }
+body.dark-mode[data-subdivision] .item-container .thumb { background: #1d1d1d; }
+
+/* old price sits under the price so the Add button never gets crowded */
+body[data-subdivision] .item-container .prices { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.15; }
+body[data-subdivision] .item-container .prices s { font-size: .7rem; }
+
+/* v61: smaller card text and a slimmer Add button */
+body[data-subdivision] .item-container .prices .now { font-size: .92rem; }
+body[data-subdivision] .item-container .prices .now small { font-size: .7em; }
+body[data-subdivision] .item-container .prices s { font-size: .66rem; }
+body[data-subdivision] .item-container .add-to-cart-btn,
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn { height: 1.75rem; padding: 0 .6rem; font-size: .72rem; gap: .25rem; }
+body[data-subdivision] .item-container .add-to-cart-btn i { font-size: .62rem; }
+body[data-subdivision] .item-container .name { min-height: 2.4em; font-size: .78rem; line-height: 1.2; }
+body[data-subdivision] .item-container .size { font-size: .68rem; }
+body[data-subdivision] .item-container .item-body { gap: .1rem; padding-top: .5rem; }
+
+/* v63: white card (bg-white), name at the very bottom, snug spacing; swipe-friendly rows on phones */
+body[data-subdivision] .item-container,
+body[data-subdivision] .item-container:hover {
+    padding: .45rem;
+    border-radius: 1rem;
+    background: var(--bg-white, #fff);
+}
+body[data-subdivision] .item-container .thumb { border-radius: .75rem; background: var(--bg-white, #fff); }
+body[data-subdivision] .item-container .item-body { gap: .1rem; padding: .5rem .2rem .15rem; }
+body[data-subdivision] .item-container .size { order: 0; }
+body[data-subdivision] .item-container .name { min-height: 0; margin-top: .1rem; }
+body.dark-mode[data-subdivision] .item-container,
+body.dark-mode[data-subdivision] .item-container .thumb { background: var(--surface, #1a1a1a); }
+
+@media (max-width: 599.98px) {
+    body[data-subdivision] .cards-slider .column-cards { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+    body[data-subdivision] .cards-slider .card-data { scroll-snap-align: start; }
+    body[data-subdivision] .item-container { padding: .35rem; border-radius: .85rem; }
+    body[data-subdivision] .item-container .thumb { border-radius: .65rem; }
+    body[data-subdivision] .item-container .item-body { padding: .45rem .15rem .1rem; }
+    body[data-subdivision] .item-container .buy { gap: .3rem; }
+    body[data-subdivision] .item-container .prices .now { font-size: .86rem; }
+    body[data-subdivision] .item-container .add-to-cart-btn { height: 1.65rem; padding: 0 .5rem; font-size: .7rem; }
+}
+
+@media (max-width: 599.98px) {
+    /* no-JS fallback: two cards per row on phones */
+    body[data-subdivision] .cards-slider .card-data { flex: 0 0 calc((100% - 8px) / 2); }
+}
+
+/* v75: slider titles smaller and grey; compact arrow buttons */
+body[data-subdivision] .cards-slider .head { margin-bottom: .6rem; }
+body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading),
+body[data-subdivision="home-market"] .pdp-related .sub-heading,
+.fl-page .cart-picks .cards-slider .head .sub-heading {
+    color: #6b7280; font-size: 1.05rem; font-weight: 800; letter-spacing: 0;
+}
+body.dark-mode[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { color: #a3a3a3; }
+body[data-subdivision] .cards-slider .head span { gap: .35rem; }
+body[data-subdivision] .cards-slider .head i,
+body[data-subdivision="home-market"] .cards-slider .head i {
+    width: 1.75rem; height: 1.75rem; padding: 0;
+    border-radius: .5rem; font-size: .75rem;
+}
+@media (max-width: 40rem) {
+    body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { font-size: .98rem; }
+    body[data-subdivision] .cards-slider .head i,
+    body[data-subdivision="home-market"] .cards-slider .head i { width: 1.6rem; height: 1.6rem; }
+}

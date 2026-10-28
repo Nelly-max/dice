@@ -8,20 +8,21 @@
                 <div class="main-form login">
 
                     <span class="title">Enter New Password</span>
+                    <p class="subtitle">Choose a new password for your account.</p>
 
                     @if ($errors->any())
-                        <div class="text" style="color: red;">
+                        <div class="form-error">
                             {{ $errors->first() }}
                         </div>
                     @endif
 
                     @if (session('success'))
-                        <div class="text" style="color: green;">
+                        <div class="form-success">
                             {{ session('success') }}
                         </div>
                     @endif
 
-                    <form action="{{ route('password.reset.update') }}" method="POST">
+                    <form action="{{ route('password.reset.update') }}" method="POST" data-notify-loading="Updating your password…">
                         @csrf
 
                         <div class="input-field">
@@ -32,8 +33,8 @@
                                 placeholder="Enter Password"
                                 autocomplete="new-password"
                             >
-                            <i class="uil uil-lock icon"></i>
-                            <i class="uil uil-eye-slash showHidePw"></i>
+                            <i class="fa-solid fa-lock icon"></i>
+                            <i class="fa-regular fa-eye-slash showHidePw"></i>
                         </div>
 
                         <div class="input-field">
@@ -44,8 +45,8 @@
                                 placeholder="Confirm Password"
                                 autocomplete="new-password"
                             >
-                            <i class="uil uil-lock icon"></i>
-                            <i class="uil uil-eye-slash showHidePw"></i>
+                            <i class="fa-solid fa-lock icon"></i>
+                            <i class="fa-regular fa-eye-slash showHidePw"></i>
                         </div>
 
                         <div class="input-field button">

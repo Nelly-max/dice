@@ -22,10 +22,13 @@ pwShowHide.forEach(function (eyeIcon) {
         });
 
         pwShowHide.forEach(function (icon) {
+            // works with both Font Awesome (fa-eye) and the older Unicons (uil-eye) icons
             if (shouldShowPassword) {
                 icon.classList.replace('uil-eye-slash', 'uil-eye');
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
             } else {
                 icon.classList.replace('uil-eye', 'uil-eye-slash');
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
             }
         });
     });
@@ -233,7 +236,7 @@ if (login && centeredFormsContainer) {
         if (hiddenOtp.value.length !== inputs.length) {
             event.preventDefault();
 
-            alert(
+            (window.notify ? window.notify.error : alert)(
                 'Please enter all ' +
                 inputs.length +
                 ' characters of your verification code.'
@@ -326,7 +329,7 @@ if (login && centeredFormsContainer) {
                 || document.querySelector('input[name="_token"]');
 
             if (!csrf) {
-                alert(
+                (window.notify ? window.notify.error : alert)(
                     'Unable to request a new code. Please refresh the page.'
                 );
 

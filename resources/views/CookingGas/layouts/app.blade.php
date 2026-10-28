@@ -10,6 +10,7 @@
     @vite([
             'resources/css/reused.css',
             'resources/css/LargeCards.css',
+            'resources/css/responsive.css',
             
             'resources/js/reused.js',
             'resources/js/cart.js',
@@ -19,12 +20,12 @@
     <link rel="icon" href="{{ asset('img/favicon.png') }}">
 
     <!-- Remix icons -->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet"/>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
+    @include('partials.theme-init')
 
     {{-- Navbar --}}
     @include('CookingGas.partials.nav')

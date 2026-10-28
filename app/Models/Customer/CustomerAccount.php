@@ -29,7 +29,12 @@ class CustomerAccount extends Authenticatable
         'phone_number',
         'password',
         'gender',
+        'date_of_birth',
         'status',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
     ];
 
     // Hidden attributes for serialization safety layers

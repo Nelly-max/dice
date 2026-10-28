@@ -3,1716 +3,246 @@
 namespace App\Http\Controllers\Web\HomeMarket;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
+use App\Services\HomeMarket\MediaGallery;
+use App\Services\HomeMarket\ProductPresenter;
+use App\Services\HomeMarket\ShopDiscovery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-
-use App\Models\Customer\Cart;
-
-use App\Services\DeliveryLocationService;
+use Illuminate\Support\Facades\Log;
 
 class ItemsController extends Controller
 {
-    /**
-     * Display all HomeMarket items.
-     */
-    public function index(
-        Request $request,
-        DeliveryLocationService $locationService
+    public function __construct(
+        private ShopDiscovery $shops,
+        private ProductPresenter $presenter,
+        private MediaGallery $media,
     ) {
-        /*
-        |--------------------------------------------------------------------------
-        | Current Customer
-        |--------------------------------------------------------------------------
-        */
-
-        $userId = auth('customer')->id();
-        $sessionId = $request->session()->getId();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Current Cart Shop
-        |--------------------------------------------------------------------------
-        */
-
-        $selectedBusinessAccount = $this->getSelectedBusinessAccount(
-            $userId,
-            $sessionId
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Customer Delivery Location
-        |--------------------------------------------------------------------------
-        |
-        | IMPORTANT:
-        |
-        | Coordinates are NOT read from the URL.
-        |
-        | They come from the Laravel session through
-        | DeliveryLocationService.
-        |
-        */
-
-        $deliveryLocation = $locationService->get($request);
-
-        $customerLatitude = $deliveryLocation['latitude'] ?? null;
-        $customerLongitude = $deliveryLocation['longitude'] ?? null;
-
-        $hasDeliveryLocation =
-            !is_null($customerLatitude) &&
-            !is_null($customerLongitude);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Determine Progressive Radius
-        |--------------------------------------------------------------------------
-        |
-        | If the customer has a delivery location and does not already
-        | have a cart shop, find the nearest radius containing at least
-        | one qualifying shop.
-        |
-        | 500m
-        | 1km
-        | 2km
-        | 3km maximum
-        |
-        */
-
-        $selectedRadius = null;
-
-        if (
-            $hasDeliveryLocation &&
-            !$selectedBusinessAccount
-        ) {
-            $selectedRadius = $this->resolveDeliveryRadius(
-                $customerLatitude,
-                $customerLongitude
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Products Query
-        |--------------------------------------------------------------------------
-        */
-
-        $products = DB::connection('homemarket')
-            ->table('retail_inventory as ri')
-
-            /*
-            |------------------------------------------------------------------
-            | Business
-            |------------------------------------------------------------------
-            */
-
-            ->join(
-                'business as b',
-                'b.account',
-                '=',
-                'ri.business_account'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Active Subscription
-            |------------------------------------------------------------------
-            */
-
-            ->join(
-                'business_subscription as bs',
-                function ($join) {
-                    $join->on(
-                        'bs.main_branch_account',
-                        '=',
-                        'b.main_branch_account'
-                    );
-
-                    $join->where(
-                        'bs.status',
-                        'active'
-                    );
-                }
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Tariff
-            |------------------------------------------------------------------
-            */
-
-            ->join(
-                'tariffs as t',
-                't.id',
-                '=',
-                'bs.tariff_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Product
-            |------------------------------------------------------------------
-            */
-
-            ->join(
-                'products as p',
-                'p.id',
-                '=',
-                'ri.product_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Product Item
-            |------------------------------------------------------------------
-            */
-
-            ->join(
-                'product_items as pi',
-                'pi.id',
-                '=',
-                'ri.item_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Packaging
-            |------------------------------------------------------------------
-            */
-
-            ->leftJoin(
-                'product_variables.product_packaging as pv_pack',
-                'pv_pack.id',
-                '=',
-                'pi.packaging_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Quantity Unit
-            |------------------------------------------------------------------
-            */
-
-            ->leftJoin(
-                'product_variables.quantity_units as qu',
-                'qu.id',
-                '=',
-                'pi.quantity_unit_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Weight Unit
-            |------------------------------------------------------------------
-            */
-
-            ->leftJoin(
-                'product_variables.weight_units as wu',
-                'wu.id',
-                '=',
-                'pi.weight_unit_id'
-            )
-
-            /*
-            |------------------------------------------------------------------
-            | Basic Product Eligibility
-            |------------------------------------------------------------------
-            */
-
-            ->where(
-                'bs.status',
-                'active'
-            )
-
-            ->where(
-                't.ecommerce_access',
-                1
-            )
-
-            ->where(
-                'b.shop_status',
-                'open'
-            )
-
-            ->where(
-                'ri.status',
-                'instock'
-            )
-
-            ->whereNotNull(
-                'ri.retail_price'
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SHOP SELECTION PRIORITY
-        |--------------------------------------------------------------------------
-        |
-        | 1. Existing cart shop
-        | 2. Delivery location
-        | 3. All qualifying shops
-        |
-        */
-
-        if ($selectedBusinessAccount) {
-
-            /*
-            |------------------------------------------------------------------
-            | Existing Cart Shop
-            |------------------------------------------------------------------
-            */
-
-            $products->where(
-                'ri.business_account',
-                $selectedBusinessAccount
-            );
-
-        } elseif ($hasDeliveryLocation) {
-
-            /*
-            |------------------------------------------------------------------
-            | Delivery Location
-            |------------------------------------------------------------------
-            */
-
-            if (is_null($selectedRadius)) {
-
-                /*
-                | No qualifying shop exists within the maximum 3km.
-                |
-                | Therefore show no products.
-                */
-
-                $products->whereRaw(
-                    '1 = 0'
-                );
-
-            } else {
-
-                $this->applyDistanceFilter(
-                    $products,
-                    $customerLatitude,
-                    $customerLongitude,
-                    $selectedRadius
-                );
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Select Product Attributes
-        |--------------------------------------------------------------------------
-        */
-
-        $products->select([
-
-            /*
-            |------------------------------------------------------------------
-            | Retail Inventory
-            |------------------------------------------------------------------
-            */
-
-            'ri.*',
-
-            /*
-            |------------------------------------------------------------------
-            | Business
-            |------------------------------------------------------------------
-            */
-
-            'b.name as business_name',
-            'b.account as business_account',
-            'b.latitude as business_latitude',
-            'b.longitude as business_longitude',
-
-            /*
-            |------------------------------------------------------------------
-            | Product
-            |------------------------------------------------------------------
-            */
-
-            'p.id as product_id',
-            'p.code as product_code',
-            'p.name as product_name',
-            'p.brand',
-            'p.description',
-
-            /*
-            |------------------------------------------------------------------
-            | Product Item
-            |------------------------------------------------------------------
-            */
-
-            'pi.id as item_id',
-            'pi.code as item_code',
-            'pi.size_value',
-            'pi.weight_value',
-            'pi.pieces',
-
-            /*
-            |------------------------------------------------------------------
-            | Units
-            |------------------------------------------------------------------
-            */
-
-            'qu.slug as quantity_unit',
-            'wu.name as weight_unit',
-
-            /*
-            |------------------------------------------------------------------
-            | Packaging
-            |------------------------------------------------------------------
-            */
-
-            'pv_pack.name as packaging_name',
-        ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Primary Product Image
-        |--------------------------------------------------------------------------
-        */
-
-        $products->selectRaw("
-            (
-                SELECT pii.image_path
-                FROM product_item_images as pii
-                WHERE pii.product_item_id = pi.id
-                ORDER BY
-                    pii.is_primary DESC,
-                    pii.id ASC
-                LIMIT 1
-            ) AS image_path
-        ");
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Distance
-        |--------------------------------------------------------------------------
-        |
-        | Only calculate distance when the customer is discovering shops
-        | using their delivery location.
-        |
-        */
-
-        if (
-            $hasDeliveryLocation &&
-            !$selectedBusinessAccount &&
-            !is_null($selectedRadius)
-        ) {
-            $this->addDistanceSelect(
-                $products,
-                $customerLatitude,
-                $customerLongitude
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Execute Query
-        |--------------------------------------------------------------------------
-        */
-
-        $products = $products
-            ->latest('ri.updated_at')
-            ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Transform Products
-        |--------------------------------------------------------------------------
-        */
-
-        $products->transform(function ($product) {
-
-            /*
-            |------------------------------------------------------------------
-            | Variant Label
-            |------------------------------------------------------------------
-            */
-
-            $variant = '';
-
-            if (
-                $product->size_value &&
-                $product->quantity_unit
-            ) {
-                $variant =
-                    rtrim(
-                        rtrim(
-                            $product->size_value,
-                            '0'
-                        ),
-                        '.'
-                    )
-                    . $product->quantity_unit;
-
-            } elseif (
-                $product->weight_value &&
-                $product->weight_unit
-            ) {
-                $variant =
-                    rtrim(
-                        rtrim(
-                            $product->weight_value,
-                            '0'
-                        ),
-                        '.'
-                    )
-                    . $product->weight_unit;
-            }
-
-            if ($product->pieces) {
-                $variant .=
-                    ' (' .
-                    $product->pieces .
-                    'pcs)';
-            }
-
-            $product->variant_label = $variant;
-
-
-            /*
-            |------------------------------------------------------------------
-            | Image URL
-            |------------------------------------------------------------------
-            */
-
-
-            $baseMediaUrl = rtrim(
-                config('app.media_url'),
-                '/'
-            );
-
-            $product->image_url =
-                !empty($product->image_path)
-                    ? $baseMediaUrl . '/' .
-                        ltrim($product->image_path, '/')
-                    : $baseMediaUrl .
-                        '/img/homeMarket/products/item_image.png';
-
-
-            /*
-            |------------------------------------------------------------------
-            | Discount
-            |------------------------------------------------------------------
-            */
-
-            $now = Carbon::now();
-
-            $hasActiveDiscount = false;
-
-            $finalPrice =
-                (float) $product->retail_price;
-
-            $discountPercentage = 0;
-
-            if (
-                !is_null($product->discount) &&
-                (float) $product->discount > 0
-            ) {
-                $startValid =
-                    is_null($product->discount_start)
-                    ||
-                    $now->greaterThanOrEqualTo(
-                        Carbon::parse(
-                            $product->discount_start
-                        )
-                    );
-
-                $stopValid =
-                    is_null($product->discount_stop)
-                    ||
-                    $now->lessThanOrEqualTo(
-                        Carbon::parse(
-                            $product->discount_stop
-                        )
-                    );
-
-                if (
-                    $startValid &&
-                    $stopValid
-                ) {
-                    $hasActiveDiscount = true;
-
-                    $originalPrice =
-                        (float) $product->retail_price;
-
-                    $finalPrice =
-                        max(
-                            0,
-                            $originalPrice -
-                            (float) $product->discount
-                        );
-
-                    if ($originalPrice > 0) {
-                        $discountPercentage =
-                            round(
-                                (
-                                    (float) $product->discount /
-                                    $originalPrice
-                                ) * 100
-                            );
-                    }
-                }
-            }
-
-
-            /*
-            |------------------------------------------------------------------
-            | Discount Properties
-            |------------------------------------------------------------------
-            */
-
-            $product->has_discount =
-                $hasActiveDiscount;
-
-            $product->final_price =
-                $finalPrice;
-
-            $product->discount_percentage =
-                $discountPercentage;
-
-
-            /*
-            |------------------------------------------------------------------
-            | Distance
-            |------------------------------------------------------------------
-            */
-
-            if (
-                isset($product->distance_meters) &&
-                !is_null($product->distance_meters)
-            ) {
-                $product->distance_km =
-                    round(
-                        (float) $product->distance_meters / 1000,
-                        2
-                    );
-            } else {
-                $product->distance_km = null;
-            }
-
-
-            return $product;
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Return HomeMarket
-        |--------------------------------------------------------------------------
-        */
-
-        return view(
-            'HomeMarket.home',
-            compact(
-                'products',
-                'selectedBusinessAccount'
-            )
-        );
     }
 
+    /**
+     * HomeMarket home page.
+     *
+     * Shop rules (see ShopDiscovery): once the cart holds items, only that
+     * shop's inventory is shown; otherwise only shops within the maximum
+     * delivery radius of the buyer's saved location.
+     */
+    public function index(Request $request)
+    {
+        $context = $this->shops->context($request);
+
+        $query = $this->shops->restrict($this->shops->catalogue(), $context);
+
+        if ($request->filled('category')) {
+            $query->where('p.category_id', (int) $request->query('category'));
+        }
+
+        $products = $query
+            ->latest('ri.updated_at')
+            ->limit(config('homemarket.home_item_limit'))
+            ->get()
+            ->map(fn ($row) => $this->presenter->present($row));
+
+        $size = config('homemarket.row_size');
+
+        $rows = [
+            'hot'      => $products->where('has_discount', true)->sortByDesc('discount_percentage')->take($size)->values(),
+            'fresh'    => $products->take($size)->values(),
+            'everyday' => $products->slice($size)->take($size * 2)->values(),
+        ];
+
+        return view('HomeMarket.home', [
+            'rows'         => $rows,
+            'hasLocation'  => !is_null($context['location']),
+            'outOfRange'   => $context['location'] && !$context['shop'] && is_null($context['radius']),
+            'cartShopName' => $this->shops->shopName($context['shop']),
+            'nearbyShops'  => ($context['location'] && $context['radius'] && !$context['shop'])
+                ? $this->shops->nearbyShops($context['location'], $context['radius'])
+                : collect(),
+            'radiusKm'     => $context['radius'] ? $context['radius'] / 1000 : null,
+            'hero'         => $this->media->images('Sliders'),
+            'leaflets'     => [
+                1 => $this->media->images('Carousel_1'),
+                2 => $this->media->images('Carousel_2'),
+                3 => $this->media->images('Carousel_3'),
+            ],
+            'banners'      => [
+                1 => $this->media->images('StaticBanners_1'),
+                2 => $this->media->images('StaticBanners_2'),
+                3 => $this->media->images('StaticBanners_3'),
+            ],
+        ]);
+    }
 
     /**
-     * View a single inventory item.
-     *
-     * The same shop/location rules used by the homepage are respected.
+     * A single inventory item, with the other sizes the same shop stocks.
+     * The same shop / location rules as the home page apply.
      */
-    public function ViewItem(
-        $inventoryId,
-        Request $request,
-        DeliveryLocationService $locationService
-    ) {
-        /*
-        |--------------------------------------------------------------------------
-        | Current Customer
-        |--------------------------------------------------------------------------
-        */
+    public function ViewItem($inventoryId, Request $request)
+    {
+        $context = $this->shops->context($request);
 
-        $userId = auth('customer')->id();
-        $sessionId = $request->session()->getId();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Selected Cart Shop
-        |--------------------------------------------------------------------------
-        */
-
-        $selectedBusinessAccount =
-            $this->getSelectedBusinessAccount(
-                $userId,
-                $sessionId
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delivery Location
-        |--------------------------------------------------------------------------
-        */
-
-        $deliveryLocation =
-            $locationService->get($request);
-
-        $customerLatitude =
-            $deliveryLocation['latitude'] ?? null;
-
-        $customerLongitude =
-            $deliveryLocation['longitude'] ?? null;
-
-        $hasDeliveryLocation =
-            !is_null($customerLatitude) &&
-            !is_null($customerLongitude);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Progressive Radius
-        |--------------------------------------------------------------------------
-        |
-        | Only used when there is no cart shop.
-        |
-        */
-
-        $selectedRadius = null;
-
-        if (
-            $hasDeliveryLocation &&
-            !$selectedBusinessAccount
-        ) {
-            $selectedRadius =
-                $this->resolveDeliveryRadius(
-                    $customerLatitude,
-                    $customerLongitude
-                );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Product Query
-        |--------------------------------------------------------------------------
-        */
-
-        $productQuery = DB::connection('homemarket')
-            ->table('retail_inventory as ri')
-
-            ->join(
-                'business as b',
-                'b.account',
-                '=',
-                'ri.business_account'
-            )
-
-            ->join(
-                'business_subscription as bs',
-                function ($join) {
-                    $join->on(
-                        'bs.main_branch_account',
-                        '=',
-                        'b.main_branch_account'
-                    );
-
-                    $join->where(
-                        'bs.status',
-                        'active'
-                    );
-                }
-            )
-
-            ->join(
-                'tariffs as t',
-                't.id',
-                '=',
-                'bs.tariff_id'
-            )
-
-            ->join(
-                'products as p',
-                'p.id',
-                '=',
-                'ri.product_id'
-            )
-
-            ->join(
-                'product_items as pi',
-                'pi.id',
-                '=',
-                'ri.item_id'
-            )
-
-            ->leftJoin(
-                'product_variables.product_packaging as pv_pack',
-                'pv_pack.id',
-                '=',
-                'pi.packaging_id'
-            )
-
-            ->leftJoin(
-                'product_variables.quantity_units as qu',
-                'qu.id',
-                '=',
-                'pi.quantity_unit_id'
-            )
-
-            ->leftJoin(
-                'product_variables.weight_units as wu',
-                'wu.id',
-                '=',
-                'pi.weight_unit_id'
-            )
-
-            ->where(
-                'ri.id',
-                $inventoryId
-            )
-
-            ->where(
-                'bs.status',
-                'active'
-            )
-
-            ->where(
-                't.ecommerce_access',
-                1
-            )
-
-            ->where(
-                'b.shop_status',
-                'open'
-            )
-
-            ->where(
-                'ri.status',
-                'instock'
-            )
-
-            ->whereNotNull(
-                'ri.retail_price'
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Item Shop / Location Rules
-        |--------------------------------------------------------------------------
-        */
-
-        if ($selectedBusinessAccount) {
-
-            /*
-            |------------------------------------------------------------------
-            | Existing Cart Shop Has Priority
-            |------------------------------------------------------------------
-            */
-
-            $productQuery->where(
-                'ri.business_account',
-                $selectedBusinessAccount
-            );
-
-        } elseif ($hasDeliveryLocation) {
-
-            /*
-            |------------------------------------------------------------------
-            | Customer Location
-            |------------------------------------------------------------------
-            */
-
-            if (is_null($selectedRadius)) {
-
-                /*
-                | No qualifying shop within 3km.
-                */
-
-                $productQuery->whereRaw(
-                    '1 = 0'
-                );
-
-            } else {
-
-                $this->applyDistanceFilter(
-                    $productQuery,
-                    $customerLatitude,
-                    $customerLongitude,
-                    $selectedRadius
-                );
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Select Main Product
-        |--------------------------------------------------------------------------
-        */
-
-        $product = $productQuery
-            ->select([
-
-                'ri.*',
-
-                'b.name as business_name',
-                'b.account as business_account',
-                'b.latitude as business_latitude',
-                'b.longitude as business_longitude',
-
-                'p.id as product_id',
-                'p.name as product_name',
-                'p.description',
-
-                'pi.size_value',
-                'pi.weight_value',
-                'pi.pieces',
-                'pi.id as item_id',
-                'pi.packaging_id',
-
-                'qu.slug as quantity_unit',
-                'wu.name as weight_unit',
-
-                'pv_pack.name as packaging_name',
-            ])
+        $product = $this->shops
+            ->restrict($this->shops->catalogue(), $context)
+            ->where('ri.id', $inventoryId)
             ->first();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Item Not Available
-        |--------------------------------------------------------------------------
-        */
-
-        if (!$product) {
-            abort(
-                404,
-                'The targeted inventory variation could not be found or is not available from your selected shop or delivery area.'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Variant Label
-        |--------------------------------------------------------------------------
-        */
-
-        $variant = '';
-
-        if (
-            $product->size_value &&
-            $product->quantity_unit
-        ) {
-            $variant =
-                rtrim(
-                    rtrim(
-                        $product->size_value,
-                        '0'
-                    ),
-                    '.'
-                )
-                . $product->quantity_unit;
-
-        } elseif (
-            $product->weight_value &&
-            $product->weight_unit
-        ) {
-            $variant =
-                rtrim(
-                    rtrim(
-                        $product->weight_value,
-                        '0'
-                    ),
-                    '.'
-                )
-                . $product->weight_unit;
-        }
-
-        if ($product->pieces) {
-            $variant .=
-                ' (' .
-                $product->pieces .
-                'pcs)';
-        }
-
-        $product->variant_label = $variant;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Media URL
-        |--------------------------------------------------------------------------
-        */
-
-        $rawUrl =
-            config('app.media_url')
-            ?:
-            env('MEDIA_URL');
-
-        $baseMediaUrl =
-            rtrim(
-                $rawUrl,
-                '/'
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Primary Image
-        |--------------------------------------------------------------------------
-        */
-
-        $imageRecord =
-            DB::connection('homemarket')
-                ->table('product_item_images')
-                ->where(
-                    'product_item_id',
-                    $product->item_id
-                )
-                ->orderBy(
-                    'is_primary',
-                    'DESC'
-                )
-                ->orderBy(
-                    'id',
-                    'ASC'
-                )
-                ->first();
-
-
-        $product->image_url =
-            (
-                $imageRecord &&
-                !empty($imageRecord->image_path)
-            )
-
-                ? $baseMediaUrl .
-                    '/media/' .
-                    ltrim(
-                        $imageRecord->image_path,
-                        '/'
-                    )
-
-                : $baseMediaUrl .
-                    '/media/img/homeMarket/products/item_image.png';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Current Time
-        |--------------------------------------------------------------------------
-        */
-
-        $now = Carbon::now();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Alternate Product Variations
-        |--------------------------------------------------------------------------
-        |
-        | IMPORTANT:
-        |
-        | Variations remain locked to the same business as the
-        | currently viewed item.
-        |
-        */
-
-        $product->gallery_images =
-            DB::connection('homemarket')
-                ->table('retail_inventory as ri')
-
-                ->join(
-                    'business as b',
-                    'b.account',
-                    '=',
-                    'ri.business_account'
-                )
-
-                ->join(
-                    'business_subscription as bs',
-                    function ($join) {
-                        $join->on(
-                            'bs.main_branch_account',
-                            '=',
-                            'b.main_branch_account'
-                        );
-
-                        $join->where(
-                            'bs.status',
-                            'active'
-                        );
-                    }
-                )
-
-                ->join(
-                    'tariffs as t',
-                    't.id',
-                    '=',
-                    'bs.tariff_id'
-                )
-
-                ->join(
-                    'product_items as pi',
-                    'pi.id',
-                    '=',
-                    'ri.item_id'
-                )
-
-                ->leftJoin(
-                    'product_variables.quantity_units as qu',
-                    'qu.id',
-                    '=',
-                    'pi.quantity_unit_id'
-                )
-
-                ->leftJoin(
-                    'product_variables.weight_units as wu',
-                    'wu.id',
-                    '=',
-                    'pi.weight_unit_id'
-                )
-
-                ->leftJoin(
-                    'product_item_images as pii',
-                    'pii.product_item_id',
-                    '=',
-                    'pi.id'
-                )
-
-                ->where(
-                    'ri.product_id',
-                    $product->product_id
-                )
-
-                ->where(
-                    'pi.packaging_id',
-                    $product->packaging_id
-                )
-
-                /*
-                |------------------------------------------------------------------
-                | Same Business
-                |------------------------------------------------------------------
-                */
-
-                ->where(
-                    'ri.business_account',
-                    $product->business_account
-                )
-
-                ->where(
-                    'bs.status',
-                    'active'
-                )
-
-                ->where(
-                    't.ecommerce_access',
-                    1
-                )
-
-                ->where(
-                    'b.shop_status',
-                    'open'
-                )
-
-                ->where(
-                    'ri.status',
-                    'instock'
-                )
-
-                ->whereNotNull(
-                    'ri.retail_price'
-                )
-
-                ->select([
-
-                    'ri.id as inventory_id',
-
-                    'ri.item_id',
-                    'ri.retail_price',
-                    'ri.discount',
-                    'ri.discount_start',
-                    'ri.discount_stop',
-
-                    'pi.size_value',
-                    'pi.weight_value',
-                    'pi.pieces',
-
-                    'qu.slug as quantity_unit',
-                    'wu.name as weight_unit',
-
-                    'pii.image_path',
-                ])
-
-                ->orderBy(
-                    'pii.is_primary',
-                    'DESC'
-                )
-
-                ->orderBy(
-                    'pii.id',
-                    'ASC'
-                )
-
-                ->get()
-
-                ->unique('item_id')
-
-                ->map(
-                    function ($variantItem) use (
-                        $baseMediaUrl,
-                        $now
-                    ) {
-
-                        /*
-                        |------------------------------------------------------
-                        | Variant Label
-                        |------------------------------------------------------
-                        */
-
-                        $label = '';
-
-                        if (
-                            $variantItem->size_value &&
-                            $variantItem->quantity_unit
-                        ) {
-                            $label =
-                                rtrim(
-                                    rtrim(
-                                        $variantItem->size_value,
-                                        '0'
-                                    ),
-                                    '.'
-                                )
-                                .
-                                $variantItem->quantity_unit;
-
-                        } elseif (
-                            $variantItem->weight_value &&
-                            $variantItem->weight_unit
-                        ) {
-                            $label =
-                                rtrim(
-                                    rtrim(
-                                        $variantItem->weight_value,
-                                        '0'
-                                    ),
-                                    '.'
-                                )
-                                .
-                                $variantItem->weight_unit;
-                        }
-
-                        if ($variantItem->pieces) {
-                            $label .=
-                                ' (' .
-                                $variantItem->pieces .
-                                'pcs)';
-                        }
-
-                        $variantItem->size_label =
-                            $label;
-
-
-                        /*
-                        |------------------------------------------------------
-                        | Image
-                        |------------------------------------------------------
-                        */
-
-                        $variantItem->full_url =
-                            !empty(
-                                $variantItem->image_path
-                            )
-
-                                ? $baseMediaUrl .
-                                    '/media/' .
-                                    ltrim(
-                                        $variantItem->image_path,
-                                        '/'
-                                    )
-
-                                : $baseMediaUrl .
-                                    '/media/img/homeMarket/products/item_image.png';
-
-
-                        /*
-                        |------------------------------------------------------
-                        | Discount
-                        |------------------------------------------------------
-                        */
-
-                        $hasActiveDiscount = false;
-
-                        $originalPrice =
-                            (float)
-                            $variantItem->retail_price;
-
-                        $finalPrice =
-                            $originalPrice;
-
-                        $discountPercentage = 0;
-
-                        if (
-                            !is_null(
-                                $variantItem->discount
-                            )
-                            &&
-                            (float)
-                            $variantItem->discount > 0
-                        ) {
-                            $startValid =
-                                is_null(
-                                    $variantItem->discount_start
-                                )
-                                ||
-                                $now->greaterThanOrEqualTo(
-                                    Carbon::parse(
-                                        $variantItem->discount_start
-                                    )
-                                );
-
-                            $stopValid =
-                                is_null(
-                                    $variantItem->discount_stop
-                                )
-                                ||
-                                $now->lessThanOrEqualTo(
-                                    Carbon::parse(
-                                        $variantItem->discount_stop
-                                    )
-                                );
-
-                            if (
-                                $startValid &&
-                                $stopValid
-                            ) {
-                                $hasActiveDiscount = true;
-
-                                $finalPrice =
-                                    max(
-                                        0,
-                                        $originalPrice -
-                                        (float)
-                                        $variantItem->discount
-                                    );
-
-                                if (
-                                    $originalPrice > 0
-                                ) {
-                                    $discountPercentage =
-                                        round(
-                                            (
-                                                $variantItem->discount /
-                                                $originalPrice
-                                            ) * 100
-                                        );
-                                }
-                            }
-                        }
-
-
-                        /*
-                        |------------------------------------------------------
-                        | Discount Properties
-                        |------------------------------------------------------
-                        */
-
-                        $variantItem->has_discount =
-                            $hasActiveDiscount;
-
-                        $variantItem->original_price_formatted =
-                            number_format(
-                                $originalPrice
-                            );
-
-                        $variantItem->final_price_formatted =
-                            number_format(
-                                $finalPrice
-                            );
-
-                        $variantItem->discount_percentage =
-                            $discountPercentage;
-
-
-                        return $variantItem;
-                    }
-                );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Main Item Discount
-        |--------------------------------------------------------------------------
-        */
-
-        $hasActiveDiscount = false;
-
-        $finalPrice =
-            (float) $product->retail_price;
-
-        $discountPercentage = 0;
-
-        if (
-            !is_null($product->discount) &&
-            (float) $product->discount > 0
-        ) {
-            $startValid =
-                is_null($product->discount_start)
-                ||
-                $now->greaterThanOrEqualTo(
-                    Carbon::parse(
-                        $product->discount_start
-                    )
-                );
-
-            $stopValid =
-                is_null($product->discount_stop)
-                ||
-                $now->lessThanOrEqualTo(
-                    Carbon::parse(
-                        $product->discount_stop
-                    )
-                );
-
-            if (
-                $startValid &&
-                $stopValid
-            ) {
-                $hasActiveDiscount = true;
-
-                $originalPrice =
-                    (float)
-                    $product->retail_price;
-
-                $finalPrice =
-                    max(
-                        0,
-                        $originalPrice -
-                        (float)
-                        $product->discount
-                    );
-
-                if (
-                    $originalPrice > 0
-                ) {
-                    $discountPercentage =
-                        round(
-                            (
-                                (float)
-                                $product->discount /
-                                $originalPrice
-                            ) * 100
-                        );
-                }
-            }
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Main Discount Properties
-        |--------------------------------------------------------------------------
-        */
-
-        $product->has_discount =
-            $hasActiveDiscount;
-
-        $product->final_price =
-            $finalPrice;
-
-        $product->discount_percentage =
-            $discountPercentage;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Return Item View
-        |--------------------------------------------------------------------------
-        */
-
-        return view(
-            'HomeMarket.products.viewItem',
-            compact('product')
+        abort_if(
+            !$product,
+            404,
+            'This item could not be found or is not available from your shop or delivery area.'
         );
+
+        $product = $this->presenter->present($product);
+
+        $product->gallery_images = $this->shops->catalogue()
+            ->where('ri.business_account', $product->business_account)
+            ->where('ri.product_id', $product->product_id)
+            ->where('pi.packaging_id', $product->packaging_id)
+            ->get()
+            ->unique('item_id')
+            ->map(fn ($row) => $this->presenter->present($row))
+            ->values();
+
+        [$similar, $sameBrand] = $this->related($product, $context);
+
+        return view('HomeMarket.products.viewItem', compact('product', 'similar', 'sameBrand'));
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRIVATE HELPERS
-    |--------------------------------------------------------------------------
-    */
-
 
     /**
-     * Get the business account currently represented in the active cart.
-     */
-    private function getSelectedBusinessAccount(
-        $userId,
-        string $sessionId
-    ): ?string {
-        $cartQuery = Cart::active();
-
-        if ($userId) {
-            $cartQuery->where(
-                'user_id',
-                $userId
-            );
-        } else {
-            $cartQuery->where(
-                'session_id',
-                $sessionId
-            );
-        }
-
-        return $cartQuery
-            ->whereNotNull('business_account')
-            ->value('business_account');
-    }
-
-
-/**
- * Resolve the customer's progressive delivery radius.
- *
- * Radius progression:
- *
- * 1 km
- * 3 km
- * 5 km maximum
- *
- * The first radius containing at least one
- * qualifying shop is selected.
- *
- * Returns:
- * 1000, 3000, 5000
- *
- * or null when no qualifying shop exists
- * within 5km.
- */
-private function resolveDeliveryRadius(
-    float $customerLatitude,
-    float $customerLongitude
-): ?int {
-    /*
-    |--------------------------------------------------------------------------
-    | Progressive delivery radius
-    |--------------------------------------------------------------------------
-    |
-    | 1 km -> 2 km -> 3 km maximum
-    |
-    | The first radius containing at least one qualifying shop wins.
-    |
-    */
-
-    $radiusOptions = [
-        1000, // 1 km
-        2000, // 2 km
-        3000, // 3 km maximum
-    ];
-
-    foreach ($radiusOptions as $radius) {
-
-        $distanceSql = $this->distanceSql();
-
-        $hasShop = DB::connection('homemarket')
-            ->table('business as b')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Active subscription
-            |--------------------------------------------------------------------------
-            */
-            ->join('business_subscription as bs', function ($join) {
-                $join->on(
-                    'bs.main_branch_account',
-                    '=',
-                    'b.main_branch_account'
-                )->where(
-                    'bs.status',
-                    'active'
-                );
-            })
-
-            /*
-            |--------------------------------------------------------------------------
-            | Ecommerce tariff
-            |--------------------------------------------------------------------------
-            */
-            ->join(
-                'tariffs as t',
-                't.id',
-                '=',
-                'bs.tariff_id'
-            )
-
-            ->where('t.ecommerce_access', 1)
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must be open
-            |--------------------------------------------------------------------------
-            */
-            ->where('b.shop_status', 'open')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must have valid coordinates
-            |--------------------------------------------------------------------------
-            */
-            ->whereNotNull('b.latitude')
-            ->whereNotNull('b.longitude')
-
-            /*
-            |--------------------------------------------------------------------------
-            | Shop must have qualifying inventory
-            |--------------------------------------------------------------------------
-            */
-            ->whereExists(function ($query) {
-
-                $query->select(DB::raw(1))
-                    ->from('retail_inventory as ri')
-
-                    ->whereColumn(
-                        'ri.business_account',
-                        'b.account'
-                    )
-
-                    ->where(
-                        'ri.status',
-                        'instock'
-                    )
-
-                    ->whereNotNull(
-                        'ri.retail_price'
-                    );
-            })
-
-            /*
-            |--------------------------------------------------------------------------
-            | Distance from customer
-            |--------------------------------------------------------------------------
-            */
-            ->whereRaw(
-                "{$distanceSql} <= ?",
-                [
-                    $customerLatitude,
-                    $customerLongitude,
-                    $customerLatitude,
-                    $radius,
-                ]
-            )
-
-            ->exists();
-
-        if ($hasShop) {
-            return $radius;
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | No qualifying shop within 3 km
-    |--------------------------------------------------------------------------
-    */
-
-    return null;
-}
-
-
-    /**
-     * Apply a delivery-radius filter to a product query.
-     */
-    private function applyDistanceFilter(
-        $query,
-        float $customerLatitude,
-        float $customerLongitude,
-        int $radius
-    ): void {
-        $distanceSql =
-            $this->distanceSql();
-
-        $query
-            ->whereNotNull(
-                'b.latitude'
-            )
-            ->whereNotNull(
-                'b.longitude'
-            )
-            ->whereRaw(
-                "{$distanceSql} <= ?",
-                [
-                    $customerLatitude,
-                    $customerLongitude,
-                    $customerLatitude,
-                    $radius,
-                ]
-            );
-    }
-
-
-    /**
-     * Add calculated distance to a product query.
-     */
-    private function addDistanceSelect(
-        $query,
-        float $customerLatitude,
-        float $customerLongitude
-    ): void {
-        $distanceSql =
-            $this->distanceSql();
-
-        $query->selectRaw(
-            "{$distanceSql} AS distance_meters",
-            [
-                $customerLatitude,
-                $customerLongitude,
-                $customerLatitude,
-            ]
-        );
-    }
-
-
-    /**
-     * Haversine distance SQL.
+     * Rows under the product: other products with the same generic name
+     * (products.generic_id), then other products of the same brand. Same shop /
+     * delivery-area rules as everything else, one card per product, the
+     * product being viewed left out.
      *
-     * Returns distance in meters.
+     * @return array{0: Collection, 1: Collection}
      */
-    private function distanceSql(): string
+    private function related(object $product, array $context): array
     {
-        return "
-            6371000 * ACOS(
-                LEAST(
-                    1,
-                    GREATEST(
-                        -1,
-                        COS(RADIANS(?))
-                        *
-                        COS(RADIANS(b.latitude))
-                        *
-                        COS(
-                            RADIANS(b.longitude)
-                            -
-                            RADIANS(?)
-                        )
-                        +
-                        SIN(RADIANS(?))
-                        *
-                        SIN(RADIANS(b.latitude))
-                    )
-                )
-            )
-        ";
+        $similar = collect();
+        $sameBrand = collect();
+
+        $pick = function ($query, array $exclude) {
+            return $query
+                ->whereNotIn('p.id', $exclude)
+                ->latest('ri.updated_at')
+                ->limit(60)
+                ->get()
+                ->unique('product_id')
+                ->take(12)
+                ->map(fn ($row) => $this->presenter->present($row))
+                ->values();
+        };
+
+        try {
+            $genericId = DB::connection('homemarket')->table('products')
+                ->where('id', $product->product_id)
+                ->value('generic_id');
+
+            if ($genericId) {
+                $similar = $pick(
+                    $this->shops->restrict($this->shops->catalogue(), $context)->where('p.generic_id', $genericId),
+                    [$product->product_id]
+                );
+            }
+
+            if (!empty($product->brand)) {
+                $sameBrand = $pick(
+                    $this->shops->restrict($this->shops->catalogue(), $context)->where('p.brand', $product->brand),
+                    array_merge([$product->product_id], $similar->pluck('product_id')->all())
+                );
+            }
+        } catch (\Throwable $e) {
+            // related rows are a nice-to-have; never break the product page over them
+            Log::warning('Related items failed for product ' . $product->product_id . ': ' . $e->getMessage());
+        }
+
+        return [$similar, $sameBrand];
+    }
+
+    /**
+     * Search within the shops the buyer can actually order from (same shop /
+     * location rules as the home page).
+     *
+     * - ?q=milk with Accept: JSON (or ?json=1) -> compact suggestions for the live search panel
+     * - ?q=milk in the browser                 -> a full results page
+     */
+    public function search(Request $request)
+    {
+        $term = trim(mb_substr((string) $request->query('q', ''), 0, 60));
+        $context = $this->shops->context($request);
+        $wantsJson = $request->expectsJson() || $request->boolean('json');
+
+        $query = $this->matching($term, $context);
+
+        if ($wantsJson) {
+            if (mb_strlen($term) < 2) {
+                return response()->json(['q' => $term, 'products' => [], 'shops' => [], 'categories' => [], 'more' => false]);
+            }
+
+            $rows = $query->limit(9)->get()->map(fn ($row) => $this->presenter->present($row));
+
+            $shops = collect();
+            if ($context['location'] && $context['radius'] && !$context['shop']) {
+                $shops = $this->shops->nearbyShops($context['location'], $context['radius'], 50)
+                    ->filter(fn ($shop) => mb_stripos($shop->name, $term) !== false)
+                    ->take(3)->values();
+            }
+
+            $categories = collect(config('homemarket.nav_categories'))
+                ->filter(fn ($c) => $c['category_id'] && mb_stripos($c['label'], $term) !== false)
+                ->take(3)
+                ->map(fn ($c) => ['label' => $c['label'], 'url' => route('homemarket.home', ['category' => $c['category_id']])])
+                ->values();
+
+            return response()->json([
+                'q'          => $term,
+                'more'       => $rows->count() > 8,
+                'products'   => $rows->take(8)->map(fn ($p) => [
+                    'name'     => $p->product_name,
+                    'variant'  => trim($p->variant_label . (!empty($p->packaging_name) ? ' (' . strtolower($p->packaging_name) . ')' : '')),
+                    'price'    => (int) round($p->final_price),
+                    'was'      => $p->has_discount ? (int) round($p->retail_price) : null,
+                    'discount' => $p->has_discount ? $p->discount_percentage : null,
+                    'image'    => $p->image_url,
+                    'shop'     => $p->business_name,
+                    'km'       => $p->distance_km,
+                    'url'      => route('item.view', $p->id),
+                ])->values(),
+                'shops'      => $shops->map(fn ($s) => [
+                    'name' => $s->name, 'km' => $s->distance_km, 'eta' => $s->eta_min,
+                    'url'  => route('homemarket.search', ['q' => $s->name]),
+                ])->values(),
+                'categories' => $categories,
+            ]);
+        }
+
+        $products = mb_strlen($term) >= 2
+            ? $query->limit(60)->get()->map(fn ($row) => $this->presenter->present($row))
+            : collect();
+
+        return view('HomeMarket.search', [
+            'term'         => $term,
+            'products'     => $products,
+            'hasLocation'  => !is_null($context['location']),
+            'outOfRange'   => $context['location'] && !$context['shop'] && is_null($context['radius']),
+            'cartShopName' => $this->shops->shopName($context['shop']),
+        ]);
+    }
+
+    /** Catalogue rows whose product name, brand or shop name contains the term; best matches first. */
+    private function matching(string $term, array $context)
+    {
+        $escaped = addcslashes($term, '%_\\');
+
+        return $this->shops->restrict($this->shops->catalogue(), $context)
+            ->where(function ($q) use ($escaped) {
+                $q->where('p.name', 'like', "%{$escaped}%")
+                  ->orWhere('p.brand', 'like', "%{$escaped}%")
+                  ->orWhere('b.name', 'like', "%{$escaped}%");
+            })
+            ->orderByRaw('(p.name LIKE ?) DESC', ["{$escaped}%"])
+            ->orderByRaw('(p.name LIKE ?) DESC', ["%{$escaped}%"])
+            ->latest('ri.updated_at');
     }
 }

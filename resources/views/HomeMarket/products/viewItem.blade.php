@@ -2,7 +2,7 @@
 
 @section('content')
 
-<main class="wrapper">
+<main class="wrapper pdp">
     <div class="small-container single-product">
         <div class="product-row">
 
@@ -23,33 +23,33 @@
                     @if($galleryImg->item_id == $product->item_id) active-thumbnail @endif"
 
                     data-item-id="{{ $galleryImg->item_id }}"
-                    data-full-url="{{ $galleryImg->full_url }}"
-                    data-label="{{ $galleryImg->size_label }}"
+                    data-full-url="{{ $galleryImg->image_url }}"
+                    data-label="{{ $galleryImg->variant_label }}"
                     data-packaging-name="{{ strtolower($product->packaging_name ?? '') }}"
-                    data-final-price="Ksh {{ $galleryImg->final_price_formatted }}"
-                    data-original-price="Ksh {{ $galleryImg->original_price_formatted }}"
+                    data-final-price="Ksh {{ number_format($galleryImg->final_price) }}"
+                    data-original-price="Ksh {{ number_format($galleryImg->retail_price) }}"
                     data-has-discount="{{ $galleryImg->has_discount ? 'true' : 'false' }}"
                     data-discount-percentage="{{ $galleryImg->discount_percentage }}% off"
-                    data-route-url="{{ route('item.view', $galleryImg->inventory_id) }}"
+                    data-route-url="{{ route('item.view', $galleryImg->id) }}"
 
                     {{-- ✅ ADDED (DO NOT CHANGE YOUR EXISTING FIELDS) --}}
-                    data-stockable-id="{{ $galleryImg->inventory_id }}"
+                    data-stockable-id="{{ $galleryImg->id }}"
                     data-stockable-type="{{ get_class($product) }}"
                     data-business-account="{{ $galleryImg->business_account ?? $product->business_account ?? '' }}"
                     data-subdivision-code="{{ $product->subdivision_code ?? '' }}"
                     data-product-name="{{ $product->product_name }}"
-                    data-image-url="{{ $galleryImg->full_url }}"
+                    data-image-url="{{ $galleryImg->image_url }}"
                     data-price="{{ $galleryImg->retail_price }}"
-                    data-variant-label="{{ $galleryImg->size_label }}"
+                    data-variant-label="{{ $galleryImg->variant_label }}"
                 >
 
-                    <img src="{{ $galleryImg->full_url }}"
+                    <img src="{{ $galleryImg->image_url }}"
                          class="small-img"
-                         alt="{{ $galleryImg->size_label }} preview"
+                         alt="{{ $galleryImg->variant_label }} preview"
                          width="100%">
 
                     <span style="display: block; font-size: 10px; font-weight: bold; margin-top: 3px; color: #878787;">
-                        {{ $galleryImg->size_label }}
+                        {{ $galleryImg->variant_label }}
                     </span>
 
                 </div>
@@ -63,6 +63,10 @@
 
         <!-- Product Specific Meta Specifications Profiles Panel -->
         <div class="product-details">
+
+            @if (!empty($product->brand))
+                <small class="brand">{{ $product->brand }}</small>
+            @endif
 
             <h2 class="tittle">{{ $product->product_name }}</h2>
 
@@ -106,16 +110,26 @@
             <h5>{{ $product->origin ?? 'Kenya' }}</h5>
             </span>
 
+            @if (!empty($product->business_name))
+                <div class="sold-by">
+                    <span class="shop-chip-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->business_name, 0, 1)) }}</span>
+                    <span><small>Sold by</small><strong>{{ $product->business_name }}</strong></span>
+                    @if (isset($product->distance_meters))
+                        <em class="dist">{{ number_format($product->distance_meters / 1000, 1) }} km</em>
+                    @endif
+                </div>
+            @endif
+
             <!-- Basket Counter Add Actions Panel -->
             <span class="btns">
 
-            <button type="button" class="dec">-</button>
+            <button type="button" class="dec" aria-label="Less" disabled><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
 
-            <input type="number" class="quantity-val" value="1" min="1" max="999" readonly>
+            <input type="number" class="quantity-val" value="1" min="1" max="999" readonly aria-label="Quantity">
 
-            <button type="button" class="inc">+</button>
+            <button type="button" class="inc" aria-label="More"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
 
-            <h4 class="add-to-cart-btn" id="AddToCartBtn" data-item-id="{{ $product->item_id }}">
+            <h4 class="add-to-cart-btn" id="AddToCartBtn" role="button" tabindex="0" data-item-id="{{ $product->item_id }}">
                 <i class="fa-solid fa-basket-shopping"></i>Add to cart
             </h4>
 
@@ -135,15 +149,34 @@
             <!-- Actions -->
             <div class="actions">
                 <span>
-                    <i class="ri-heart-add-line"></i>
+                    <i class="fa-regular fa-heart"></i>
                     <h5>Add to wishlist</h5>
                 </span>
     
-                <span>
-                    <i class="ri-share-fill"></i>
+                {{-- opens the share sheet: WhatsApp, Instagram, Facebook, X, Telegram, SMS, email, copy link (share.js) --}}
+                <button type="button" class="pdp-share" data-share
+                        data-share-title="{{ $product->product_name }}"
+                        data-share-text="KES {{ number_format($product->final_price) }}{{ !empty($product->business_name) ? ' at ' . $product->business_name : '' }} on Smart Market"
+                        data-share-url="{{ route('item.view', $product->id) }}">
+                    <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
                     <h5>Share</h5>
-                </span>
+                </button>
             </div>
+
+            @php
+                $specs = array_filter([
+                    'Brand'     => $product->brand ?? null,
+                    'Packaging' => !empty($product->packaging_name) ? ucfirst(strtolower($product->packaging_name)) : null,
+                    'Weight'    => !empty($product->weight_value) ? rtrim(rtrim((string) $product->weight_value, '0'), '.') . ' ' . ($product->weight_unit ?? '') : null,
+                ]);
+            @endphp
+            @if ($specs)
+                <dl class="specs">
+                    @foreach ($specs as $label => $value)
+                        <div><dt>{{ $label }}</dt><dd>{{ trim($value) }}</dd></div>
+                    @endforeach
+                </dl>
+            @endif
 
             <!-- Description -->
             <h4 class="sub-heading">Highlight</h4>
@@ -157,25 +190,24 @@
 
         <!-- Static Fulfillment Operations Options Blocks Grid -->
         <div class="select-delivery">
-            <h4 class="sub-heading">Delivery Options</h4>
+            <h4 class="sub-heading">Delivery options</h4>
             <div class="delivery-options">
-                <div class="delivery-option">
-                    <i class="ri-truck-line"></i>
-                    <h4>Today 10PM - 11PM</h4>
-                    <h5>Scheduled</h5>
-                </div>
                 <div class="delivery-option active">
-                    <i class="ri-e-bike-2-line"></i>
+                    <i class="fa-solid fa-motorcycle"></i>
                     <h4>60 - 140 Mins</h4>
-                    <h5>Quick</h5>
+                    <h5>Quick delivery by a nearby rider</h5>
                 </div>
             </div>
         </div>
     </div>
-    <!-- <h4 class="sub-heading">Best Seller</h4> -->
-    <div class="items-slider">
-        <h3 class="sub-heading">Best Sellers</h3>
-    </div>
+
+    {{-- more to look at: same generic name, then same brand (ItemsController::related) --}}
+    @if (($similar ?? collect())->isNotEmpty() || ($sameBrand ?? collect())->isNotEmpty())
+        <section class="pdp-related">
+            @include('HomeMarket.partials.product-row', ['title' => 'Similar items', 'products' => $similar ?? collect()])
+            @include('HomeMarket.partials.product-row', ['title' => 'More from ' . ($product->brand ?? 'this brand'), 'products' => $sameBrand ?? collect()])
+        </section>
+    @endif
 </main>
 
 @endsection

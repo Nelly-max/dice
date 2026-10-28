@@ -1,151 +1,90 @@
-<aside class="sidebar">
-    <!-- <div class="links-holder"> -->
-    <div class="activate-sidebar remove">
-        <i class="fa-solid fa-xmark remove-sidebar" id="removeSidebar"></i>
+{{--
+    Hub sidebar. Desktop: fixed on the left (#menu in the top bar collapses it to icons).
+    Phones/tablets: a drawer opened by .menu-sidebar and closed by .remove-sidebar or the scrim
+    (resources/js/hub.js toggles .close / .active on .sidebar).
+--}}
+@php
+    $customer = auth('customer')->user();
+
+    $hasMarketerAccount = \App\Models\Hub\Marketer::where('customer_id', $customer->id)->exists();
+    $hasRiderAccount = \App\Models\Hub\Rider::where('customer_id', $customer->id)->exists();
+
+    $mediaBase = rtrim(config('app.media_url'), '/');
+    $avatar = $customer->profile_image
+        ? $mediaBase . '/' . ltrim($customer->profile_image, '/')
+        : $mediaBase . '/img/Customer/Profiles/user.png';
+@endphp
+
+<aside class="sidebar hub-side" aria-label="Hub menu">
+
+    <div class="hub-side-head">
+        <a href="{{ route('hub.index') }}" class="hub-brand">
+            <img src="{{ asset('img/favicon.webp') }}" alt="">
+            <span>Smart Market <small>Hub</small></span>
+        </a>
+
+        <button type="button" class="hub-side-close remove-sidebar" aria-label="Close menu">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
     </div>
-    @php $customer = auth('customer')->user(); @endphp
-    <ul class="main-links">
-        <div class="logo-details">
-            <a href="{{ route('hub.index') }}" class="logo">
-                <img
-                    src="{{ $customer->profile_image
-                        ? rtrim(config('app.media_url'), '/') . '/' . ltrim($customer->profile_image, '/')
-                        : rtrim(config('app.media_url'), '/') . '/img/Customer/Profiles/user.png' }}"
-                    alt="Customer Profile"
-                >
-            </a>
-        </div>
 
-        <li class="link {{ request()->routeIs('hub.index') ? 'active' : '' }} dashboard">
-            <div class="icon-link">
-                <a href="{{ route('hub.index') }}" class="">
-                    <i class='bx bxs-dashboard icon' style="--clr: #134893"></i>
-                    <span  class="link_name">Dashboard</span>
+    <a href="{{ route('hub.account.index') }}" class="hub-user" title="My account">
+        <img src="{{ $avatar }}" alt="">
+        <span>
+            <strong>{{ $customer->name }}</strong>
+            <small>{{ $customer->account }}</small>
+        </span>
+    </a>
+
+    <nav class="hub-menu">
+        <p class="hub-menu-label">Overview</p>
+        <a href="{{ route('hub.index') }}" @class(['hub-link', 'active' => request()->routeIs('hub.index')])>
+            <i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span>Dashboard</span>
+        </a>
+
+        <p class="hub-menu-label">Shopping</p>
+        <a href="{{ route('hub.orders') }}" @class(['hub-link', 'active' => request()->routeIs('hub.orders')])>
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Orders</span>
+        </a>
+        <a href="#" class="hub-link is-soon" aria-disabled="true">
+            <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Purchases</span><em>Soon</em>
+        </a>
+        <a href="#" class="hub-link is-soon" aria-disabled="true">
+            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span><em>Soon</em>
+        </a>
+
+        @if ($hasRiderAccount || $hasMarketerAccount)
+            <p class="hub-menu-label">Work</p>
+            @if ($hasRiderAccount)
+                <a href="{{ route('hub.deliveries') }}" @class(['hub-link', 'active' => request()->routeIs('hub.deliveries*')])>
+                    <i class="fa-solid fa-motorcycle" aria-hidden="true"></i><span>Deliveries</span>
                 </a>
-            </div>
-        </li>
-
-        <li class="link {{ request()->routeIs('hub.orders') ? 'active' : '' }}">
-            <div class="icon-link">
-                <a href="{{ route('hub.orders') }}" class="link">
-                    <div class="count-holder">
-                        <i class='bx bx-basket icon' style="color: #00d768"></i>
-                        <h4 class="counter order">2</h4>
-                    </div>
-                    <span class="link_name">Orders</span>
+            @endif
+            @if ($hasMarketerAccount)
+                <a href="{{ route('hub.referrals') }}" @class(['hub-link', 'active' => request()->routeIs('hub.referral*')])>
+                    <i class="fa-solid fa-link" aria-hidden="true"></i><span>Referrals</span>
                 </a>
-            </div>
-        </li>
-
-        <li class="link">
-            <div class="icon-link arrowOpen">
-                <a href="" class="link">
-                    <i class="fa-solid fa-bag-shopping icon" style="color: #fc744a"></i>
-                    <span class="link_name">Purchases</span>
-                </a>
-            </div>
-        </li>
-
-
-        @php
-            $hasMarketerAccount = \App\Models\Hub\Marketer::where(
-                'customer_id',
-                auth('customer')->id()
-            )->exists();
-        @endphp
-
-        @if($hasMarketerAccount)
-
-            <li class="link {{ request()->routeIs('hub.referral*') ? 'active' : '' }}">
-
-                <div class="icon-link arrowOpen">
-
-                    <a href="{{ route('hub.referrals') }}" class="link">
-
-                        <i
-                            class="bx bx-link icon"
-                            style="color: #fc4aa0"
-                        ></i>
-
-                        <span class="link_name">Referrals</span>
-
-                    </a>
-
-                </div>
-
-            </li>
-
+            @endif
         @endif
 
+        <p class="hub-menu-label">Account</p>
+        <a href="{{ route('hub.account.index') }}" @class(['hub-link', 'active' => request()->routeIs('hub.account.*')])>
+            <i class="fa-regular fa-circle-user" aria-hidden="true"></i><span>My account</span>
+        </a>
+    </nav>
 
-        <li class="link">
-            <div class="icon-link arrowOpen">
-                <a href="" class="link">
-                    <i class='bx bx-book' style="color: #0076d7"></i>
-                    <span class="link_name">Bookings</span>
-                </a>
-            </div>
-        </li>
+    <div class="hub-side-foot">
+        <a href="{{ route('home') }}" class="hub-link">
+            <i class="fa-solid fa-store" aria-hidden="true"></i><span>Back to shop</span>
+        </a>
 
-
-
-        @php
-            $hasRiderAccount = \App\Models\Hub\Rider::where(
-                'customer_id',
-                auth('customer')->id()
-            )->exists();
-        @endphp
-
-        @if($hasRiderAccount)
-
-            <li class="link {{ request()->routeIs('hub.deliveries*') ? 'active' : '' }}">
-
-                <div class="icon-link arrowOpen">
-
-                    <a href="{{ route('hub.deliveries') }}" class="link">
-
-                        <div class="count-holder">
-
-                            <i
-                                class="fa-solid fa-motorcycle"
-                                style="color: #00b3d7"
-                            ></i>
-
-                            <h4 class="counter order"></h4>
-
-                        </div>
-
-                        <span class="link_name">Deliveries</span>
-
-                    </a>
-
-                </div>
-
-            </li>
-
-        @endif
-
-                
-        
-        <li class="link {{ request()->routeIs('hub.account.*') ? 'active' : '' }}">
-            <div class="icon-link arrowOpen">
-                <a href="{{ route('hub.account.index') }}" class="link">
-                    <i class='bx bxs-user-account icon' style="--clr: #0e6d9c"></i>
-                    <span class="link_name">Account</span>
-                </a>
-            </div>
-        </li>
-
-        <li class="link bottom-item last">
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-    
-                <button type="submit" class="logout">
-                    <i class="bx bx-log-out"></i>
-                    <span class="link_name">Logout</span>
-                </button>
-            </form>
-        </li>
-
-    </ul>
+        <form method="POST" action="{{ route('logout') }}" data-notify-loading="Signing you out…">
+            @csrf
+            <button type="submit" class="hub-link hub-logout">
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i><span>Log out</span>
+            </button>
+        </form>
+    </div>
 </aside>
+
+<div class="hub-scrim" data-hub-scrim aria-hidden="true"></div>

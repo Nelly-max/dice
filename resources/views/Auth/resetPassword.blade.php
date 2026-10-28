@@ -7,10 +7,11 @@
             <div class="main-forms">
                 <div class="main-form login">
                     <span class="title">Reset Your Password</span>
+                    <p class="subtitle">We will email you a code to reset it.</p>
 
                     {{-- Success Message --}}
                     @if(session('success'))
-                        <div class="text">
+                        <div class="form-success">
                             {{ session('success') }}
                         </div>
                     @endif
@@ -18,11 +19,11 @@
                     
                     @error('email')
                         <div class="form-error">
-                            **{{ $message }}**
+                            {{ $message }}
                         </div>
                     @enderror
 
-                    <form action="{{ route('password.reset.request') }}" method="POST">
+                    <form action="{{ route('password.reset.request') }}" method="POST" data-notify-loading="Sending your reset code…">
                         @csrf
 
                         {{-- Email --}}
@@ -35,7 +36,7 @@
                                 class="@error('email') is-invalid @enderror"
                                 autocomplete="email"
                             >
-                            <i class="uil uil-envelope icon"></i>
+                            <i class="fa-regular fa-envelope icon"></i>
                         </div>
 
 

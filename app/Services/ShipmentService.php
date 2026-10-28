@@ -19,15 +19,15 @@ class ShipmentService
 
         $shipmentInfo = [
             'quick' => [
-                'icon' => 'ri-e-bike-2-line',
+                'icon' => 'fa-solid fa-motorcycle',
                 'label' => 'Quick in 10 - 50 Mins',
             ],
             'standard' => [
-                'icon' => 'ri-truck-line',
+                'icon' => 'fa-solid fa-truck',
                 'label' => 'Standard delivery',
             ],
             'specific_shop' => [
-                'icon' => 'ri-riding-line',
+                'icon' => 'fa-solid fa-motorcycle',
                 'label' => 'Order to specific shop',
             ],
         ];
@@ -156,7 +156,7 @@ class ShipmentService
                 'shipment_type_id' => $shipment['shipment_type_id'],
 
                 'info' => $shipmentInfo[$typeName] ?? [
-                    'icon' => 'ri-package-line',
+                    'icon' => 'fa-solid fa-box',
                     'label' => ucfirst($typeName),
                 ],
 

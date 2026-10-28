@@ -17,6 +17,8 @@
                     {{-- Shortcuts --}}
                     <div class="shortcuts">
 
+                        @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'shortcut'])
+
                         <a
                             href="{{ route('hub.account.rider.edit') }}"
                             class="shortcut"
@@ -132,6 +134,12 @@
         {{-- No Rider Account --}}
         <div class="no-account">
 
+            {{-- back to where they came from (My account if there is no history) --}}
+            <a href="{{ route('hub.account.index') }}" class="no-account-back"
+               onclick="if (history.length > 1) { history.back(); return false; }">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+            </a>
+
             <h3>Team</h3>
 
             <p>HUB \ RIDER</p>
@@ -148,7 +156,7 @@
             </p>
 
             <a
-                href="{{ route('hub.account.rider-application') }}"
+                href="{{ route('hub.account.rider.application') }}"
                 class="btn-continue"
             >
                 Join Team

@@ -1,0 +1,2287 @@
+/*
+|--------------------------------------------------------------------------
+| HomeMarket UI  (Direction B)
+|--------------------------------------------------------------------------
+| Floating dark header, pill buttons, rounded white cards on a cream page.
+| Loaded after reused.css, modal.css, homemrkt.css and tokens.css and scoped
+| to body[data-subdivision="home-market"] so it wins over older shared rules.
+| Colours come from tokens.css only (so dark mode keeps working).
+*/
+
+body[data-subdivision="home-market"] {
+    --page-width: 76rem;
+    --gutter: 1.5rem;
+    font-family: var(--font-body);
+}
+
+body[data-subdivision="home-market"] :where(h1, h2, h3, h4, h5, h6, p, ul) { margin: 0; }
+body[data-subdivision="home-market"] ul { padding: 0; list-style: none; }
+body[data-subdivision="home-market"] :where(h1, h2, h3) { font-family: var(--font-display); }
+
+/* ---------- Floating header ---------- */
+
+.hm-header {
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    padding: .75rem var(--gutter) 0;
+    background: linear-gradient(var(--surface-tint) 70%, transparent);
+}
+
+.hm-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: var(--page-width);
+    margin: 0 auto;
+    padding: .55rem .6rem .55rem 1rem;
+    border-radius: var(--radius-pill);
+    background: var(--inverse-bg);
+    color: var(--on-inverse);
+    box-shadow: 0 10px 28px rgba(34, 20, 13, .22);
+}
+
+.hm-logo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--on-inverse);
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+
+.hm-logo img { width: 2.25rem; height: 2.25rem; object-fit: contain; border-radius: var(--r-inner); background: #fff; }
+
+.hm-search { position: relative; flex: 1 1 18rem; display: flex; align-items: center; }
+
+.hm-search input {
+    width: 100%;
+    height: 2.9rem;
+    padding: 0 1rem 0 2.9rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--surface-tint);
+    color: var(--ink);
+    font: inherit;
+    font-size: .9rem;
+    outline: none;
+}
+
+.hm-search input::placeholder { color: var(--ink-soft); }
+.hm-search input:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+.hm-search > i { position: absolute; left: 1.1rem; color: var(--accent-strong); font-size: 1.15rem; pointer-events: none; }
+
+.hm-deliver,
+.hm-account {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 44px;
+    border: 0;
+    background: none;
+    color: var(--on-inverse);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hm-deliver {
+    padding: 0 1rem;
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: var(--radius-pill);
+}
+
+.hm-deliver i { color: #ffb27a; font-size: 1.15rem; }
+.hm-deliver small { display: none; }
+.hm-deliver span { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+
+.hm-deliver strong {
+    max-width: 9rem;
+    overflow: hidden;
+    font-size: .82rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hm-radius { flex: none; color: #ffc9a3; font-size: .8rem; font-style: normal; font-weight: 500; }
+
+.hm-account { padding: 0 1.1rem; border: var(--bw) solid var(--on-inverse); border-radius: var(--radius-pill); font-size: .85rem; font-weight: 700; white-space: nowrap; }
+.hm-account i { display: none; }
+.hm-account-short { display: none; }
+
+.hm-cart {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 44px;
+    padding: 0 1.2rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+.hm-cart i { font-size: 1.2rem; }
+
+.hm-cart .cart-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 .3rem;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    color: var(--accent-strong);
+    font-size: .75rem;
+}
+
+.hm-categories-inner {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    max-width: var(--page-width);
+    margin: 0 auto;
+    padding: .8rem 0 .4rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.hm-categories-inner::-webkit-scrollbar { display: none; }
+
+.hm-categories a {
+    flex: none;
+    padding: .5rem 1.05rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hm-categories a.active { border-color: var(--ink); background: var(--ink); color: var(--surface-tint); }
+
+/* ---------- Page ---------- */
+
+body[data-subdivision="home-market"] .wrapper {
+    top: 0;
+    max-width: var(--page-width);
+    min-height: 0;
+    margin: 0 auto;
+    padding: 1rem var(--gutter) var(--gutter);
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+}
+
+body[data-subdivision="home-market"] .wrapper > * { margin-top: 0; margin-bottom: 0; }
+
+/* section headings */
+.hm-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.hm-section-head h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
+.hm-section-head small { color: var(--ink-soft); font-size: .85rem; }
+
+/* ---------- Hero ---------- */
+
+body[data-subdivision="home-market"] .slider {
+    width: 100%;
+    height: clamp(11rem, 34vw, 27rem);
+    border-radius: var(--r-card);
+    background: var(--accent);
+    box-shadow: var(--shadow-card);
+}
+
+.slider .buttons button {
+    width: 2.9rem;
+    height: 2.9rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .92);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.slider .dots { position: absolute; bottom: 1rem; left: 0; right: 0; display: flex; justify-content: center; gap: .5rem; }
+.slider .dots li { width: .5rem; height: .5rem; border-radius: var(--radius-pill); background: rgba(255, 255, 255, .55); transition: width .3s ease; }
+.slider .dots li.active { width: 1.75rem; background: #fff; }
+
+/* ---------- Quick links ---------- */
+
+body[data-subdivision="home-market"] .info-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    background: none;
+}
+
+body[data-subdivision="home-market"] .info-bar .info {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    min-height: 44px;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-m);
+    background: var(--accent-tint);
+    color: var(--ink);
+}
+
+body[data-subdivision="home-market"] .info-bar .info i {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--accent-strong);
+    font-size: 1.05rem;
+}
+
+body[data-subdivision="home-market"] .info-bar .info-txt { display: flex; flex-direction: column; gap: 2px; }
+body[data-subdivision="home-market"] .info-bar .info-txt h3 { color: var(--ink); font-size: .95rem; font-weight: 700; }
+body[data-subdivision="home-market"] .info-bar .info-txt h4 { color: var(--ink-soft); font-size: .8rem; font-weight: 400; }
+
+/* ---------- Shops near you ---------- */
+
+.hm-shops-row { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: .5rem; scrollbar-width: none; }
+.hm-shops-row::-webkit-scrollbar { display: none; }
+
+.hm-shop {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    width: 16rem;
+    padding: .9rem 1rem;
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.hm-shop-mark {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--accent-tint);
+    color: var(--accent-strong);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.hm-shop strong { display: block; overflow: hidden; color: var(--ink); font-size: .95rem; text-overflow: ellipsis; white-space: nowrap; }
+.hm-shop small { color: var(--ink-soft); font-size: .8rem; }
+.hm-shop-text { min-width: 0; }
+
+/* ---------- Category tiles (circles) ---------- */
+
+body[data-subdivision="home-market"] .category-icons.main-cat-icons {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+body[data-subdivision="home-market"] .category-icons .category-icon {
+    flex: 1 0 5.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .65rem;
+    width: auto;
+    max-width: 8rem;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--ink);
+    font-size: .82rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.category-icons .category-icon img {
+    width: 6rem;
+    height: 6rem;
+    padding: .55rem;
+    border: 0;
+    box-shadow: none;
+    object-fit: contain;
+    border-radius: 50%;
+    background: var(--accent-tint);
+    transition: transform .2s ease;
+}
+
+.category-icons .category-icon:hover img { transform: translateY(-3px) scale(1.03); }
+
+/* ---------- Leaflets ---------- */
+
+body[data-subdivision="home-market"] .carousel-container { margin: 0; }
+body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: 17rem; gap: 1rem; }
+
+body[data-subdivision="home-market"] .carousel .card {
+    height: 21rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--r-card);
+    background: var(--accent-tint);
+    box-shadow: var(--shadow-card);
+}
+
+.carousel .card .img img { width: 100%; height: 100%; object-fit: cover; }
+
+body[data-subdivision="home-market"] .carousel-container i {
+    width: 2.9rem;
+    height: 2.9rem;
+    line-height: 2.9rem;
+    background: var(--ink);
+    color: var(--surface-tint);
+    font-size: 1.1rem;
+    opacity: 1;
+    box-shadow: var(--shadow-card);
+}
+
+/* ---------- Item rows ---------- */
+
+body[data-subdivision="home-market"] .cards-slider { margin: 0; padding: 0; background: none; }
+
+body[data-subdivision="home-market"] .cards-slider .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+body[data-subdivision="home-market"] .cards-slider .sub-heading,
+body[data-subdivision="home-market"] .cards-slider .heading {
+    margin: 0;
+    padding: 0;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 2.6vw, 1.9rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+}
+
+body[data-subdivision="home-market"] .cards-slider .head span { display: flex; gap: .5rem; }
+
+body[data-subdivision="home-market"] .cards-slider .head i {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+body[data-subdivision="home-market"] .cards-slider .head i.fa-angle-right { border-color: var(--ink); background: var(--ink); color: var(--surface-tint); }
+
+body[data-subdivision="home-market"] .cards-slider .column-cards {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 0 0 .5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+.cards-slider .column-cards::-webkit-scrollbar { display: none; }
+.cards-slider .column-cards.no-transition { scroll-behavior: auto; }
+
+/* the card */
+body[data-subdivision="home-market"] .item-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 11rem;   /* JS (data-min) resizes; this is the no-JS fallback */
+    gap: .5rem;
+    padding: .8rem;
+    border: 0;
+    border-radius: var(--r-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+body[data-subdivision="home-market"] .item-container::before { content: none; }
+
+.item-container .badge {
+    position: absolute;
+    top: 1.2rem;
+    left: 1.2rem;
+    z-index: 1;
+    padding: .28rem .6rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.item-container .thumb {
+    display: grid;
+    place-items: center;
+    height: 8rem;
+    overflow: hidden;
+    border-radius: var(--r-card);
+    background: var(--surface-tint);
+}
+
+body[data-subdivision="home-market"] .item-container .thumb img { width: 100%; height: 100%; object-fit: contain; transform: none; }
+
+.item-container .name { min-height: 2.15rem; color: var(--ink); font-size: .85rem; font-weight: 600; line-height: 1.3; }
+.item-container .size { min-height: 1rem; color: var(--ink-soft); font-size: .75rem; }
+
+.item-container .buy { display: flex; flex-direction: column; gap: .6rem; margin-top: auto; }
+.item-container .prices { display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .5rem; }
+.item-container .prices s { color: var(--ink-soft); font-size: .75rem; order: 2; }
+.item-container .prices .now { color: var(--ink); font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; }
+.item-container .prices .now.deal { color: var(--accent-strong); }
+
+/* full-width dark "Add" pill (the + icon is kept for the existing markup/JS) */
+body[data-subdivision="home-market"] .item-container .add-to-cart-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    width: 100%;
+    height: 2.75rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--surface-tint);
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.item-container .add-to-cart-btn:hover,
+.item-container:has(.badge) .add-to-cart-btn:hover { background: var(--accent); color: var(--on-accent); }
+
+
+/* ---------- Product page ---------- */
+
+body[data-subdivision="home-market"] .pdp .single-product { width: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.5rem; }
+
+body[data-subdivision="home-market"] .pdp .product-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+}
+
+body[data-subdivision="home-market"] .pdp .product-col { width: auto; padding: 1rem; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-card); }
+
+body[data-subdivision="home-market"] .pdp .main-img {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--r-card);
+    background: var(--surface-tint);
+}
+
+body[data-subdivision="home-market"] .pdp .main-img img { width: 100%; height: 100%; object-fit: contain; }
+
+body[data-subdivision="home-market"] .pdp .small-img-row { display: flex; gap: .6rem; margin-top: .9rem; overflow-x: auto; scrollbar-width: none; }
+
+body[data-subdivision="home-market"] .pdp .small-img-col {
+    flex: none;
+    width: 5.25rem;
+    padding: .4rem;
+    border: var(--bw) solid transparent;
+    border-radius: var(--r-inner);
+    background: var(--surface-tint);
+    cursor: pointer;
+}
+
+body[data-subdivision="home-market"] .pdp .small-img-col span { color: var(--ink-soft) !important; text-align: center; }
+body[data-subdivision="home-market"] .pdp .small-img-col.active-thumbnail { border-color: var(--accent); }
+
+body[data-subdivision="home-market"] .pdp .product-details {
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: var(--r-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+body[data-subdivision="home-market"] .pdp .product-details > span { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; color: var(--ink-soft); }
+body[data-subdivision="home-market"] .pdp .product-details h5 { margin: 0; font-size: .85rem; font-weight: 500; }
+body[data-subdivision="home-market"] .pdp .product-details .tittle { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.15; color: var(--ink); }
+body[data-subdivision="home-market"] .pdp .js-final-price { color: var(--accent-strong); font-family: var(--font-display); font-size: 2rem; font-weight: 800; }
+body[data-subdivision="home-market"] .pdp .discount { color: var(--ink-soft); text-decoration: line-through; font-weight: 500; }
+body[data-subdivision="home-market"] .pdp .js-discount-percentage { padding: .2rem .65rem; border-radius: var(--radius-pill); background: var(--accent); color: var(--on-accent); font-size: .75rem; }
+body[data-subdivision="home-market"] .pdp .product-details > span i { color: var(--accent-strong); }
+
+body[data-subdivision="home-market"] .pdp .btns { display: flex; align-items: center; gap: .75rem; padding-top: .5rem; }
+
+body[data-subdivision="home-market"] .pdp .btns .dec,
+body[data-subdivision="home-market"] .pdp .btns .inc {
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+body[data-subdivision="home-market"] .pdp .quantity-val { width: 2.5rem; border: 0; background: none; color: var(--ink); font: inherit; font-size: 1.1rem; font-weight: 700; text-align: center; }
+
+body[data-subdivision="home-market"] .pdp .btns .add-to-cart-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    height: 3.25rem;
+    margin: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+body[data-subdivision="home-market"] .pdp .actions { display: flex; gap: 1.25rem; color: var(--ink-soft); }
+body[data-subdivision="home-market"] .pdp .actions span { display: flex; align-items: center; gap: .4rem; cursor: pointer; }
+body[data-subdivision="home-market"] .pdp .sub-heading { margin: .5rem 0 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--ink); }
+body[data-subdivision="home-market"] .pdp .product-details p { color: var(--ink-soft); font-size: .9rem; line-height: 1.6; }
+
+body[data-subdivision="home-market"] .pdp .select-delivery { margin: 0; padding: 1.5rem; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--shadow-card); }
+body[data-subdivision="home-market"] .pdp .delivery-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .8rem; margin-top: .9rem; }
+
+body[data-subdivision="home-market"] .pdp .delivery-option {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    padding: 1rem 1.1rem;
+    border: var(--bw) solid var(--line);
+    border-radius: var(--r-card);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+body[data-subdivision="home-market"] .pdp .delivery-option i { color: var(--accent-strong); font-size: 1.4rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option h4 { margin: 0; font-size: .95rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option h5 { margin: 0; color: var(--ink-soft); font-size: .78rem; font-weight: 500; }
+body[data-subdivision="home-market"] .pdp .delivery-option.active { border-color: var(--accent); background: var(--accent-tint); }
+
+@media (max-width: 48rem) {
+    body[data-subdivision="home-market"] .pdp .product-row { grid-template-columns: 1fr; gap: 1rem; }
+    body[data-subdivision="home-market"] .pdp .product-details { padding: 1.1rem; }
+}
+
+/* product page v2: brand, sold-by, specs, mobile bar */
+body[data-subdivision="home-market"] .pdp .brand { color: var(--accent-strong); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+body[data-subdivision="home-market"] .pdp .sold-by { display: flex; align-items: center; gap: .75rem; padding: .7rem .9rem; border-radius: var(--r-card); background: var(--surface-tint); }
+body[data-subdivision="home-market"] .pdp .sold-by span:nth-child(2) { flex: 1; }
+body[data-subdivision="home-market"] .pdp .sold-by small { display: block; color: var(--ink-soft); font-size: .72rem; }
+body[data-subdivision="home-market"] .pdp .sold-by strong { color: var(--ink); font-size: .9rem; }
+body[data-subdivision="home-market"] .pdp .sold-by .dist { padding: .2rem .65rem; border-radius: var(--radius-pill); background: var(--inverse-bg); color: var(--on-inverse); font-size: .72rem; font-style: normal; font-weight: 700; }
+body[data-subdivision="home-market"] .pdp .shop-chip-mark { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--surface); color: var(--accent-strong); font-family: var(--font-display); font-weight: 800; }
+body[data-subdivision="home-market"] .pdp .specs { display: flex; flex-direction: column; margin: 0; padding: .25rem 1rem; border-radius: var(--r-card); background: var(--surface-tint); }
+body[data-subdivision="home-market"] .pdp .specs > div { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid var(--line); font-size: .85rem; }
+body[data-subdivision="home-market"] .pdp .specs > div:last-child { border-bottom: 0; }
+body[data-subdivision="home-market"] .pdp .specs dt { color: var(--ink-soft); }
+body[data-subdivision="home-market"] .pdp .specs dd { margin: 0; color: var(--ink); font-weight: 700; }
+
+@media (max-width: 40rem) {
+    /* quantity + Add to cart float at the bottom like the mockup */
+    body[data-subdivision="home-market"] .pdp .btns {
+        position: fixed;
+        right: .85rem;
+        bottom: .85rem;
+        left: .85rem;
+        z-index: 98;
+        padding: .4rem;
+        border-radius: var(--radius-pill);
+        background: var(--inverse-bg);
+        box-shadow: 0 12px 30px rgba(34, 20, 13, .35);
+    }
+    body[data-subdivision="home-market"] .pdp .btns .dec,
+    body[data-subdivision="home-market"] .pdp .btns .inc { width: 2.5rem; height: 2.5rem; border-color: rgba(255, 255, 255, .3); background: none; color: var(--on-inverse); }
+    body[data-subdivision="home-market"] .pdp .quantity-val { width: 1.8rem; color: var(--on-inverse); }
+    body[data-subdivision="home-market"] .pdp .btns .add-to-cart-btn { height: 3rem; }
+    body[data-subdivision="home-market"] .pdp { padding-bottom: 6rem; }
+    body[data-subdivision="home-market"] .pdp ~ footer { padding-bottom: 5rem; }
+}
+
+/* ---------- Banners + footer ---------- */
+
+body[data-subdivision="home-market"] :where(.static_one, .static_two, .static_three) img { border-radius: var(--r-card); }
+
+body[data-subdivision="home-market"] footer { top: 0; margin-top: 2rem; }
+body[data-subdivision="home-market"] .footer-top { height: .5rem; margin: 0; background: var(--accent); }
+body[data-subdivision="home-market"] .footer-bottom { background: var(--surface); padding: 1.25rem var(--gutter); text-align: center; color: var(--ink-soft); }
+body[data-subdivision="home-market"] .footer-bottom h3 { font-size: .8rem; font-weight: 500; }
+
+/* ---------- Floating cart bar (phone only) ---------- */
+
+.hm-floatbar { display: none; }
+.hm-floatbar[hidden] { display: none !important; }
+
+/* ---------- Tablet ---------- */
+
+@media (max-width: 62rem) {
+    .hm-bar { flex-wrap: wrap; row-gap: .6rem; border-radius: var(--r-card); }
+    .hm-bar .hm-logo { margin-right: auto; }
+    .hm-search { order: 5; flex-basis: 100%; }
+    .hm-deliver strong { max-width: 6rem; }
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width: 40rem) {
+    body[data-subdivision="home-market"] { --gutter: 1rem; }
+
+    .hm-header { position: static; padding-top: .75rem; background: transparent; }
+
+    .hm-bar { gap: .6rem; padding: .6rem; border-radius: var(--r-card); }
+    .hm-logo { margin-right: auto; padding-left: .3rem; font-size: 1rem; }
+    .hm-logo img { width: 2rem; height: 2rem; border-radius: var(--r-inner); }
+
+    .hm-account-full, .hm-cart-label { display: none; }
+    .hm-account--guest .hm-account-short { display: inline; }
+    .hm-account:not(.hm-account--guest) { padding: 0; border: 0; }
+    .hm-account:not(.hm-account--guest) i { display: inline; color: var(--on-inverse); font-size: 1.4rem; }
+
+    .hm-cart { justify-content: center; width: 2.75rem; padding: 0; border-radius: 50%; }
+    .hm-cart .cart-count { position: absolute; top: -.25rem; right: -.25rem; min-width: 1.25rem; height: 1.25rem; font-size: .7rem; }
+
+    .hm-deliver { order: 4; flex: 1 1 100%; }
+    .hm-deliver span { flex: 1; justify-content: space-between; }
+    .hm-deliver strong { max-width: none; }
+
+    .hm-search { order: 5; }
+    .hm-search input { height: 2.9rem; }
+
+    .hm-categories-inner { padding-block: .75rem .25rem; }
+
+    body[data-subdivision="home-market"] .wrapper { gap: 2rem; }
+    body[data-subdivision="home-market"] .slider { height: 11.5rem; border-radius: var(--r-card); }
+    body[data-subdivision="home-market"] .info-bar { grid-template-columns: 1fr; gap: .6rem; }
+    body[data-subdivision="home-market"] .info-bar .info { padding: .75rem 1rem; }
+    body[data-subdivision="home-market"] .category-icons.main-cat-icons { flex-wrap: nowrap; justify-content: flex-start; }
+    body[data-subdivision="home-market"] .category-icons .category-icon { flex: none; width: 5rem; font-size: .72rem; }
+    .category-icons .category-icon img { width: 4.5rem; height: 4.5rem; }
+    body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: 72%; }
+    body[data-subdivision="home-market"] .carousel .card { height: 17rem; }
+    body[data-subdivision="home-market"] .carousel-container i { display: none; }
+    body[data-subdivision="home-market"] .cards-slider .head i { width: 2.25rem; height: 2.25rem; }
+    .hm-shop { width: 14rem; }
+
+    .hm-floatbar {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        left: 1rem;
+        z-index: 98;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 3.5rem;
+        padding: 0 .6rem 0 1.4rem;
+        border-radius: var(--radius-pill);
+        background: var(--inverse-bg);
+        color: var(--on-inverse);
+        font-weight: 700;
+        box-shadow: 0 12px 30px rgba(34, 20, 13, .35);
+    }
+    .hm-floatbar span { display: flex; align-items: center; gap: .6rem; }
+    .hm-floatbar .cart-count {
+        align-items: center;
+        justify-content: center;
+        min-width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--on-accent);
+    }
+    body[data-subdivision="home-market"] footer { padding-bottom: 4.5rem; }
+}
+
+/* older rules fade h4/h5 text; the buttons and price must stay solid */
+body[data-subdivision="home-market"] .pdp .btns .add-to-cart-btn,
+body[data-subdivision="home-market"] .pdp .discount,
+body[data-subdivision="home-market"] .pdp .js-discount-percentage { opacity: 1; }
+body[data-subdivision="home-market"] .pdp .sold-by small { white-space: nowrap; }
+
+/* =====================================================================
+   v11: header that always fits + visible, natural borders
+   ===================================================================== */
+
+/* ---------- Header row 1 never wraps: logo shrinks, Login and Cart stay whole ---------- */
+
+.hm-logo { min-width: 0; }
+.hm-logo span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-logo img { flex: none; }
+.hm-account, .hm-cart { flex: none; }
+
+@media (max-width: 62rem) {
+    .hm-bar { flex-wrap: wrap; }
+    .hm-bar .hm-logo { flex: 1 1 0; margin-right: 0; }
+}
+
+@media (max-width: 40rem) {
+    .hm-bar { column-gap: .5rem; padding: .55rem; }
+    .hm-logo { flex: 1 1 0; gap: .45rem; padding-left: .2rem; }
+    .hm-logo span { font-size: clamp(.78rem, 3.6vw, .95rem); letter-spacing: .02em; }
+    .hm-account--guest { height: 2.5rem; min-height: 0; padding: 0 .95rem; font-size: .85rem; }
+    .hm-cart { width: 2.5rem; height: 2.5rem; min-height: 0; }
+    .hm-deliver, .hm-search { flex: 1 1 100%; }
+}
+
+/* very narrow phones, or phones with large text: drop the wordmark, keep the logo */
+@media (max-width: 22rem) {
+    .hm-logo span { display: none; }
+    .hm-logo { flex: 1 1 auto; }
+}
+
+/* ---------- Borders: 1.5px warm lines instead of none, so cards and fields read as objects ---------- */
+
+body[data-subdivision="home-market"] {
+    --card-border: var(--bw) solid var(--line-strong);
+}
+
+.hm-categories a { border: var(--card-border); }
+.hm-categories a.active { border-color: var(--ink); }
+
+.hm-deliver { border: var(--bw) solid rgba(255, 255, 255, .35); }
+.hm-account { border-width: var(--bw); }
+.hm-search input { border: var(--bw) solid transparent; }
+.hm-search input:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-line); }
+
+body[data-subdivision="home-market"] .item-container { border: var(--card-border); box-shadow: 0 1px 0 rgba(34, 20, 13, .04); }
+body[data-subdivision="home-market"] .item-container .thumb { border: var(--bw) solid var(--line); }
+.hm-shop { border: var(--card-border); box-shadow: none; }
+body[data-subdivision="home-market"] .info-bar .info { border: var(--card-border); }
+body[data-subdivision="home-market"] .carousel .card { border: var(--card-border); box-shadow: none; }
+body[data-subdivision="home-market"] .slider { border: var(--bw) solid var(--line-strong); box-shadow: none; }
+.category-icons .category-icon img { border: var(--card-border); }
+body[data-subdivision="home-market"] .cards-slider .head i { border: var(--card-border); }
+.context-banner { border-width: var(--bw); }
+
+body[data-subdivision="home-market"] .pdp :is(.product-col, .product-details, .select-delivery) { border: var(--card-border); box-shadow: none; }
+body[data-subdivision="home-market"] .pdp :is(.sold-by, .specs) { border: var(--bw) solid var(--line); }
+body[data-subdivision="home-market"] .pdp .small-img-col { border-width: var(--bw); border-color: var(--line); }
+body[data-subdivision="home-market"] .pdp .small-img-col.active-thumbnail { border-color: var(--accent); }
+body[data-subdivision="home-market"] .pdp .btns :is(.dec, .inc) { border-width: var(--bw); border-color: var(--line-strong); }
+
+/* =====================================================================
+   v12: light header theme (white bar, outlined Login, orange cart,
+   orange-ringed search) on every screen size. Overrides the dark card.
+   ===================================================================== */
+
+.hm-header {
+    position: sticky;
+    top: 0;
+    padding: 0;
+    border-bottom: var(--bw) solid var(--line-strong);
+    background: var(--surface);
+}
+
+.hm-bar {
+    max-width: var(--page-width);
+    gap: .75rem 1rem;
+    margin: 0 auto;
+    padding: .75rem var(--gutter);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--ink);
+    box-shadow: none;
+}
+
+.hm-logo { color: var(--ink); }
+.hm-logo img { background: none; border-radius: 0; }
+.hm-logo span { color: var(--ink); font-size: clamp(.95rem, 4vw, 1.15rem); font-weight: 800; letter-spacing: .03em; }
+
+/* search: white, 2px orange ring, icon on the right */
+.hm-search input {
+    height: 3rem;
+    padding: 0 3rem 0 1.2rem;
+    border: var(--bw) solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+}
+.hm-search input::placeholder { color: var(--ink-soft); }
+.hm-search > i { right: 1.1rem; left: auto; color: var(--accent); font-size: 1.25rem; }
+
+/* deliver-to chip */
+.hm-deliver {
+    padding: 0 1rem;
+    border: var(--bw) solid var(--line-strong);
+    border-radius: var(--r-card);
+    background: var(--surface-tint);
+    color: var(--ink);
+}
+.hm-deliver i { color: var(--accent); }
+.hm-deliver small { display: block; color: var(--ink-soft); font-size: .7rem; }
+.hm-deliver span { flex-direction: column; align-items: flex-start; gap: 0; }
+.hm-deliver strong { color: var(--ink); }
+.hm-radius { display: none; }
+
+/* Login: outlined orange pill with the user icon */
+.hm-account {
+    gap: .5rem;
+    padding: 0 1.1rem;
+    border: var(--bw) solid var(--accent);
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--accent-strong);
+    font-weight: 700;
+}
+.hm-account i { display: inline; color: var(--accent); font-size: 1.25rem; }
+
+/* Cart: solid orange */
+.hm-cart { border-radius: var(--r-card); background: var(--accent); color: var(--on-accent); }
+
+/* categories */
+.hm-categories-inner { padding-block: .7rem; }
+.hm-categories a { border: var(--bw) solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.hm-categories a.active { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+
+@media (max-width: 62rem) {
+    .hm-bar { border-radius: 0; }
+    .hm-search { order: 5; flex: 1 1 100%; }
+}
+
+@media (max-width: 40rem) {
+    .hm-header { position: static; padding: 0; background: var(--surface); }
+    .hm-bar { gap: .6rem .5rem; padding: .75rem 1rem; border-radius: 0; }
+
+    .hm-logo { flex: 1 1 0; min-width: 0; gap: .6rem; padding-left: 0; }
+    .hm-logo img { width: 2.75rem; height: 2.75rem; border-radius: 0; background: none; }
+
+    /* Login keeps its icon, Cart is a round-cornered square; both fit on row one */
+    .hm-account, .hm-account--guest { height: 2.75rem; min-height: 0; padding: 0 .9rem; border: var(--bw) solid var(--accent); border-radius: var(--radius-pill); color: var(--accent-strong); font-size: .9rem; }
+    .hm-account--guest i { display: inline; }
+    .hm-account:not(.hm-account--guest) { padding: 0 .75rem; }
+    .hm-account:not(.hm-account--guest) i { color: var(--accent); }
+    .hm-cart { width: 2.75rem; height: 2.75rem; min-height: 0; padding: 0; border-radius: var(--r-card); }
+
+    .hm-deliver { order: 4; flex: 1 1 100%; padding: .55rem 1rem; }
+    .hm-deliver span { flex: 1; flex-direction: column; align-items: flex-start; justify-content: flex-start; }
+    .hm-deliver strong { max-width: 100%; font-size: .95rem; }
+    .hm-radius { display: none; }
+
+    .hm-search { order: 5; flex: 1 1 100%; }
+    .hm-search input { padding: 0 3rem 0 1.2rem; }
+    .hm-search > i { left: auto; right: 1.1rem; }
+
+    .hm-categories { border: 0; background: var(--surface-tint); }
+    .hm-categories-inner { padding: .7rem 1rem; }
+}
+
+/* narrow phones / big text: keep Login as the icon + word, drop the wordmark */
+@media (max-width: 20rem) {
+    .hm-logo span { display: none; }
+    .hm-logo { flex: 1 1 auto; }
+}
+
+/* =====================================================================
+   v13: squarer corners (less "smooth"), thick orange edges
+   ===================================================================== */
+.category-icons .category-icon img { border-radius: var(--r-card); }
+.slider .buttons button,
+body[data-subdivision="home-market"] .carousel-container i,
+body[data-subdivision="home-market"] .cards-slider .head i,
+.hm-shop-mark,
+body[data-subdivision="home-market"] .pdp .shop-chip-mark,
+body[data-subdivision="home-market"] .info-bar .info i,
+body[data-subdivision="home-market"] .pdp .btns :is(.dec, .inc),
+.hm-floatbar .cart-count { border-radius: var(--r-inner); }
+.hm-cart, body[data-subdivision="home-market"] .hm-cart { border-radius: var(--r-inner); }
+.hm-cart .cart-count { border-radius: .4rem; }
+.slider .dots li { border-radius: 2px; }
+.item-container .badge { border-radius: var(--r-inner); }
+.hm-search input, .hm-deliver, .hm-account, .hm-categories a { border-radius: var(--r-inner); }
+body[data-subdivision="home-market"] .item-container .add-to-cart-btn { border-radius: var(--r-inner); }
+
+/* orange edges on the white header and its controls */
+.hm-deliver { border-color: var(--accent); background: var(--surface-tint); }
+.hm-account { border-color: var(--accent); }
+body[data-subdivision="home-market"] .slider { border: var(--bw) solid var(--accent); }
+body[data-subdivision="home-market"] .category-icons .category-icon img { border-radius: var(--r-card); }
+
+/* =====================================================================
+   v14: natural look. Hairline warm borders and soft shadows on content
+   (cards, tiles, inputs); orange is kept for actions and focus only.
+   Leaflets show two per row on phones.
+   ===================================================================== */
+
+body[data-subdivision="home-market"] {
+    --card-border: 1px solid var(--line);
+    --card-shadow: 0 1px 2px rgba(34, 20, 13, .05), 0 6px 18px rgba(34, 20, 13, .06);
+    --r-card: 1.1rem;
+    --r-inner: .75rem;
+    --radius-pill: .9rem;
+}
+body.dark-mode[data-subdivision="home-market"] { --card-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 20px rgba(0, 0, 0, .3); }
+
+body[data-subdivision="home-market"] .item-container,
+body[data-subdivision="home-market"] .carousel .card,
+body[data-subdivision="home-market"] .info-bar .info,
+.hm-shop,
+body[data-subdivision="home-market"] .pdp :is(.product-col, .product-details, .select-delivery),
+.context-banner { box-shadow: var(--card-shadow); }
+body[data-subdivision="home-market"] .slider { border: 0; box-shadow: var(--card-shadow); }
+body[data-subdivision="home-market"] .carousel .card { overflow: hidden; }
+.hm-header { border-bottom: 1px solid var(--line); box-shadow: 0 2px 10px rgba(34, 20, 13, .05); }
+.hm-categories a.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+.hm-deliver { border-color: var(--line); }
+
+/* orange stays on things you press */
+.hm-account, .hm-search input:focus-visible { border-color: var(--accent); }
+.hm-search input { border-color: var(--line); background: var(--surface); }
+
+@media (max-width: 720px) {
+    body[data-subdivision="home-market"] .carousel-container .carousel {
+        grid-auto-columns: calc((100% - .75rem) / 2);
+        gap: .75rem;
+    }
+    body[data-subdivision="home-market"] .carousel .card { height: auto; aspect-ratio: 3 / 4.4; }
+}
+
+/* =====================================================================
+   v14: live search panel (hmsearch.js) and results page
+   ===================================================================== */
+
+.hm-search input[readonly] { cursor: pointer; }
+.hm-search.is-open { z-index: 62; }
+
+.hm-sp[hidden], .hm-sp-scrim[hidden] { display: none; }
+.hm-sp { display: flex; flex-direction: column; color: var(--ink); font-family: var(--font-body); }
+.hm-sp * { box-sizing: border-box; }
+
+/* phones: full-screen sheet */
+.hm-sp {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: var(--surface-tint);
+    animation: hm-sp-in .18s ease both;
+}
+@keyframes hm-sp-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.hm-sp-scrim { display: none; }
+body.hm-sp-open { overflow: hidden; }
+
+.hm-sp-bar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .65rem .75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+}
+.hm-sp-back, .hm-sp-clear {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: var(--r-inner);
+    background: none;
+    color: var(--ink);
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+.hm-sp-clear[hidden] { display: none; }
+.hm-search .hm-sp-input {
+    flex: 1;
+    min-width: 0;
+    height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--r-inner);
+    background: var(--surface);
+    color: var(--ink);
+    font: 500 1rem var(--font-body);
+    box-shadow: 0 0 0 3px var(--accent-line);
+}
+.hm-search .hm-sp-input:focus { outline: 0; }
+
+.hm-sp-body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: .75rem .9rem 2rem; }
+
+.hm-sp-sec { margin: 0 0 1.1rem; }
+.hm-sp-sec h4 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 .5rem; font: 700 .72rem var(--font-body); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.hm-sp-link { border: 0; background: none; padding: 0; color: var(--accent-strong); font: 700 .8rem var(--font-body); text-transform: none; letter-spacing: 0; cursor: pointer; }
+
+.hm-sp-recent { list-style: none; margin: 0; padding: 0; }
+.hm-sp-recent li { display: flex; align-items: center; }
+.hm-sp-recent-item { flex: 1; display: flex; align-items: center; gap: .75rem; min-width: 0; padding: .65rem .25rem; border: 0; background: none; color: var(--ink); font: 500 .95rem var(--font-body); text-align: left; cursor: pointer; }
+.hm-sp-recent-item i { color: var(--ink-soft); font-size: .85rem; }
+.hm-sp-recent-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-sp-x { border: 0; background: none; color: var(--ink-soft); width: 2rem; height: 2rem; cursor: pointer; }
+
+.hm-sp-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.hm-sp-top { margin-bottom: .75rem; }
+.hm-sp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .5rem .85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--ink);
+    font: 600 .85rem var(--font-body);
+    text-decoration: none;
+}
+.hm-sp-chip i { color: var(--accent); font-size: .8rem; }
+.hm-sp-chip:hover { border-color: var(--accent); }
+
+.hm-sp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.hm-sp-item {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    align-items: center;
+    gap: .75rem;
+    padding: .55rem;
+    border-radius: var(--r-inner);
+    color: var(--ink);
+    text-decoration: none;
+}
+.hm-sp-item img { width: 3.5rem; height: 3.5rem; border-radius: var(--r-inner); background: var(--accent-tint); object-fit: contain; }
+.hm-sp-info { min-width: 0; display: grid; gap: .15rem; }
+.hm-sp-info strong { font: 600 .92rem/1.25 var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-sp-info mark { background: var(--accent-tint); color: var(--accent-strong); border-radius: 3px; padding: 0 1px; }
+.hm-sp-info small { color: var(--ink-soft); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-sp-price { display: grid; justify-items: end; gap: .1rem; font-size: .85rem; }
+.hm-sp-price b { font-weight: 800; }
+.hm-sp-price s { color: var(--ink-soft); font-size: .72rem; }
+.hm-sp-price em { font: 700 .68rem var(--font-body); font-style: normal; color: #fff; background: var(--accent); border-radius: .35rem; padding: .05rem .35rem; }
+.hm-sp-item:hover, .hm-sp-item.is-active, .hm-sp-recent-item.is-active, .hm-sp-chip.is-active, .hm-sp-all.is-active { background: var(--accent-tint); }
+.hm-sp-chip.is-active { border-color: var(--accent); }
+
+.hm-sp-all { display: flex; align-items: center; justify-content: space-between; margin-top: .5rem; padding: .8rem .9rem; border-radius: var(--r-inner); color: var(--accent-strong); font: 700 .9rem var(--font-body); text-decoration: none; border: 1px dashed var(--accent-line); }
+
+.hm-sp-hint, .hm-sp-empty { text-align: center; color: var(--ink-soft); font-size: .9rem; }
+.hm-sp-empty { display: grid; justify-items: center; gap: .35rem; padding: 2.5rem 1rem; }
+.hm-sp-empty i { font-size: 1.6rem; color: var(--accent); margin-bottom: .25rem; }
+.hm-sp-empty strong { color: var(--ink); }
+
+.hm-sp-skel { display: grid; gap: .6rem; }
+.hm-sp-skel > div { display: grid; grid-template-columns: 3.5rem 1fr; grid-template-rows: 1rem 1rem; gap: .35rem .75rem; align-items: center; padding: .55rem; }
+.hm-sp-skel i { grid-row: 1 / 3; height: 3.5rem; border-radius: var(--r-inner); }
+.hm-sp-skel b { height: .8rem; border-radius: .4rem; width: 70%; }
+.hm-sp-skel b + b { width: 40%; }
+.hm-sp-skel i, .hm-sp-skel b { background: linear-gradient(90deg, var(--line) 25%, var(--accent-tint) 50%, var(--line) 75%); background-size: 200% 100%; animation: hm-sp-shim 1.2s linear infinite; }
+@keyframes hm-sp-shim { to { background-position: -200% 0; } }
+
+/* desktop: dropdown under the header field */
+@media (min-width: 900px) {
+    .hm-sp {
+        position: absolute;
+        inset: -.35rem -.35rem auto -.35rem;     /* sits over the header field, input on top */
+        max-height: min(78vh, 38rem);
+        border: 1px solid var(--line);
+        border-radius: var(--r-card);
+        background: var(--surface);
+        box-shadow: 0 18px 48px rgba(34, 20, 13, .18);
+        overflow: hidden;
+        z-index: 62;
+    }
+    .hm-sp-bar { padding: .45rem .5rem; background: transparent; }
+    .hm-sp-back { display: none; }
+    .hm-sp-input { padding-left: 1rem; }
+    .hm-sp-scrim { display: block; position: fixed; inset: 0; z-index: 61; background: rgba(34, 20, 13, .28); }
+    body.hm-sp-open { overflow: visible; }
+    .hm-sp-body { padding-top: 1rem; }
+}
+
+body.dark-mode .hm-sp { box-shadow: 0 18px 48px rgba(0, 0, 0, .5); }
+
+@media (prefers-reduced-motion: reduce) { .hm-sp, .hm-sp-skel i, .hm-sp-skel b { animation: none; } }
+
+/* results page */
+.hm-results-head { padding: 1.25rem 0 .75rem; }
+.hm-results-head h1 { margin: 0; font: 800 clamp(1.3rem, 4vw, 1.9rem) var(--font-display); color: var(--ink); }
+.hm-results-head em { font-style: normal; color: var(--accent-strong); }
+.hm-results-head p { margin: .25rem 0 0; color: var(--ink-soft); font-size: .9rem; }
+.hm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .9rem; padding-bottom: 2.5rem; }
+.hm-grid .item-container { width: auto; min-width: 0; flex: none; }
+.hm-empty { display: grid; justify-items: center; gap: .5rem; padding: 3rem 1rem 4rem; text-align: center; color: var(--ink-soft); }
+.hm-empty i { font-size: 2rem; color: var(--accent); }
+.hm-empty h2 { margin: 0; color: var(--ink); font: 800 1.25rem var(--font-display); }
+.hm-empty p { margin: 0; max-width: 28rem; }
+.hm-btn { display: inline-flex; margin-top: .75rem; padding: .7rem 1.4rem; border-radius: var(--radius-pill); background: var(--accent); color: #fff; font: 700 .9rem var(--font-body); text-decoration: none; }
+@media (max-width: 520px) { .hm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; } }
+.hm-sp-clear i, .hm-sp-back i { color: inherit; position: static; font-size: inherit; }
+.hm-search .hm-sp-input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+
+/* phones: same floating card as desktop (input on top, results below, page dimmed behind) */
+@media (max-width: 899.98px) {
+    .hm-sp {
+        inset: .6rem .6rem auto .6rem;
+        max-height: min(78dvh, 38rem);
+        border: 1px solid var(--line);
+        border-radius: var(--r-card);
+        background: var(--surface);
+        box-shadow: 0 18px 48px rgba(34, 20, 13, .22);
+        overflow: hidden;
+    }
+    .hm-sp-scrim { display: block; position: fixed; inset: 0; z-index: 99999; background: rgba(34, 20, 13, .4); }
+    .hm-sp-bar { padding: .45rem .5rem; background: transparent; border-bottom: 1px solid var(--line); }
+    .hm-sp-back { display: none; }
+    .hm-sp-body { padding: .85rem .8rem 1rem; }
+}
+
+/* search input spans the whole bar; the clear (x) sits inside it on the right */
+.hm-sp-bar { position: relative; }
+.hm-search .hm-sp .hm-sp-input { flex: 1 1 100%; width: 100%; min-width: 0; padding-right: 2.75rem; }
+.hm-sp .hm-sp-clear { position: absolute; top: 50%; right: .95rem; transform: translateY(-50%); width: 2rem; height: 2rem; color: var(--ink-soft); }
+
+/* =====================================================================
+   v24: phones & tablets – the nav and search stay fixed at the top.
+   Scrolling down tucks away the "Deliver to" strip and the category
+   pills so only the nav row and search remain (hmsearch.js toggles
+   .is-compact and sets --hm-header-h to the full header height).
+   ===================================================================== */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] { padding-top: var(--hm-header-h, 15rem); }
+    .hm-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        transition: box-shadow .2s ease;
+    }
+    .hm-header.is-compact { box-shadow: 0 6px 18px rgba(34, 20, 13, .1); }
+    .hm-header.is-compact .hm-deliver,
+    .hm-header.is-compact .hm-categories { display: none; }
+    .hm-header.is-compact .hm-bar { padding-bottom: .65rem; }
+}
+
+/* =====================================================================
+   v25: hero slider and leaflet sizes restored to the original site's sizes
+   (homemrkt.css): hero 18em → 16em (≤850px) → 9em (≤500px);
+   leaflets 5 per row at 23em, 4 (≤1200px), 18em (≤1000px), 3 at 23em (≤850px),
+   20em (≤750px), 16em (≤600px), 2 per row at 16em (≤500px).
+   ===================================================================== */
+body[data-subdivision="home-market"] .slider { height: 18em; }
+body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: calc((100% - 4rem) / 5); gap: 1rem; }
+body[data-subdivision="home-market"] .carousel .card { height: 23em; aspect-ratio: auto; }
+
+@media (max-width: 1200px) {
+    body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: calc((100% - 3rem) / 4); }
+}
+@media (max-width: 1000px) {
+    body[data-subdivision="home-market"] .carousel .card { height: 18em; }
+}
+@media (max-width: 850px) {
+    body[data-subdivision="home-market"] .slider { height: 16em; }
+    body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: calc((100% - 2rem) / 3); }
+    body[data-subdivision="home-market"] .carousel .card { height: 23em; }
+}
+@media (max-width: 750px) {
+    body[data-subdivision="home-market"] .carousel .card { height: 20em; }
+}
+@media (max-width: 600px) {
+    body[data-subdivision="home-market"] .carousel .card { height: 16em; }
+}
+@media (max-width: 500px) {
+    body[data-subdivision="home-market"] .slider { height: 9em; }
+    body[data-subdivision="home-market"] .slider .buttons button { width: 2em; height: 2em; }
+    body[data-subdivision="home-market"] .carousel-container .carousel { grid-auto-columns: calc((100% - .75rem) / 2); gap: .75rem; }
+    body[data-subdivision="home-market"] .carousel .card { height: 16em; }
+}
+
+/* =====================================================================
+   v26: original page look restored (values from main.css / homemrkt.css)
+   - .wrapper side margins: 6em, 1.5em (≤1200px), .5em (≤960px), 0 (≤750px)
+     No "top" offset: the header is sticky on desktop and the fixed mobile
+     header already pushes the page down.
+   - body background: var(--color-light) (#faf8ff, black in dark mode)
+   - category icons: grid of tiles on the original --bg-white background
+   ===================================================================== */
+body[data-subdivision="home-market"] .wrapper {
+    max-width: none;
+    margin: 0 6em;
+    padding: 1em;
+}
+@media (max-width: 1200px) { body[data-subdivision="home-market"] .wrapper { margin: 0 1.5em; } }
+@media (max-width: 960px)  { body[data-subdivision="home-market"] .wrapper { margin: 0 .5em; } }
+@media (max-width: 750px)  { body[data-subdivision="home-market"] .wrapper { margin: 0; } }
+@media (max-width: 500px)  { body[data-subdivision="home-market"] .wrapper { padding: .2em .5em 1em; } }
+
+/* header rows line up with the wrapper's content edge on desktop */
+@media (min-width: 900px) {
+    .hm-bar, .hm-categories-inner { max-width: none; padding-inline: calc(6em + 1em); }
+}
+@media (min-width: 900px) and (max-width: 1200px) {
+    .hm-bar, .hm-categories-inner { padding-inline: calc(1.5em + 1em); }
+}
+@media (min-width: 900px) and (max-width: 960px) {
+    .hm-bar, .hm-categories-inner { padding-inline: calc(.5em + 1em); }
+}
+
+/* body background as before */
+body[data-subdivision="home-market"] { --color-light: #faf8ff; }
+body[data-subdivision="home-market"].dark-mode { --color-light: #000000; }
+body[data-subdivision="home-market"],
+body[data-subdivision="home-market"].dark-mode { background: var(--color-light); }
+
+/* category icons: grid of tiles with the original background */
+body[data-subdivision="home-market"] .category-icons.main-cat-icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8em, 1fr));
+    gap: 1em;
+    overflow: visible;
+}
+body[data-subdivision="home-market"] .category-icons.main-cat-icons .category-icon {
+    flex: none;
+    width: auto;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: .35em;
+    padding: .5em 0;
+    border: 0;
+    border-radius: 2em;
+    background: var(--bg-white, #fff);
+    box-shadow: none;
+    color: var(--color-gray-dark, #6f6f6f);
+    font-size: .8rem;
+    font-weight: 500;
+}
+body[data-subdivision="home-market"] .category-icons.main-cat-icons .category-icon img {
+    width: fit-content;
+    max-width: 100%;
+    height: 5em;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    object-fit: contain;
+}
+body[data-subdivision="home-market"] .category-icons.main-cat-icons .category-icon span { display: inline; }
+body[data-subdivision="home-market"] .category-icons .category-icon:hover img { transform: scale(1.1); }
+
+@media (max-width: 850px) {
+    body[data-subdivision="home-market"] .category-icons.main-cat-icons { grid-template-columns: repeat(auto-fit, minmax(6em, 1fr)); gap: .5em; }
+    body[data-subdivision="home-market"] .category-icons.main-cat-icons .category-icon { border-radius: 1.5em; font-size: .7rem; }
+    body[data-subdivision="home-market"] .category-icons.main-cat-icons .category-icon img { width: 4em; height: 4em; }
+}
+
+/* =====================================================================
+   v27: calmer surfaces
+   - large orange-tinted backgrounds become --bg-white (white, #1a1a1a in
+     dark mode); orange stays on buttons, badges and the "Deliver to" strip
+   - "Deliver to" strip: a slightly more saturated light orange
+   - no extra space under the page content
+   - smaller Login button in the mobile nav
+   ===================================================================== */
+body[data-subdivision="home-market"] .info-bar .info,
+body[data-subdivision="home-market"] .hm-shop-mark,
+body[data-subdivision="home-market"] .carousel .card,
+body[data-subdivision="home-market"] .item-container .thumb,
+body[data-subdivision="home-market"] .pdp .main-img,
+body[data-subdivision="home-market"] .pdp .small-img-col,
+body[data-subdivision="home-market"] .pdp .sold-by,
+body[data-subdivision="home-market"] .pdp .specs,
+body[data-subdivision="home-market"] .pdp .delivery-option.active,
+body[data-subdivision="home-market"] .context-banner,
+body[data-subdivision="home-market"] .slider { background: var(--bg-white, #fff); }
+body[data-subdivision="home-market"] .hm-shop-mark { border: 1px solid var(--line); color: var(--accent-strong); }
+body[data-subdivision="home-market"] .item-container .thumb { border: 1px solid var(--line); }
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-categories { background: var(--bg-white, #fff); }
+}
+
+/* "Deliver to" keeps a light orange, a little more saturated */
+body[data-subdivision="home-market"] .hm-deliver { background: #ffe6cf; border-color: #f7b07a; }
+body[data-subdivision="home-market"].dark-mode .hm-deliver { background: #3b2416; border-color: #7a4a2a; }
+
+/* no space under the content */
+body[data-subdivision="home-market"] .wrapper { padding-bottom: 0; margin-bottom: 0; }
+body[data-subdivision="home-market"] footer { margin-top: 0; }
+
+/* phones: a slightly smaller Login button */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-account--guest { height: 2.35rem; padding: 0 .7rem; gap: .35rem; font-size: .8rem; }
+    body[data-subdivision="home-market"] .hm-account i { font-size: 1rem; }
+}
+
+/* =====================================================================
+   v28: desktop category links as on the original site (plain links on the
+   right, #ffa304, the current one in grey with the grid icon), and images
+   without boxes: no borders, backgrounds or shadows around pictures.
+   ===================================================================== */
+.hm-categories a > i { display: none; }
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-categories { border: 0; background: transparent; }
+    body[data-subdivision="home-market"] .hm-categories-inner { justify-content: flex-end; gap: 0; padding-block: .35rem .6rem; }
+    body[data-subdivision="home-market"] .hm-categories a,
+    body[data-subdivision="home-market"] .hm-categories a.active {
+        display: inline-flex;
+        align-items: center;
+        gap: .3em;
+        min-height: 0;
+        margin: 0 .5em;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        color: #ffa304;
+        font-size: .9rem;
+        font-weight: 500;
+    }
+    body[data-subdivision="home-market"] .hm-categories a.active { color: var(--color-gray-dark, #6f6f6f); }
+    body[data-subdivision="home-market"] .hm-categories a:hover { color: var(--accent); }
+    body[data-subdivision="home-market"] .hm-categories a > i { display: inline; font-size: 1rem; }
+}
+
+/* images without boxes */
+body[data-subdivision="home-market"] .item-container .thumb,
+body[data-subdivision="home-market"] .item-container .thumb img,
+body[data-subdivision="home-market"] .carousel .card,
+body[data-subdivision="home-market"] .carousel .card .img,
+body[data-subdivision="home-market"] .pdp .main-img,
+body[data-subdivision="home-market"] .pdp .main-img img,
+body[data-subdivision="home-market"] .pdp .small-img-col,
+body[data-subdivision="home-market"] .pdp .small-img-col img,
+body[data-subdivision="home-market"] .category-icons .category-icon img,
+body[data-subdivision="home-market"] .hm-sp-item img,
+body[data-subdivision="home-market"] .slider {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+/* the selected thumbnail on the product page still shows which one is active */
+body[data-subdivision="home-market"] .pdp .small-img-col.active-thumbnail { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* v29: no borders on the location banner and the three info cards (soft shadow only) */
+body[data-subdivision="home-market"] .context-banner,
+body[data-subdivision="home-market"] .info-bar .info { border: 0; box-shadow: var(--card-shadow); }
+/* icons always use Font Awesome, even where an old "* { font-family }" rule applies */
+body[data-subdivision="home-market"] i.fa-solid, body[data-subdivision="home-market"] i.fa-regular { font-family: "Font Awesome 6 Free"; }
+body[data-subdivision="home-market"] i.fa-solid { font-weight: 900; }
+body[data-subdivision="home-market"] i.fa-regular { font-weight: 400; }
+
+/* =====================================================================
+   v29: no borders on the info cards, shop cards and the location banner;
+   info-card icons are the original Font Awesome ones in their colours.
+   ===================================================================== */
+body[data-subdivision="home-market"] .info-bar .info,
+body[data-subdivision="home-market"] .hm-shop,
+body[data-subdivision="home-market"] .context-banner { border: 0; }
+body[data-subdivision="home-market"] .info-bar .info i {
+    width: auto;
+    height: auto;
+    padding: 0 .5em;
+    border-radius: 0;
+    background: none;
+    color: var(--icon, var(--accent));
+    font-size: 1.4rem;
+}
+
+/* =====================================================================
+   v30: centred desktop category links without the line under the header;
+   hero arrows sit the same distance from both edges; leaflet arrows are
+   light orange with an orange icon.
+   ===================================================================== */
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-categories-inner { justify-content: center; }
+    body[data-subdivision="home-market"] .hm-header { border-bottom: 0; }
+}
+
+/* reused.css gives .buttons "width: 90%", which pushed the right arrow inwards */
+body[data-subdivision="home-market"] .slider .buttons {
+    left: 1em;
+    right: 1em;
+    width: auto;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+body[data-subdivision="home-market"] .carousel-container i {
+    background: #ffe6cf;
+    color: var(--accent);
+    box-shadow: 0 2px 8px rgba(34, 20, 13, .12);
+}
+body[data-subdivision="home-market"] .carousel-container i:hover { background: #ffd9b8; }
+body[data-subdivision="home-market"].dark-mode .carousel-container i { background: #3b2416; color: #ff8a4c; }
+
+/* v32: quieter location banner */
+body[data-subdivision="home-market"] .context-banner { padding: .55em 1em; gap: .5em .8em; font-size: .8rem; }
+body[data-subdivision="home-market"] .context-banner p { font-size: .8rem; line-height: 1.45; color: var(--ink-soft); }
+body[data-subdivision="home-market"] .context-banner > i { font-size: 1rem; }
+body[data-subdivision="home-market"] .context-banner button,
+body[data-subdivision="home-market"] .context-banner a { min-height: 2.1rem; padding: 0 .95em; font-size: .78rem; font-weight: 600; }
+
+/* =====================================================================
+   v32: quieter location banner; Login and Cart are the same size
+   ===================================================================== */
+body[data-subdivision="home-market"] .context-banner { padding: .6rem .9rem; gap: .65rem; }
+body[data-subdivision="home-market"] .context-banner > i { font-size: 1rem; }
+body[data-subdivision="home-market"] .context-banner p { font-size: .82rem; line-height: 1.4; }
+body[data-subdivision="home-market"] .context-banner button,
+body[data-subdivision="home-market"] .context-banner a { min-height: 0; padding: .45rem .85rem; font-size: .78rem; }
+
+body[data-subdivision="home-market"] .hm-account,
+body[data-subdivision="home-market"] .hm-cart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    box-sizing: border-box;
+    height: 2.75rem;
+    min-width: 9.75rem;
+    width: auto;
+    padding: 0 1.1rem;
+    border-radius: var(--r-inner);
+    font-size: .85rem;
+    font-weight: 700;
+}
+body[data-subdivision="home-market"] .hm-account i,
+body[data-subdivision="home-market"] .hm-cart i { font-size: 1.1rem; }
+body[data-subdivision="home-market"] .hm-cart { border: 1px solid var(--accent); }
+
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-account--guest,
+    body[data-subdivision="home-market"] .hm-cart {
+        height: 2.35rem;
+        min-width: 4.25rem;
+        padding: 0 .7rem;
+        font-size: .8rem;
+    }
+    body[data-subdivision="home-market"] .hm-account i,
+    body[data-subdivision="home-market"] .hm-cart i { font-size: 1rem; }
+}
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-cart { min-height: 0; }
+}
+/* tablets show "Login & Register" in full, so the cart gets the same width */
+@media (min-width: 600px) and (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-cart { min-width: 8.5rem; }
+}
+
+/* =====================================================================
+   v33: smaller Login/Cart on phones; search field border a little thicker
+   on desktop, tighter with a smaller magnifier on phones
+   ===================================================================== */
+@media (max-width: 599.98px) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-account--guest,
+    body[data-subdivision="home-market"] .hm-cart {
+        height: 2.1rem;
+        min-width: 3.75rem;
+        padding: 0 .6rem;
+        gap: .3rem;
+        font-size: .75rem;
+    }
+    body[data-subdivision="home-market"] .hm-account i,
+    body[data-subdivision="home-market"] .hm-cart i { font-size: .9rem; }
+}
+
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-search > input { border-width: 2px; }
+}
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-search > input {
+        height: 2.6rem;
+        padding: 0 2.6rem 0 .9rem;
+        font-size: .9rem;
+    }
+    body[data-subdivision="home-market"] .hm-search > i { right: .9rem; font-size: 1rem; }
+}
+
+/* v35: smaller category buttons on phones/tablets */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-categories-inner { gap: .4rem; }
+    body[data-subdivision="home-market"] .hm-categories a {
+        min-height: 0;
+        height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+        padding: 0 .75rem;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+}
+
+/* =====================================================================
+   v36: leaflet arrows on phones too; hero arrows keep their light
+   background with an orange icon; space under the content moves from the
+   page to the wrapper; footer text in Montserrat.
+   ===================================================================== */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .carousel-container i {
+        display: grid;
+        place-items: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        line-height: 2.2rem;
+        font-size: .9rem;
+        z-index: 2;
+    }
+    body[data-subdivision="home-market"] .carousel-container i:first-child { left: .25rem; }
+    body[data-subdivision="home-market"] .carousel-container i:last-child { right: .25rem; }
+}
+
+body[data-subdivision="home-market"] .slider .buttons button {
+    background: rgba(255, 255, 255, .9);
+    color: var(--accent);
+    font-weight: 700;
+}
+body[data-subdivision="home-market"] .slider .buttons button:hover { background: #fff; color: var(--accent-strong); }
+
+/* space below the content belongs to the wrapper, not the page */
+body[data-subdivision="home-market"] .wrapper { margin-bottom: 2rem; }
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] footer { padding-bottom: 0; }
+    /* only leave room under the footer while the floating "View cart" bar is showing */
+    body[data-subdivision="home-market"]:has(.hm-floatbar:not([hidden])) footer { padding-bottom: 4.5rem; }
+}
+
+body[data-subdivision="home-market"] footer,
+body[data-subdivision="home-market"] footer :is(h3, h4, p, a, span) { font-family: 'Montserrat', var(--font-body); }
+
+/* =====================================================================
+   v43/v44: desktop header – white search field (original shape) with an
+   orange search button, borderless "Deliver to", green initial badge,
+   cart in its original shape; location banner with a clear button.
+   Flat colours only.
+   ===================================================================== */
+body[data-subdivision="home-market"] .hm-avatar { display: none; }
+body[data-subdivision="home-market"] .hm-deliver-caret { display: none; }
+
+/* signed-in: initials instead of the person icon (all sizes) */
+body[data-subdivision="home-market"] .hm-account:not(.hm-account--guest) > i { display: none !important; }
+body[data-subdivision="home-market"] .hm-account:not(.hm-account--guest) .hm-avatar {
+    display: grid; place-items: center; flex: none;
+    width: 1.85rem; height: 1.85rem; border-radius: 50%;
+    background: #16a34a;
+    color: #fff; font-size: .8rem; font-weight: 800; line-height: 1;
+}
+
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-bar { gap: .9rem; }
+
+    /* search: soft pill, magnifier becomes a round button */
+    body[data-subdivision="home-market"] .hm-search > input {
+        height: 2.75rem;
+        padding: 0 3.2rem 0 1rem;
+        border: 2px solid var(--line, #ece7e2);
+        border-radius: var(--r-inner);
+        background: #fff;
+        box-shadow: none;
+        transition: border-color .2s ease;
+    }
+    body[data-subdivision="home-market"] .hm-search:hover > input { border-color: color-mix(in srgb, var(--accent, #ea580c) 45%, var(--line, #ece7e2)); }
+    body[data-subdivision="home-market"] .hm-search > i {
+        right: .3rem; left: auto;
+        display: grid; place-items: center;
+        width: 2.15rem; height: 2.15rem; border-radius: calc(var(--r-inner) - 2px);
+        background: var(--accent, #ea580c); color: #fff; font-size: .85rem;
+    }
+
+    /* deliver to: no box, icon in a soft circle, caret */
+    body[data-subdivision="home-market"] .hm-deliver {
+        position: relative;
+        display: inline-flex; align-items: center; gap: .6rem;
+        height: 2.75rem; padding: 0 .6rem 0 .25rem;
+        border: 0 !important; border-radius: 999px;
+        background: transparent !important;
+        transition: background-color .2s ease;
+    }
+    body[data-subdivision="home-market"] .hm-deliver:hover { background: color-mix(in srgb, var(--accent, #ea580c) 8%, transparent) !important; }
+    body[data-subdivision="home-market"] .hm-deliver > i:first-child {
+        display: grid; place-items: center; flex: none;
+        width: 2.1rem; height: 2.1rem; border-radius: 50%;
+        background: color-mix(in srgb, var(--accent, #ea580c) 12%, transparent);
+        color: var(--accent, #ea580c); font-size: .95rem;
+    }
+    body[data-subdivision="home-market"] .hm-deliver small { font-size: .7rem; font-weight: 600; letter-spacing: .02em; }
+    body[data-subdivision="home-market"] .hm-deliver strong { max-width: 11rem; font-size: .88rem; }
+    body[data-subdivision="home-market"] .hm-deliver .hm-deliver-caret { display: inline; color: var(--ink-soft, #8a7f78); font-size: .7rem; }
+
+    /* thin divider between location and account */
+    body[data-subdivision="home-market"] .hm-account { position: relative; }
+    body[data-subdivision="home-market"] .hm-account::before {
+        content: ""; position: absolute; left: -.5rem; top: 25%; bottom: 25%;
+        width: 1px; background: var(--line, #ece7e2);
+    }
+
+    /* account: ghost chip */
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-cart {
+        height: 2.75rem; min-width: 0;
+    }
+    body[data-subdivision="home-market"] .hm-account {
+        gap: .45rem;
+        padding: 0 .6rem 0 .3rem;
+        border: 0 !important;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--ink, #2a1d16);
+        transition: background-color .2s ease;
+    }
+    body[data-subdivision="home-market"] .hm-account:hover { background: color-mix(in srgb, var(--accent, #ea580c) 8%, transparent); }
+    body[data-subdivision="home-market"] .hm-account--guest {
+        padding: 0 .9rem;
+        border-radius: var(--r-inner);
+        box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #ea580c) 45%, transparent);
+        color: var(--accent-strong, #c2410c);
+    }
+    body[data-subdivision="home-market"] .hm-account--guest > i { color: var(--accent, #ea580c); }
+
+    /* cart: original shape, flat orange; count as a white bubble */
+    body[data-subdivision="home-market"] .hm-cart {
+        position: relative;
+        padding: 0 1rem;
+        border: 0 !important;
+        border-radius: var(--r-inner);
+        background: var(--accent, #ea580c);
+        box-shadow: none;
+        transition: background-color .2s ease;
+    }
+    body[data-subdivision="home-market"] .hm-cart:hover { background: var(--accent-strong, #c2410c); }
+    body[data-subdivision="home-market"] .hm-cart .cart-count {
+        position: static; min-width: 1.35rem; height: 1.35rem; padding: 0 .3rem;
+        border-radius: 999px; background: #fff; color: var(--accent-strong, #c2410c);
+        font-size: .72rem; font-weight: 800; align-items: center; justify-content: center;
+    }
+}
+
+/* ---------- location banner ---------- */
+body[data-subdivision="home-market"] .context-banner {
+    align-items: center;
+    padding: .7rem .75rem .7rem .8rem;
+    gap: .85rem;
+    border: 0;
+    border-radius: 1.1rem;
+    background: var(--surface, #fff);
+    box-shadow: 0 1px 2px rgba(42, 29, 22, .05), 0 6px 18px -14px rgba(42, 29, 22, .25);
+}
+body[data-subdivision="home-market"] .context-banner > i {
+    display: grid; place-items: center; flex: none;
+    width: 2.4rem; height: 2.4rem; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent, #ea580c) 14%, transparent);
+    color: var(--accent, #ea580c); font-size: 1rem;
+}
+body[data-subdivision="home-market"] .context-banner p { margin: 0; color: var(--ink-soft, #6b5f57); font-size: .84rem; line-height: 1.45; }
+body[data-subdivision="home-market"] .context-banner p strong { display: block; color: var(--ink, #2a1d16); font-size: .92rem; font-weight: 700; }
+
+body[data-subdivision="home-market"] .context-banner button,
+body[data-subdivision="home-market"] .context-banner a {
+    display: inline-flex; align-items: center; gap: .5rem; flex: none;
+    height: 2.35rem; min-height: 0; padding: 0 .9rem;
+    border: 0; border-radius: var(--r-inner);
+    background: var(--accent, #ea580c);
+    color: #fff; font-size: .82rem; font-weight: 700; white-space: nowrap; text-decoration: none;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background-color .2s ease;
+}
+body[data-subdivision="home-market"] .context-banner button:hover,
+body[data-subdivision="home-market"] .context-banner a:hover { background: var(--accent-strong, #c2410c); }
+body[data-subdivision="home-market"] .context-banner button:focus-visible,
+body[data-subdivision="home-market"] .context-banner a:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent, #ea580c) 35%, transparent); outline-offset: 2px; }
+body[data-subdivision="home-market"] .context-banner button i,
+body[data-subdivision="home-market"] .context-banner a i { font-size: .9rem; }
+
+/* cart-locked variant keeps its orange fill */
+body[data-subdivision="home-market"] .context-banner--shop { background: var(--accent, #ea580c); }
+body[data-subdivision="home-market"] .context-banner--shop > i { background: rgba(255, 255, 255, .2); color: #fff; }
+body[data-subdivision="home-market"] .context-banner--shop p,
+body[data-subdivision="home-market"] .context-banner--shop p strong { color: #fff; }
+body[data-subdivision="home-market"] .context-banner--shop a,
+body[data-subdivision="home-market"] .context-banner--shop a:hover { background: #fff; color: var(--accent-strong, #c2410c); }
+
+@media (max-width: 599.98px) {
+    body[data-subdivision="home-market"] .context-banner { flex-wrap: wrap; padding: .75rem; gap: .6rem .7rem; }
+    body[data-subdivision="home-market"] .context-banner p { flex: 1 1 0; min-width: 0; font-size: .8rem; }
+    body[data-subdivision="home-market"] .context-banner p strong { font-size: .88rem; }
+    body[data-subdivision="home-market"] .context-banner button,
+    body[data-subdivision="home-market"] .context-banner a { flex: 1 1 100%; justify-content: center; height: 2.5rem; }
+}
+
+/* dark mode */
+body.dark-mode[data-subdivision="home-market"] .context-banner {
+    background: var(--surface, #1c1714);
+    box-shadow: 0 6px 18px -14px rgba(0, 0, 0, .8);
+}
+body.dark-mode[data-subdivision="home-market"] .hm-search > input { background: var(--surface, #1c1714); }
+
+/* =====================================================================
+   v45: brand name in the subdivision colour; phone "Deliver to" matches
+   desktop (no box, pin in a soft circle, arrow on the right)
+   ===================================================================== */
+body[data-subdivision] .hm-logo span,
+body[data-subdivision] .fl-logo span { color: var(--accent, #ea580c); }
+
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-deliver {
+        display: flex; align-items: center; gap: .6rem;
+        padding: .2rem .25rem;
+        border: 0 !important;
+        border-radius: var(--r-inner);
+        background: transparent !important;
+        box-shadow: none;
+    }
+    body[data-subdivision="home-market"] .hm-deliver > i:first-child {
+        display: grid; place-items: center; flex: none;
+        width: 2.1rem; height: 2.1rem; border-radius: 50%;
+        background: color-mix(in srgb, var(--accent, #ea580c) 12%, transparent);
+        color: var(--accent, #ea580c); font-size: .95rem;
+    }
+    body[data-subdivision="home-market"] .hm-deliver span { flex: 1 1 auto; min-width: 0; }
+    body[data-subdivision="home-market"] .hm-deliver small { color: var(--ink-soft, #8a7f78); font-size: .7rem; font-weight: 600; }
+    body[data-subdivision="home-market"] .hm-deliver strong { max-width: 100%; color: var(--ink, #2a1d16); font-size: .9rem; }
+    body[data-subdivision="home-market"] .hm-deliver .hm-deliver-caret { display: inline; flex: none; margin-left: auto; color: var(--ink-soft, #8a7f78); font-size: .75rem; }
+    body.dark-mode[data-subdivision="home-market"] .hm-deliver strong { color: var(--ink, #f3ede8); }
+}
+@media (min-width: 40.0625rem) and (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-bar .hm-logo { flex: 0 0 auto; margin-right: auto; }
+    body[data-subdivision="home-market"] .hm-logo span { overflow: visible; }
+    body[data-subdivision="home-market"] .hm-deliver { flex: 1 1 0; min-width: 0; }
+    body[data-subdivision="home-market"] .hm-deliver strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* signed-in badge needs no fixed width; between 600–640px labels are hidden, so keep buttons compact */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-account:not(.hm-account--guest) { min-width: 0; padding: 0 .15rem; border: 0; background: transparent; }
+}
+@media (min-width: 600px) and (max-width: 40rem) {
+    body[data-subdivision="home-market"] .hm-account,
+    body[data-subdivision="home-market"] .hm-cart { min-width: 3.75rem; }
+}
+
+/* v46: slimmer Login & Register / Cart buttons on desktop */
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-account--guest,
+    body[data-subdivision="home-market"] .hm-cart {
+        height: 2.4rem;
+        min-height: 0;
+        padding: 0 .75rem;
+        gap: .35rem;
+        font-size: .8rem;
+    }
+    body[data-subdivision="home-market"] .hm-account--guest > i,
+    body[data-subdivision="home-market"] .hm-cart > i { font-size: .95rem; }
+    body[data-subdivision="home-market"] .hm-account:not(.hm-account--guest) { height: 2.4rem; min-height: 0; }
+}
+
+/* v47: hero slider dots – small circles; the current one is solid and a bit larger */
+body[data-subdivision] .slider .dots { gap: .4rem; align-items: center; bottom: .8rem; }
+body[data-subdivision] .slider .dots li {
+    width: .4rem; height: .4rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .5);
+    transition: background-color .25s ease, transform .25s ease;
+}
+body[data-subdivision] .slider .dots li.active { width: .4rem; background: #fff; transform: scale(1.35); }
+@media (max-width: 599.98px) {
+    body[data-subdivision] .slider .dots { gap: .3rem; bottom: .55rem; }
+    body[data-subdivision] .slider .dots li { width: .32rem; height: .32rem; }
+    body[data-subdivision] .slider .dots li.active { width: .32rem; }
+}
+
+/* v48: footer band a little slimmer than the original 2em */
+body[data-subdivision="home-market"] .footer-top { height: 1.5rem; }
+@media (max-width: 599.98px) {
+    body[data-subdivision="home-market"] .footer-top { height: 1.1rem; }
+}
+
+/* v49: slimmer desktop search field, same height as the header buttons */
+@media (min-width: 900px) {
+    body[data-subdivision="home-market"] .hm-search > input {
+        height: 2.4rem;
+        padding: 0 2.9rem 0 .85rem;
+        font-size: .85rem;
+    }
+    body[data-subdivision="home-market"] .hm-search > i {
+        right: .25rem;
+        width: 1.9rem; height: 1.9rem;
+        font-size: .78rem;
+    }
+    body[data-subdivision="home-market"] .hm-deliver { height: 2.4rem; }
+    body[data-subdivision="home-market"] .hm-deliver > i:first-child { width: 1.9rem; height: 1.9rem; font-size: .85rem; }
+}
+
+/* v51: categories strip at 90% so the page shows faintly through it; the top bar stays solid */
+body[data-subdivision="home-market"] .hm-header { background: transparent; }
+body[data-subdivision="home-market"] .hm-bar { background: var(--surface, #fff); }
+body[data-subdivision="home-market"] .hm-categories { background: color-mix(in srgb, var(--surface, #fff) 90%, transparent); }
+
+/* v51: smooth compact header on phones/tablets – the location picker and the
+   category strip fold away instead of disappearing in one frame */
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-header .hm-bar { transition: padding .28s ease; }
+    body[data-subdivision="home-market"] .hm-header .hm-deliver,
+    body[data-subdivision="home-market"] .hm-header .hm-categories {
+        overflow: hidden;
+        transition: max-height .28s ease, max-width .28s ease, opacity .2s ease, margin .28s ease, padding .28s ease, visibility 0s linear 0s;
+    }
+    body[data-subdivision="home-market"] .hm-header .hm-deliver { max-height: 4rem; }
+    body[data-subdivision="home-market"] .hm-header .hm-categories { max-height: 5rem; }
+
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-deliver,
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-categories {
+        max-height: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: max-height .28s ease, max-width .28s ease, opacity .16s ease, margin .28s ease, padding .28s ease, visibility 0s linear .28s;
+    }
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-deliver { display: flex; min-height: 0; padding-top: 0; padding-bottom: 0; }
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-categories { display: block; }
+}
+/* phones: the picker has its own row – also remove the row gap above it */
+@media (max-width: 40rem) {
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-deliver { margin-top: -.6rem; }
+}
+/* tablets: the picker sits in the top row – slide it shut sideways */
+@media (min-width: 40.0625rem) and (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-header .hm-deliver { max-width: 30rem; }
+    body[data-subdivision="home-market"] .hm-header.is-compact .hm-deliver { max-width: 0; max-height: 4rem; flex: 0 0 0; padding: 0; margin-left: -.75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    body[data-subdivision="home-market"] .hm-header .hm-deliver,
+    body[data-subdivision="home-market"] .hm-header .hm-categories,
+    body[data-subdivision="home-market"] .hm-header .hm-bar { transition: none; }
+}
+
+/* =====================================================================
+   v59: product cards – price first, soft colours, Nunito, full-width photo
+   that zooms gently on hover. (Same block in homemarket-ui.css and
+   product-cards.css.)
+   ===================================================================== */
+body[data-subdivision] .item-container {
+    display: flex; flex-direction: column; gap: 0;
+    padding: 0; overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: none;
+    font-family: "Nunito", system-ui, sans-serif;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+body[data-subdivision] .item-container:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    box-shadow: 0 14px 28px -14px rgba(34, 20, 13, .28);
+}
+body[data-subdivision] .item-container .thumb {
+    position: relative; display: block;
+    width: 100%; height: auto; aspect-ratio: 1 / 1;
+    margin: 0; padding: 0;
+    border: 0; border-radius: 0;
+    background: transparent;
+    overflow: hidden;
+}
+body[data-subdivision] .item-container .thumb img {
+    display: block; width: 100%; height: 100%;
+    object-fit: cover; transform: none;
+    transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+body[data-subdivision] .item-container:hover .thumb img { transform: scale(1.07); }
+body[data-subdivision] .item-container .badge {
+    position: absolute; top: .55rem; left: .55rem; z-index: 1;
+    padding: .2rem .5rem; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, #fff); color: var(--accent-strong);
+    font-family: "Nunito", system-ui, sans-serif; font-size: .72rem; font-weight: 900;
+}
+body[data-subdivision] .item-container .item-body {
+    display: flex; flex-direction: column; flex: 1 1 auto; gap: .2rem;
+    padding: .7rem .8rem .8rem;
+}
+body[data-subdivision] .item-container .prices { display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .45rem; }
+body[data-subdivision] .item-container .prices .now { color: var(--ink); font-family: "Nunito", system-ui, sans-serif; font-size: 1.08rem; font-weight: 900; }
+body[data-subdivision] .item-container .prices .now.deal { color: var(--accent-strong); }
+body[data-subdivision] .item-container .prices s { order: 0; color: var(--ink-soft); font-size: .76rem; font-weight: 600; opacity: .8; }
+body[data-subdivision] .item-container .name {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 2.5em; color: var(--ink); font-family: "Nunito", system-ui, sans-serif;
+    font-size: .88rem; font-weight: 700; line-height: 1.25; text-decoration: none;
+}
+body[data-subdivision] .item-container .size { min-height: 0; color: var(--ink-soft); font-family: "Nunito", system-ui, sans-serif; font-size: .76rem; font-weight: 600; }
+body[data-subdivision] .item-container .add-to-cart-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+    width: 100%; height: 2.3rem; min-height: 0; margin-top: auto;
+    border: 0; border-radius: .7rem;
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--accent-strong);
+    font-family: "Nunito", system-ui, sans-serif; font-size: .85rem; font-weight: 800;
+    cursor: pointer; transition: background-color .2s ease, color .2s ease;
+}
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn { margin-top: .55rem; }
+body[data-subdivision] .item-container .add-to-cart-btn:hover,
+body[data-subdivision] .item-container:has(.badge) .add-to-cart-btn:hover { background: var(--accent); color: var(--on-accent); }
+@media (prefers-reduced-motion: reduce) {
+    body[data-subdivision] .item-container, body[data-subdivision] .item-container .thumb img { transition: none; }
+    body[data-subdivision] .item-container:hover, body[data-subdivision] .item-container:hover .thumb img { transform: none; }
+}
+
+/* =====================================================================
+   v59: smaller, softer product page in Nunito; Quick delivery only
+   ===================================================================== */
+body[data-subdivision="home-market"] .pdp,
+body[data-subdivision="home-market"] .pdp :is(h1, h2, h3, h4, h5, h6, h0, p, span, small, strong, em, dt, dd, button, input, label) { font-family: "Nunito", system-ui, sans-serif; }
+body[data-subdivision="home-market"] .pdp .single-product { max-width: 62rem; margin: 0 auto; gap: 1rem; }
+body[data-subdivision="home-market"] .pdp .product-row { grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+body[data-subdivision="home-market"] .pdp .product-col,
+body[data-subdivision="home-market"] .pdp .product-details,
+body[data-subdivision="home-market"] .pdp .select-delivery {
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    border-radius: 1rem; box-shadow: none; background: var(--surface);
+}
+body[data-subdivision="home-market"] .pdp .product-col { padding: .75rem; }
+body[data-subdivision="home-market"] .pdp .main-img { width: 100%; height: auto; max-height: 21rem; aspect-ratio: 1 / 1; border-radius: .8rem; overflow: hidden; }
+body[data-subdivision="home-market"] .pdp .main-img img { width: 100%; height: 100%; object-fit: contain; }
+body[data-subdivision="home-market"] .pdp .small-img-row { gap: .45rem; margin-top: .6rem; }
+body[data-subdivision="home-market"] .pdp .small-img-col { flex: none; width: 3.6rem; padding: .2rem; border-radius: .6rem; }
+body[data-subdivision="home-market"] .pdp .small-img-col img { aspect-ratio: 1 / 1; object-fit: contain; border-radius: .45rem; }
+body[data-subdivision="home-market"] .pdp .small-img-col span { font-size: .62rem !important; }
+
+body[data-subdivision="home-market"] .pdp .product-details { gap: .7rem; padding: 1.1rem 1.25rem; }
+body[data-subdivision="home-market"] .pdp .brand { font-size: .7rem; font-weight: 900; }
+body[data-subdivision="home-market"] .pdp .product-details .tittle { margin: 0; font-size: clamp(1.25rem, 2.4vw, 1.6rem); font-weight: 900; letter-spacing: -.01em; }
+body[data-subdivision="home-market"] .pdp .product-details h5 { font-size: .82rem; font-weight: 600; }
+body[data-subdivision="home-market"] .pdp .js-final-price { margin: 0; font-size: 1.55rem; font-weight: 900; }
+body[data-subdivision="home-market"] .pdp .discount { font-size: .85rem; }
+body[data-subdivision="home-market"] .pdp .js-discount-percentage { padding: .15rem .55rem; background: color-mix(in srgb, var(--accent) 14%, #fff); color: var(--accent-strong); font-size: .72rem; font-weight: 900; }
+
+body[data-subdivision="home-market"] .pdp .sold-by,
+body[data-subdivision="home-market"] .pdp .specs { border: 1px solid color-mix(in srgb, var(--line) 70%, transparent); background: transparent; border-radius: .85rem; }
+body[data-subdivision="home-market"] .pdp .sold-by { padding: .5rem .7rem; gap: .6rem; }
+body[data-subdivision="home-market"] .pdp .shop-chip-mark { width: 2rem; height: 2rem; background: var(--accent-tint); color: var(--accent-strong); font-weight: 900; }
+body[data-subdivision="home-market"] .pdp .sold-by strong { font-size: .88rem; font-weight: 800; }
+body[data-subdivision="home-market"] .pdp .specs > div { padding: .5rem 0; font-size: .82rem; border-bottom-color: color-mix(in srgb, var(--line) 60%, transparent); }
+
+body[data-subdivision="home-market"] .pdp .btns { gap: .5rem; padding-top: .25rem; }
+body[data-subdivision="home-market"] .pdp .btns .dec,
+body[data-subdivision="home-market"] .pdp .btns .inc {
+    display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0;
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-radius: .7rem;
+    background: var(--surface); color: var(--ink); font-size: .8rem; cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, opacity .2s ease;
+}
+body[data-subdivision="home-market"] .pdp .btns :is(.dec, .inc):hover:not([disabled]) { border-color: var(--accent); background: var(--accent-tint); color: var(--accent-strong); }
+body[data-subdivision="home-market"] .pdp .btns .dec[disabled] { opacity: .45; cursor: default; }
+body[data-subdivision="home-market"] .pdp .quantity-val { width: 2.2rem; font-size: 1rem; font-weight: 800; -moz-appearance: textfield; }
+body[data-subdivision="home-market"] .pdp .quantity-val::-webkit-inner-spin-button,
+body[data-subdivision="home-market"] .pdp .quantity-val::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+body[data-subdivision="home-market"] .pdp .btns .add-to-cart-btn { flex: 1; height: 2.75rem; min-height: 0; border-radius: .8rem; font-size: .95rem; font-weight: 900; }
+
+body[data-subdivision="home-market"] .pdp .actions { gap: 1rem; }
+body[data-subdivision="home-market"] .pdp .actions > :is(span, button) {
+    display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .2rem;
+    border: 0; background: none; color: var(--ink-soft); cursor: pointer; font: inherit;
+}
+body[data-subdivision="home-market"] .pdp .actions > :is(span, button):hover { color: var(--accent-strong); }
+body[data-subdivision="home-market"] .pdp .actions h5 { margin: 0; font-size: .85rem; font-weight: 700; }
+body[data-subdivision="home-market"] .pdp .sub-heading { font-size: 1rem; font-weight: 900; }
+body[data-subdivision="home-market"] .pdp .product-details p { font-size: .88rem; }
+
+body[data-subdivision="home-market"] .pdp .select-delivery { width: 100%; max-width: 62rem; margin: 0 auto; padding: 1rem 1.25rem; box-sizing: border-box; }
+body[data-subdivision="home-market"] .pdp .delivery-options { grid-template-columns: minmax(0, 22rem); margin-top: .6rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option { padding: .7rem .9rem; border-radius: .8rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option i { font-size: 1.15rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option h4 { font-size: .9rem; font-weight: 900; }
+
+@media (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .pdp .product-row { grid-template-columns: 1fr; }
+    body[data-subdivision="home-market"] .pdp .main-img { max-height: 18rem; margin: 0 auto; }
+}
+@media (max-width: 40rem) {
+    /* bottom bar on phones: light and soft instead of dark */
+    body[data-subdivision="home-market"] .pdp .btns {
+        padding: .45rem; border-radius: 1rem;
+        background: var(--surface); border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+        box-shadow: 0 10px 28px rgba(34, 20, 13, .18);
+    }
+    body[data-subdivision="home-market"] .pdp .btns .dec,
+    body[data-subdivision="home-market"] .pdp .btns .inc { width: 2.4rem; height: 2.4rem; background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, var(--line) 80%, transparent); }
+    body[data-subdivision="home-market"] .pdp .quantity-val { width: 1.9rem; color: var(--ink); }
+    body[data-subdivision="home-market"] .pdp .btns .add-to-cart-btn { height: 2.6rem; }
+    body[data-subdivision="home-market"] .pdp .main-img { max-height: 15rem; }
+    body[data-subdivision="home-market"] .pdp .product-details { padding: 1rem; }
+}
+body[data-subdivision="home-market"] .pdp .product-details > span { margin: 0; }
+body[data-subdivision="home-market"] .pdp .product-details > span h3,
+body[data-subdivision="home-market"] .pdp .product-details > span h4 { margin: 0; }
+body[data-subdivision="home-market"] .pdp .delivery-option { flex-direction: row; justify-content: flex-start; align-items: center; gap: .75rem; text-align: left; }
+body[data-subdivision="home-market"] .pdp .delivery-option > :is(h4, h5) { margin: 0; }
+body[data-subdivision="home-market"] .pdp .delivery-option { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: .75rem; row-gap: .1rem; }
+body[data-subdivision="home-market"] .pdp .delivery-option i { grid-row: 1 / span 2; align-self: center; }
+body[data-subdivision="home-market"] .pdp .delivery-option h4 { color: var(--ink); }
+
+/* =====================================================================
+   v60: cards without a border, greyish text, zoom on the photo only,
+   price with a small "KES" and the Add button beside it
+   ===================================================================== */
+body[data-subdivision] .item-container,
+body[data-subdivision] .item-container:hover {
+    border: 0;
+    box-shadow: none;
+    transform: none;
+    background: transparent;
+}
+body[data-subdivision] .item-container .thumb { border-radius: .9rem; background: var(--surface); }
+body[data-subdivision] .item-container:hover .thumb img { transform: none; }
+body[data-subdivision] .item-container .thumb:hover img { transform: scale(1.07); }
+body[data-subdivision] .item-container .item-body { gap: .15rem; padding: .6rem .15rem .2rem; }
+
+body[data-subdivision] .item-container .buy {
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: .5rem;
+    margin: 0 0 .15rem;
+}
+body[data-subdivision] .item-container .prices { flex: 1 1 auto; min-width: 0; gap: 0 .35rem; }
+body[data-subdivision] .item-container .prices .now { color: #4a5557; font-size: 1.05rem; font-weight: 900; white-space: nowrap; }
+body[data-subdivision] .item-container .prices .now small { font-size: .68em; font-weight: 800; letter-spacing: .02em; }
+body[data-subdivision] .item-container .prices .now.deal { color: var(--accent-strong); }
+body[data-subdivision] .item-container .prices s { color: var(--static-text, #889396); font-size: .72rem; }
+
+body[data-subdivision] .item-container .add-to-cart-btn,
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn {
+    flex: none; width: auto; height: 2rem; margin: 0; padding: 0 .75rem;
+    border-radius: 999px; font-size: .78rem; gap: .3rem;
+}
+body[data-subdivision] .item-container .add-to-cart-btn i { font-size: .7rem; }
+
+body[data-subdivision] .item-container .name { min-height: 2.5em; color: #5f6b6e; font-size: .86rem; font-weight: 700; }
+body[data-subdivision] .item-container .name:hover { color: var(--ink); }
+body[data-subdivision] .item-container .size { color: var(--static-text, #889396); font-size: .74rem; font-weight: 600; }
+
+/* row headings in Nunito too */
+body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { font-family: "Nunito", system-ui, sans-serif; font-weight: 900; letter-spacing: -.01em; }
+
+body.dark-mode[data-subdivision] .item-container .prices .now { color: #d5dcdd; }
+body.dark-mode[data-subdivision] .item-container .name { color: #b3bec0; }
+body.dark-mode[data-subdivision] .item-container .thumb { background: #1d1d1d; }
+
+/* v60: product page without panel borders; thumbnails keep one thin border */
+body[data-subdivision="home-market"] .pdp .product-col,
+body[data-subdivision="home-market"] .pdp .product-details,
+body[data-subdivision="home-market"] .pdp .select-delivery { border: 0; }
+body[data-subdivision="home-market"] .pdp .small-img-col,
+body[data-subdivision="home-market"] .pdp .small-img-col.active-thumbnail {
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    outline: 0; box-shadow: none;
+}
+body[data-subdivision="home-market"] .pdp .small-img-col.active-thumbnail { border-color: var(--accent); }
+body[data-subdivision="home-market"] .pdp .small-img-col img { border: 0; outline: 0; }
+/* the old homemrkt.css adds a second ring with !important – keep a single border */
+body[data-subdivision="home-market"] .pdp .product-col .small-img-col,
+body[data-subdivision="home-market"] .pdp .product-col .small-img-col:hover { outline: 0 !important; margin: 0; }
+body[data-subdivision="home-market"] .pdp .product-col .small-img-col.active-thumbnail { border: 1px solid var(--accent) !important; }
+body[data-subdivision="home-market"] .pdp .product-col .small-img-col:not(.active-thumbnail):hover { border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)) !important; }
+
+/* old price sits under the price so the Add button never gets crowded */
+body[data-subdivision] .item-container .prices { flex-direction: column; align-items: flex-start; gap: 0; line-height: 1.15; }
+body[data-subdivision] .item-container .prices s { font-size: .7rem; }
+
+/* v61: smaller card text and a slimmer Add button */
+body[data-subdivision] .item-container .prices .now { font-size: .92rem; }
+body[data-subdivision] .item-container .prices .now small { font-size: .7em; }
+body[data-subdivision] .item-container .prices s { font-size: .66rem; }
+body[data-subdivision] .item-container .add-to-cart-btn,
+body[data-subdivision] .item-container .item-body .size + .add-to-cart-btn { height: 1.75rem; padding: 0 .6rem; font-size: .72rem; gap: .25rem; }
+body[data-subdivision] .item-container .add-to-cart-btn i { font-size: .62rem; }
+body[data-subdivision] .item-container .name { min-height: 2.4em; font-size: .78rem; line-height: 1.2; }
+body[data-subdivision] .item-container .size { font-size: .68rem; }
+body[data-subdivision] .item-container .item-body { gap: .1rem; padding-top: .5rem; }
+
+/* v61: product page – Nunito for every heading, whole photo visible, footer clear of the phone bar */
+body[data-subdivision="home-market"] .pdp { --font-display: "Nunito", system-ui, sans-serif; --font-body: "Nunito", system-ui, sans-serif; }
+body[data-subdivision="home-market"] .pdp :is(.sub-heading, .tittle, .js-final-price, .brand, .delivery-option h4, .delivery-option h5, .specs dt, .specs dd, .sold-by strong, .sold-by small) { font-family: "Nunito", system-ui, sans-serif; }
+
+body[data-subdivision="home-market"] .pdp .main-img {
+    display: flex; align-items: center; justify-content: center;
+    height: 20rem; max-height: none; aspect-ratio: auto; padding: .5rem; box-sizing: border-box;
+}
+body[data-subdivision="home-market"] .pdp .product-col .main-img img {
+    display: block; width: auto; height: auto; max-width: 100%; max-height: 100%;
+    margin: auto; object-fit: contain;
+}
+@media (max-width: 899.98px) { body[data-subdivision="home-market"] .pdp .main-img { height: 17rem; } }
+@media (max-width: 40rem) {
+    body[data-subdivision="home-market"] .pdp .main-img { height: 14rem; }
+}
+
+/* footer text: less padding */
+body[data-subdivision="home-market"] .footer-bottom { padding: .6rem var(--gutter, 1rem); }
+body[data-subdivision="home-market"] .footer-bottom h3 { margin: 0; font-size: .76rem; line-height: 1.4; }
+
+/* v62: phone Add-to-cart bar floats only while the product details are on screen, then
+   settles in place – so it never sits over the footer. Footer has no margins. */
+@media (max-width: 40rem) {
+    body[data-subdivision="home-market"] .pdp .btns {
+        position: sticky; left: auto; right: auto;
+        bottom: calc(.6rem + env(safe-area-inset-bottom));
+        z-index: 20; margin: .25rem 0;
+    }
+    body[data-subdivision="home-market"] .pdp { padding-bottom: 0; }
+    body[data-subdivision="home-market"] .pdp ~ footer { padding-bottom: 0; }
+}
+body[data-subdivision="home-market"] > footer,
+body[data-subdivision="home-market"] .pdp ~ footer { margin: 0; }
+
+/* v63: white card (bg-white), name at the very bottom, snug spacing; swipe-friendly rows on phones */
+body[data-subdivision] .item-container,
+body[data-subdivision] .item-container:hover {
+    padding: .45rem;
+    border-radius: 1rem;
+    background: var(--bg-white, #fff);
+}
+body[data-subdivision] .item-container .thumb { border-radius: .75rem; background: var(--bg-white, #fff); }
+body[data-subdivision] .item-container .item-body { gap: .1rem; padding: .5rem .2rem .15rem; }
+body[data-subdivision] .item-container .size { order: 0; }
+body[data-subdivision] .item-container .name { min-height: 0; margin-top: .1rem; }
+body.dark-mode[data-subdivision] .item-container,
+body.dark-mode[data-subdivision] .item-container .thumb { background: var(--surface, #1a1a1a); }
+
+@media (max-width: 599.98px) {
+    body[data-subdivision] .cards-slider .column-cards { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+    body[data-subdivision] .cards-slider .card-data { scroll-snap-align: start; }
+    body[data-subdivision] .item-container { padding: .35rem; border-radius: .85rem; }
+    body[data-subdivision] .item-container .thumb { border-radius: .65rem; }
+    body[data-subdivision] .item-container .item-body { padding: .45rem .15rem .1rem; }
+    body[data-subdivision] .item-container .buy { gap: .3rem; }
+    body[data-subdivision] .item-container .prices .now { font-size: .86rem; }
+    body[data-subdivision] .item-container .add-to-cart-btn { height: 1.65rem; padding: 0 .5rem; font-size: .7rem; }
+}
+
+@media (max-width: 599.98px) {
+    /* no-JS fallback: two cards per row on phones */
+    body[data-subdivision] .cards-slider .card-data { flex: 0 0 calc((100% - 8px) / 2); }
+}
+
+/* v65: tablets (641–899px) – "Deliver to" gets its own full row under the brand, like phones,
+   instead of being squeezed between the logo and the Login / Cart buttons */
+@media (min-width: 40.0625rem) and (max-width: 899.98px) {
+    body[data-subdivision="home-market"] .hm-bar { flex-wrap: wrap; }
+    body[data-subdivision="home-market"] .hm-bar .hm-logo { flex: 1 1 0; min-width: 0; margin-right: 0; }
+    body[data-subdivision="home-market"] .hm-bar .hm-deliver { order: 4; flex: 1 1 100%; width: 100%; max-width: none; }
+    body[data-subdivision="home-market"] .hm-bar .hm-search { order: 5; flex: 1 1 100%; }
+    body[data-subdivision="home-market"] .hm-deliver strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* v65: "Deliver to" – grey pin, one line of text that never gets crushed */
+body[data-subdivision] .hm-header .hm-deliver > i:first-child {
+    background: #eef0f2 !important;
+    color: #6b7280 !important;
+}
+body.dark-mode[data-subdivision] .hm-header .hm-deliver > i:first-child { background: #2a2a2a !important; color: #a3a3a3 !important; }
+body[data-subdivision] .hm-header .hm-deliver:hover { background: rgba(107, 114, 128, .08) !important; }
+body[data-subdivision] .hm-header .hm-deliver span { min-width: 0; }
+body[data-subdivision] .hm-header .hm-deliver :is(small, strong) {
+    display: block; max-width: 100%;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+/* desktop: a long address must not push the search and buttons around */
+@media (min-width: 900px) {
+    body[data-subdivision] .hm-header .hm-deliver { flex: 0 1 auto; min-width: 9rem; max-width: 16rem; }
+    body[data-subdivision] .hm-header .hm-bar > .hm-logo { flex-shrink: 0; }
+}
+
+/* v66: phone Add-to-cart bar. cart.js moves it to the end of <main class="pdp"> on phones,
+   so it sticks to the bottom of the screen across the whole page and stops right above
+   the footer (no space under the footer). The "View cart" pill is hidden on this page. */
+@media (max-width: 40rem) {
+    body[data-subdivision="home-market"] main.pdp { padding-bottom: .6rem; margin-bottom: 0; }
+    body[data-subdivision="home-market"] .pdp .btns.btns--page {
+        position: sticky; z-index: 60;
+        bottom: calc(.6rem + env(safe-area-inset-bottom));
+        margin: .75rem var(--gutter, 1rem) 0;
+    }
+    body[data-subdivision="home-market"]:has(.pdp .btns) .hm-floatbar { display: none !important; }
+}
+/* the basket icon takes the button's text colour */
+body[data-subdivision] .pdp .btns .add-to-cart-btn i { color: currentColor !important; }
+
+/* v67: related rows under the product (same generic name, same brand) */
+body[data-subdivision="home-market"] .pdp-related { display: grid; gap: 1.25rem; margin-top: 1.25rem; }
+body[data-subdivision="home-market"] .pdp-related .cards-slider { margin: 0; }
+body[data-subdivision="home-market"] .pdp-related .sub-heading { font-family: "Nunito", system-ui, sans-serif; font-size: 1.05rem; font-weight: 800; }
+
+/* v75: slider titles smaller and grey; compact arrow buttons */
+body[data-subdivision] .cards-slider .head { margin-bottom: .6rem; }
+body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading),
+body[data-subdivision="home-market"] .pdp-related .sub-heading,
+.fl-page .cart-picks .cards-slider .head .sub-heading {
+    color: #6b7280; font-size: 1.05rem; font-weight: 800; letter-spacing: 0;
+}
+body.dark-mode[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { color: #a3a3a3; }
+body[data-subdivision] .cards-slider .head span { gap: .35rem; }
+body[data-subdivision] .cards-slider .head i,
+body[data-subdivision="home-market"] .cards-slider .head i {
+    width: 1.75rem; height: 1.75rem; padding: 0;
+    border-radius: .5rem; font-size: .75rem;
+}
+@media (max-width: 40rem) {
+    body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { font-size: .98rem; }
+    body[data-subdivision] .cards-slider .head i,
+    body[data-subdivision="home-market"] .cards-slider .head i { width: 1.6rem; height: 1.6rem; }
+}
+
+/* v77: header Cart button without a background (icon, label and count in the shop colour) */
+body[data-subdivision="home-market"] .hm-header .hm-cart,
+body[data-subdivision="home-market"] .hm-header .hm-cart:hover {
+    background: transparent !important;
+    color: var(--accent, #ea580c) !important;
+}
+body[data-subdivision="home-market"] .hm-header .hm-cart .cart-count { background: var(--accent, #ea580c); color: #fff; }
+
+/* v78: slider dots – small white dots; the current one is a short white pill */
+body[data-subdivision] .slider .dots { gap: .45rem; align-items: center; bottom: .8rem; }
+body[data-subdivision] .slider .dots li {
+    width: .5rem; height: .5rem; border-radius: 999px;
+    background: #fff; opacity: 1; transform: none;
+    box-shadow: 0 0 2px rgba(0, 0, 0, .25);
+    transition: width .3s ease;
+}
+body[data-subdivision] .slider .dots li.active { width: 1.5rem; height: .5rem; background: #fff; transform: none; }
+@media (max-width: 40rem) {
+    body[data-subdivision] .slider .dots { gap: .35rem; bottom: .55rem; }
+    body[data-subdivision] .slider .dots li { width: .4rem; height: .4rem; }
+    body[data-subdivision] .slider .dots li.active { width: 1.15rem; height: .4rem; }
+}

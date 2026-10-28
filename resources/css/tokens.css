@@ -1,0 +1,139 @@
+/*
+|--------------------------------------------------------------------------
+| Shared design tokens
+|--------------------------------------------------------------------------
+|
+| One set of neutrals, radii and spacing for every subdivision. A subdivision
+| only chooses its accent: put data-subdivision="home-market" on <body> and
+| the matching block below recolours the whole page.
+|
+| Load this file AFTER reused.css / modal.css so it wins over their :root
+| defaults. The legacy variable names (--primary, --hold, --theme-clr ...)
+| are mapped to the accent so existing rules recolour without being edited.
+|
+| To wire another subdivision: copy the home-market block, change the five
+| --accent* values, set data-subdivision on its layout's <body>.
+*/
+
+body[data-subdivision] {
+    /* neutral greys for the green Smart Market pages; HomeMarket sets its warm ones below */
+    --ink: #17201b;
+    --ink-soft: #5b6b62;
+    --line: #dce5df;
+    --line-strong: #16a34a;     /* accent edge used on cards, inputs and pills (HomeMarket sets orange) */
+    --bw: 1px;
+    --surface: #ffffff;
+    --surface-tint: #f4faf6;
+    --light-background: #f5f5f5;
+    --success: #1b5e3a;
+    --inverse-bg: #22140d;      /* dark chips on a light page (top strip, discount badge) */
+    --on-inverse: #ffffff;
+
+    --radius-s: .75em;
+    --radius-m: 1.375em;
+    --radius-l: 1.75em;
+    --radius-pill: .75rem;       /* "pill" buttons are now squared-off rectangles */
+    --r-card: 1rem;
+    --r-inner: .6rem;
+    --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
+    --font-body: "DM Sans", system-ui, sans-serif;
+
+    --shadow-card: 0 1px 2px rgba(34, 20, 13, .06), 0 8px 22px rgba(34, 20, 13, .07);
+
+    /* Default accent: Smart Market green. Used by the main site and by any
+       subdivision without its own block below (e.g. the shared cart opened
+       from Liquor Hub). Only HomeMarket is orange. */
+    --accent: #16a34a;
+    --accent-strong: #15803d;   /* text on white */
+    --accent-tint: #e8f7ee;
+    --accent-line: #b9e6c9;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #86efac;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+
+    background: var(--surface-tint);
+    color: var(--ink);
+}
+
+body[data-subdivision].dark-mode {
+    --ink: #f3ece8;
+    --ink-soft: #b5a8a1;
+    --line: #333333;
+    --line-strong: #4ade80;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent: #22c55e;
+    --accent-tint: #0f2a1a;
+    --accent-strong: #4ade80;
+    --accent-line: #1f4d33;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+}
+
+body[data-subdivision="home-market"] {
+    /* warm neutrals that go with the orange */
+    --ink: #22140d;
+    --ink-soft: #6b5648;
+    --line: #ebd3bc;
+    --surface-tint: #fff6ea;
+    --shadow-card: 0 1px 2px rgba(34, 20, 13, .06), 0 8px 22px rgba(34, 20, 13, .07);
+
+    /* Deep orange: leans orange, not red. */
+    --line-strong: #e8590c;
+    --accent: #e8590c;
+    --accent-strong: #b84508;   /* text and prices on white (5.4:1) */
+    --accent-tint: #ffe3cc;
+    --accent-line: #ffc9a3;
+    --on-accent: #ffffff;
+
+    /* Legacy names used by homemrkt.css, reused.css and modal.css */
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #ffb27a;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+/* Dark mode keeps the original dark surfaces; only the accent stays. */
+body[data-subdivision="home-market"].dark-mode {
+    /* keep the subdivision colour in dark mode (the shared dark block above would turn it green) */
+    --accent: #f06a1d;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+
+    --ink: #f3ece8;
+    --ink-soft: #b5a8a1;
+    --line: #333333;
+    --line-strong: #ff8a4c;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #342e23;
+    --accent-strong: #ff8a4c;
+    --accent-line: #5a3a24;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+
+    --bg-color: #000000;
+    --light-card-bg: #342e23;
+    --theme-clr: #4a2403;
+    --theme-bgclr: #705231;
+    --before-color: #333333;
+    --before-color1: #232323;
+}

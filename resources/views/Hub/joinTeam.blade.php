@@ -6,7 +6,9 @@
 
         <div class="left">
 
-            <form method="POST" action="{{ route('hub.marketer.store') }}">
+            @include('partials.Hub.back', ['fallback' => route('hub.account.marketer.index')])
+
+            <form method="POST" action="{{ route('hub.marketer.store') }}" data-notify-loading="Submitting…">
                 @csrf
 
                 <div class="account-details">

@@ -136,11 +136,11 @@
                 {{-- Actions --}}
                 <div class="actions">
                     <span>
-                        <i class="ri-heart-add-line"></i>
+                        <i class="fa-regular fa-heart"></i>
                         <h5>Add to wishlist</h5>
                     </span>
                     <span>
-                        <i class="ri-share-fill"></i>
+                        <i class="fa-solid fa-share-nodes"></i>
                         <h5>Share</h5>
                     </span>
                 </div>
@@ -157,7 +157,7 @@
             <h4 class="sub-heading">Delivery Option</h4>
             <div class="delivery-options">
                 <div class="delivery-option active">
-                    <i class="ri-e-bike-2-line"></i>
+                    <i class="fa-solid fa-motorcycle"></i>
                     <h4>10 - 60 Mins</h4>
                     <h5>Quick</h5>
                 </div>
