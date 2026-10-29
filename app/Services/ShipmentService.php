@@ -19,15 +19,15 @@ class ShipmentService
 
         $shipmentInfo = [
             'quick' => [
-                'icon' => 'fa-solid fa-motorcycle',
+                'icon' => 'ri-e-bike-2-line',
                 'label' => 'Quick in 10 - 50 Mins',
             ],
             'standard' => [
-                'icon' => 'fa-solid fa-truck',
+                'icon' => 'ri-truck-line',
                 'label' => 'Standard delivery',
             ],
             'specific_shop' => [
-                'icon' => 'fa-solid fa-motorcycle',
+                'icon' => 'ri-riding-line',
                 'label' => 'Order to specific shop',
             ],
         ];
@@ -45,65 +45,12 @@ class ShipmentService
 
         /*
         |--------------------------------------------------------------------------
-        | Group Items By Shipment Type
+        | Group Items By Seller (business_account)
         |--------------------------------------------------------------------------
+        | Items from the same seller belong to the same shipment.
         */
 
-        $groupedByType = $cartItems->groupBy('shipment_type_id');
-
-        $shipments = [];
-
-        foreach ($groupedByType as $typeId => $items) {
-            $typeRule = $shipmentTypes->get($typeId);
-
-            $typeName = strtolower($typeRule->name ?? 'standard');
-
-            $minAmount = $typeRule->min_amount ?? 0;
-
-            $timeRange = [
-                'from' => $typeRule->time1 ?? null,
-                'to' => $typeRule->time2 ?? null,
-            ];
-
-            $groupItems = collect();
-            $singleItems = collect();
-
-            foreach ($items as $item) {
-                $consignment = strtolower(
-                    $item->subdivision?->shipment?->consignment ?? 'group'
-                );
-
-                if ($consignment === 'single') {
-                    $singleItems->push($item);
-                } else {
-                    $groupItems->push($item);
-                }
-            }
-
-            if ($groupItems->isNotEmpty()) {
-                $shipments["group_{$typeId}"] = [
-                    'shipment_type_id' => $typeId,
-                    'shipment_type' => $typeName,
-                    'mode' => 'group',
-                    'subdivision' => null,
-                    'min_amount' => $minAmount,
-                    'time_range' => $timeRange,
-                    'items' => $groupItems,
-                ];
-            }
-
-            foreach ($singleItems as $item) {
-                $shipments["single_{$typeId}_{$item->id}"] = [
-                    'shipment_type_id' => $typeId,
-                    'shipment_type' => $typeName,
-                    'mode' => 'single',
-                    'subdivision' => $item->subdivision,
-                    'min_amount' => $minAmount,
-                    'time_range' => $timeRange,
-                    'items' => collect([$item]),
-                ];
-            }
-        }
+        $groupedBySeller = $cartItems->groupBy('business_account');
 
         /*
         |--------------------------------------------------------------------------
@@ -114,57 +61,97 @@ class ShipmentService
         $formattedShipments = [];
         $shipmentNumber = 1;
 
-        foreach ($shipments as $shipment) {
-            $items = $shipment['items'];
+        foreach ($groupedBySeller as $businessAccount => $items) {
 
             $subtotal = $items->sum(function ($item) {
                 return ($item->price ?? 0) * ($item->quantity ?? 0);
             });
 
-            $typeName = $shipment['shipment_type'];
+            /*
+            |--------------------------------------------------------------------------
+            | Resolve Shipment Type From First Item
+            |--------------------------------------------------------------------------
+            */
+
+            $firstItem = $items->first();
+
+            $typeId = $firstItem->shipment_type_id;
+            $typeRule = $shipmentTypes->get($typeId);
+            $typeName = strtolower($typeRule->name ?? 'standard');
+
+            $minAmount = $typeRule->min_amount ?? 0;
+
+            $timeRange = [
+                'from' => $typeRule->time1 ?? null,
+                'to' => $typeRule->time2 ?? null,
+            ];
+
+            /*
+            |--------------------------------------------------------------------------
+            | Resolve Business Details For Each Item
+            |--------------------------------------------------------------------------
+            */
+
+            $storeName = null;
 
             foreach ($items as $item) {
                 $subdivisionId = $item->sub_division_id;
 
                 $dbConn = $connections[$subdivisionId] ?? null;
 
-                if (!isset($businessCache[$subdivisionId])) {
-                    $businessCache[$subdivisionId] = null;
+                $cacheKey = $subdivisionId . '_' . $item->business_account;
+
+                if (!isset($businessCache[$cacheKey])) {
+                    $businessCache[$cacheKey] = null;
 
                     if ($dbConn) {
-                        $businessCache[$subdivisionId] = DB::connection($dbConn)
+                        $businessCache[$cacheKey] = DB::connection($dbConn)
                             ->table('business')
-                            ->where('subdivision_id', $subdivisionId)
+                            ->where('account', $item->business_account)
                             ->select('name', 'latitude', 'longitude')
                             ->first();
                     }
                 }
 
-                $business = $businessCache[$subdivisionId];
+                $business = $businessCache[$cacheKey];
 
                 $item->explicit_db_connection = $dbConn;
                 $item->explicit_biz_name = $business?->name;
                 $item->explicit_latitude = $business?->latitude;
                 $item->explicit_longitude = $business?->longitude;
+
+                if (!$storeName && $business?->name) {
+                    $storeName = $business->name;
+                }
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Use Business Name As Shipment Title
+            |--------------------------------------------------------------------------
+            */
+
+            $title = $storeName ?? $businessAccount ?? 'Shipment ' . $shipmentNumber;
 
             $formattedShipments[] = [
                 'number' => $shipmentNumber,
-                'title' => 'Shipment ' . $shipmentNumber,
+                'title' => $title,
+
+                'business_account' => $businessAccount,
 
                 'shipment_type' => $typeName,
-                'shipment_type_id' => $shipment['shipment_type_id'],
+                'shipment_type_id' => $typeId,
 
                 'info' => $shipmentInfo[$typeName] ?? [
-                    'icon' => 'fa-solid fa-box',
+                    'icon' => 'ri-package-line',
                     'label' => ucfirst($typeName),
                 ],
 
-                'mode' => $shipment['mode'],
-                'subdivision' => $shipment['subdivision'],
+                'subdivision' => $firstItem->subdivision,
+                'subdivision_id' => $firstItem->sub_division_id,
 
-                'min_amount' => $shipment['min_amount'],
-                'time_range' => $shipment['time_range'],
+                'min_amount' => $minAmount,
+                'time_range' => $timeRange,
 
                 'items' => $items,
 

@@ -89,18 +89,41 @@ class CheckoutController extends Controller
         $itemCount = $cartItems->sum('quantity');
 
         //------------------------------------------------------------------
+        // Determine subdivision layout
+        //------------------------------------------------------------------
+
+        $layout = 'layouts.app'; // default green theme
+
+        if ($cartItems->isNotEmpty()) {
+            $dbConnection = $cartItems->first()->subdivision?->db_connection;
+
+            if ($dbConnection === 'homemarket') {
+                $layout = 'HomeMarket.layouts.app';
+            }
+        }
+
+        //------------------------------------------------------------------
+        // Shipment title from session data
+        //------------------------------------------------------------------
+
+        $shipmentTitle = $checkout['shipment'][0]['title'] ?? 'Shipment';
+        $businessName  = $checkout['shipment'][0]['business_account'] ?? null;
+
+        //------------------------------------------------------------------
         // View
         //------------------------------------------------------------------
 
         return view('Cart.checkout', [
             'cartItems'     => $cartItems,
-            'shipmentTitle' => 'Shipment',
+            'shipmentTitle' => $shipmentTitle,
+            'businessName'  => $businessName,
             'itemCount'     => $itemCount,
             'subtotal'      => $subtotal,
             'discount'      => $discount,
             'delivery'      => $delivery,
             'total'         => $total,
             'expired'       => false,
+            'layout'        => $layout,
         ]);
     }
 
