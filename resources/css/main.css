@@ -711,6 +711,7 @@ hr{
 
 .slider .list{
     display: flex;
+    position: relative;
     transition: transform 0.5s ease;
 }
 
@@ -759,9 +760,10 @@ hr{
 .slider .dots{
     position: absolute;
     bottom: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     display: flex;
+    justify-content: center;
     gap: 0.375rem;
 }
 
@@ -1017,6 +1019,133 @@ body.dark-mode .settings .setting .toggle i.dark{ display: none; }
 body.dark-mode .settings .setting .toggle i.light{ display: grid; }
 body .settings .setting .toggle i.dark{ display: grid; }
 
+
+/* ===========================
+     Context Banner (shop-lock / location)
+=========================== */
+.context-banner{
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .7rem .75rem .7rem .8rem;
+    border: 0;
+    border-radius: 1.1rem;
+    background: var(--bg-white);
+    box-shadow: 0 1px 2px rgba(22, 42, 30, .05), 0 6px 18px -14px rgba(22, 42, 30, .2);
+    margin-bottom: 1rem;
+}
+
+.context-banner > i{
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.context-banner p{
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: .84rem;
+    line-height: 1.45;
+    flex: 1;
+}
+
+.context-banner p strong{
+    display: block;
+    color: var(--text-color);
+    font-size: .92rem;
+    font-weight: 700;
+}
+
+.context-banner button,
+.context-banner a{
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    flex: none;
+    height: 2.35rem;
+    padding: 0 .9rem;
+    border: 0;
+    border-radius: .5rem;
+    background: var(--primary);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .2s ease;
+    font-family: 'Nunito', sans-serif;
+}
+
+.context-banner button:hover,
+.context-banner a:hover{
+    background: var(--primary-dark, #15803d);
+}
+
+.context-banner button i,
+.context-banner a i{
+    font-size: .9rem;
+}
+
+/* Cart-locked variant: accent fill background */
+.context-banner--shop{
+    background: var(--primary);
+}
+
+.context-banner--shop > i{
+    background: rgba(255, 255, 255, .2);
+    color: #fff;
+}
+
+.context-banner--shop p,
+.context-banner--shop p strong{
+    color: #fff;
+}
+
+.context-banner--shop a,
+.context-banner--shop a:hover{
+    background: #fff;
+    color: var(--primary-dark, #15803d);
+}
+
+/* Dark mode */
+body.dark-mode .context-banner{
+    background: var(--bg-white);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+
+body.dark-mode .context-banner--shop{
+    background: var(--primary);
+}
+
+/* Mobile */
+@media (max-width: 599.98px){
+    .context-banner{
+        flex-wrap: wrap;
+        padding: .75rem;
+        gap: .6rem .7rem;
+    }
+    .context-banner p{
+        flex: 1 1 0;
+        min-width: 0;
+        font-size: .8rem;
+    }
+    .context-banner p strong{
+        font-size: .88rem;
+    }
+    .context-banner button,
+    .context-banner a{
+        flex: 1 1 100%;
+        justify-content: center;
+        height: 2.5rem;
+    }
+}
 
 /* ===========================
         Cart

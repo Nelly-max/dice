@@ -15,7 +15,7 @@ class MpesaTransactionOrder extends Model
      *
      * @var string|null
      */
-    protected $connection = 'customer';
+    protected $connection = 'finance';   // moved from the customer database (finance.mpesa_transactions_orders)
 
     /**
      * The table associated with the model.

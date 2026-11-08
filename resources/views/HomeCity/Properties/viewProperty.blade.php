@@ -1,268 +1,250 @@
 @extends('HomeCity.layouts.app')
 
+@section('title', $property->title ?? 'Listing')
+@section('body_class', 'hc-has-mbar')
+
 @section('content')
-<div class="property-view">
+<main class="wrapper hc-page">
+{{--
+    One listing (PropertyController@viewListing).
+    Hooks kept for reused.js: #imageSlider (photos) + #photoCounter, .tab_btn / .tab / .line (tabs).
+--}}
+@php
+    $hero = $property->display_image;
+    $photos = collect([['url' => $hero, 'label' => null]])
+        ->filter(fn ($p) => !empty($p['url']))
+        ->concat(collect($property->gallery_list ?? [])->reject(fn ($img) => ($img['url'] ?? null) === $hero))
+        ->values();
 
-    <!-- LEFT SIDE -->
-    <section class="view-left">
+    $priceFrom = (float) ($property->min_price ?? 0);
+    $priceTo = (float) ($property->max_price ?? 0);
+    $priceText = $priceFrom > 0
+        ? 'KES ' . number_format($priceFrom) . ($priceTo > $priceFrom ? ' – ' . number_format($priceTo) : '')
+        : 'Price on request';
+    $suffix = trim($property->price_suffix ?? '');
 
-        <div class="image-grid-holder">
-
-            @php
-                $hero = $property->display_image;
-            @endphp
-
-            <div class="image-grid">
-                <section class="photo-grid" id="imageSlider">
-
-                    {{-- HERO --}}
-                    @if(!empty($hero))
-                        <a class="photo-grid-col-2 photo-grid-row-2" href="#">
-                            <img src="{{ $hero }}" alt="property image">
-                        </a>
-                    @endif
-
-                    {{-- GALLERY --}}
-                    @foreach($property->gallery_list as $image)
-
-                        @if($image['url'] !== $hero)
-
-                            <a class="photo-item" href="#">
-                                <img src="{{ $image['url'] }}" alt="property image">
-
-                                {{-- LABEL --}}
-                                @if(!empty($image['label']))
-                                    <span class="image-label">
-                                        {{ ucfirst($image['label']) }}
-                                    </span>
-                                @endif
-
-                            </a>
-
-                        @endif
-
-                    @endforeach
-
-                </section>
-            </div>
-
-            <div class="bottom-items">
-                <div class="bottom-pill">
-                    <div class="pill-left">
-                        <h5 id="photoCounter">
-                            1/{{ max(1, count($property->gallery_list ?? []) + 1) }}
-                        </h5>
-                    </div>
-
-                    <a href="#" class="pill-right">
-                        <i class="fa-regular fa-images"></i>
-                        <h5>view all</h5>
-                    </a>
-                </div>
-
-                <div class="action-btns">
-                    <div class="action-btn">
-                        <i class="fa-regular fa-bookmark"></i>
-                        <h5>Save</h5>
-                    </div>
-
-                    <div class="action-btn">
-                        <i class="fa-solid fa-share-nodes"></i>
-                        <h5>Share</h5>
-                    </div>
-                </div>
-            </div>
-
-            <div class="image-grid-details">
-                <span>{{ $property->type_label ?? 'For Rent' }}</span>
-                <span>Viewing fee</span>
-                <h5 class="extra">furnished</h5>
-            </div>
-
-        </div>
-
-        <!-- PROPERTY INFO -->
-        <div class="info-area">
-            <div class="property-info">
-
-                <h2 class="title">{{ $property->title }}</h2>
-
-                <!-- PRICE -->
-                <span>
-                    <h4>
-                        Ksh {{ number_format($property->min_price) }}
-
-                        @if($property->min_price != $property->max_price && $property->max_price > 0)
-                            - {{ number_format($property->max_price) }}
-                        @endif
-
-                        @if(!empty($property->price_suffix))
-                            <small>
-                                {{ $property->price_suffix }}
-                            </small>
-                        @endif
-                    </h4>
-                </span>
-
-                <!-- TABS -->
-                <div class="tab_btns">
-                    <button class="tab_btn active">Details</button>
-                    <button class="tab_btn">Amenities</button>
-                    <button class="tab_btn">Units</button>
-                    <button class="tab_btn">Charges</button>
-                    <div class="line"></div>
-                </div>
-
-                <div class="tab_box">
-
-                    <!-- DETAILS TAB -->
-                    <div class="tab active">
-
-                        <h3>Overview</h3>
-
-                        <div class="property-detail">
-                            <div class="property-det">
-
-                                @foreach($property->houseUnits as $unit)
-                                    <span>
-                                        <i class="fa-solid fa-house"></i>
-                                        <h4>{{ $unit->type->name ?? 'Unit' }}</h4>
-                                    </span>
-                                @endforeach
-
-                                {{-- Check for Shops --}}
-                                @if($property->shopUnits->isNotEmpty())
-                                    <span>
-                                        <i class="fa-solid fa-store"></i>
-                                        <h4>Shops</h4>
-                                    </span>
-                                @endif
-
-                                {{-- Check for Offices --}}
-                                @if($property->officeUnits->isNotEmpty())
-                                    <span>
-                                        <i class="fa-regular fa-building"></i>
-                                        <h4>Offices</h4>
-                                    </span>
-                                @endif
+    $lister = $listing->lister ?? null;
+    $phone = trim((string) ($lister->phone ?? ''));
+    $intl = $phone !== '' ? preg_replace('/^0/', '254', preg_replace('/\D/', '', $phone)) : null;
 
 
-                            </div>
-                        </div>
+    // one card per unit type ("2 Bedroom · 3 of 8 vacant"), PropertyController::unitGroups
+    $groups = collect($property->unit_groups ?? []);
+    $unitsTotal = $groups->sum('total');
+    $vacant = $groups->sum('vacant');
 
-                        <p>{{ $property->description }}</p>
+    // opened from a card on the Home City page: start on the Units tab with that type marked
+    $picked = (string) request('unit', '');
+    $openUnits = $picked !== '' && $groups->contains('key', $picked);
+    $isSale = fn ($g) => $g->kind === 'sale' || ($property->type_label ?? '') === 'For Sale';
+@endphp
 
-                        <!-- LOCATION -->
-                        <h3>Location</h3>
-                        <div class="location">
-                            <span>
-                                <i class="fa-solid fa-location-dot"></i>
-                                <h5>{{ $property->formatted_location }}</h5>
-                            </span>
-                        </div>
+<nav class="sv-crumbs" aria-label="Breadcrumb">
+    <a href="{{ route('homecity.index') }}">Home City</a>
+    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+    <span>{{ $property->title }}</span>
+</nav>
 
-                    </div>
-
-                    <!-- AMENITIES TAB -->
-                    <div class="tab">
-                        <div class="property-detail">
-                            <div class="amenities">
-
-                                @forelse($property->amenities as $amenity)
-                                    <span>
-                                        <i class="fa-regular fa-circle-check amenity-check"></i>
-                                        {{ $amenity->name }}
-                                    </span>
-                                @empty
-                                    <p>No amenities listed</p>
-                                @endforelse
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UNITS TAB -->
-                    <div class="tab">
-                        <div class="units">
-
-                            <div class="status">
-                            </div>
-
-                            <div class="units-area">
-
-                                @forelse($property->all_units as $unit)
-
-                                    <div class="unit {{ $unit->css_class }}">
-                                        <h4>{{ $unit->display_name }}</h4>
-                                        <h4>{{ $unit->display_type }}</h4>
-                                        <h4>Ksh {{ $unit->display_price }}</h4>
-                                        <h4 class="status">{{ ucfirst($unit->status ?? 'Vacant') }}</h4>
-                                        <button>Book</button>
-                                    </div>
-
-                                @empty
-                                    <p>No units available</p>
-                                @endforelse
-
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- CHARGES TAB -->
-                    <div class="tab">
-                        <h3>Extra Charges</h3>
-
-                        <div class="charges">
-                            <div class="charge">
-                                <span><h4>Garbage Collection</h4><h4>Ksh300</h4></span>
-                                <span><h4>Viewing Fee</h4><h4>Ksh100</h4></span>
-                            </div>
-
-                            <h3>Bills</h3>
-
-                            <div class="charge">
-                                <span><h4>Electricity</h4><h4>Tokens</h4></span>
-                                <span><h4>Water</h4><h4>Metered</h4></span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-
-    </section>
-
-    <!-- RIGHT SIDE -->
-    <section class="view-right">
-
-        <div class="lister-details">
-
-            <a href="#">
-                <img src="{{ asset('img/admin.png') }}" alt="Lister">
-                <h2>{{ $listing->lister->business_name ?? 'Lister' }}</h2>
+{{-- photos --}}
+<div class="hc-gallery">
+    <section @class(['hc-photos', 'is-single' => $photos->count() === 1]) id="imageSlider" aria-label="Photos">
+        @forelse ($photos as $photo)
+            <a href="{{ $photo['url'] }}">
+                <img src="{{ $photo['url'] }}" alt="" @if (!$loop->first) loading="lazy" @endif>
+                @if (!empty($photo['label']))
+                    <span class="hc-photo-label">{{ ucfirst($photo['label']) }}</span>
+                @endif
             </a>
+        @empty
+            <a href="#"><img src="{{ asset('img/default-property.jpg') }}" alt=""></a>
+        @endforelse
+    </section>
 
-            <h4>{{ $property->formatted_location }}</h4>
+    <span class="hc-counter" id="photoCounter">1/{{ max(1, $photos->count()) }}</span>
 
-            <h3>{{ $listing->lister->phone ?? '+254...' }}</h3>
-
-            <div class="lister-contacts">
-                <button class="lister-contact">
-                    <i class="fa-solid fa-phone"></i>
-                    <h5>Call</h5>
+    <div class="hc-gallery-bar">
+        <div class="hc-gallery-actions">
+            @if ($photos->count() > 5)
+                <button type="button" class="sv-link-btn hc-view-all" data-hc-expand data-label="View all {{ $photos->count() }} photos">
+                    <i class="fa-regular fa-images" aria-hidden="true"></i> <span>View all {{ $photos->count() }} photos</span>
                 </button>
-                <button class="lister-contact">
-                    <i class="fa-regular fa-comment"></i>
-                    <h5>Chat</h5>
-                </button>
+            @endif
+            <button type="button" class="sv-link-btn" data-share
+                    data-share-title="{{ $property->title }}"
+                    data-share-text="{{ $property->title }} · {{ $priceText }} on Home City"
+                    data-share-url="{{ url()->current() }}">
+                <i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Share
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- title + price --}}
+<div class="hc-head">
+    <div>
+        <div class="hc-tags">
+            <span class="hc-tag"><i class="fa-solid fa-key" aria-hidden="true"></i> {{ $property->type_label ?? 'For Rent' }}</span>
+            @if ($unitsTotal > 0)
+                <span @class(['hc-tag', 'hc-tag--plain', 'hc-tag--none' => $vacant < 1])>{{ \App\Http\Controllers\Web\HomeCity\PropertyController::vacancyText($vacant, ($property->type_label ?? '') === 'For Sale') }}</span>
+            @endif
+        </div>
+        <h1>{{ $property->title }}</h1>
+        <p class="hc-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ $property->formatted_location }}</p>
+    </div>
+    <div class="hc-head-price">
+        <small>{{ $priceTo > $priceFrom ? 'Prices' : 'Price' }}</small>
+        <strong>{{ $priceText }}</strong>
+        @if ($suffix !== '')<em>{{ $suffix }}</em>@endif
+    </div>
+</div>
+
+<div class="hc-layout">
+
+    {{-- tabs --}}
+    <section class="sv-panel">
+        <div class="hc-tabs tab_btns" role="tablist">
+            <button type="button" @class(['tab_btn', 'active' => !$openUnits])>Details</button>
+            <button type="button" class="tab_btn">Amenities</button>
+            <button type="button" @class(['tab_btn', 'active' => $openUnits])>Vacant units @if ($groups->isNotEmpty())({{ $vacant }})@endif</button>
+            <button type="button" class="tab_btn">Charges</button>
+            <div class="line"></div>
+        </div>
+
+        <div class="hc-tabbox tab_box">
+
+            {{-- details --}}
+            <div @class(['tab', 'active' => !$openUnits])>
+                <h3>Overview</h3>
+                <div class="hc-features">
+                    @foreach ($groups as $group)
+                        <span class="hc-feature"><i class="{{ $group->icon }}" aria-hidden="true"></i> {{ $group->label }}</span>
+                    @endforeach
+                </div>
+
+                @if (!empty($property->description))
+                    <p>{{ $property->description }}</p>
+                @endif
+
+                <h3>Location</h3>
+                <p class="hc-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ $property->formatted_location }}</p>
+            </div>
+
+            {{-- amenities --}}
+            <div class="tab">
+                @if ($property->amenities->isNotEmpty())
+                    <div class="hc-amenities">
+                        @foreach ($property->amenities as $amenity)
+                            <span class="hc-amenity"><i class="fa-regular fa-circle-check" aria-hidden="true"></i> {{ $amenity->name }}</span>
+                        @endforeach
+                    </div>
+                @else
+                    <p>No amenities listed.</p>
+                @endif
+            </div>
+
+            {{-- vacant units, listed one by one under their unit type --}}
+            <div @class(['tab', 'active' => $openUnits])>
+                @if ($groups->isNotEmpty())
+                    <div class="hc-vacancies">
+                        @foreach ($groups as $group)
+                            @php
+                                $sale = $isSale($group);
+                                $suffixText = trim($group->suffix ?? '');
+                                $list = collect($group->vacant_units ?? []);
+                            @endphp
+                            <section @class(['hc-vgroup', 'is-picked' => $picked === $group->key, 'is-full' => $group->vacant < 1]) @if ($picked === $group->key) aria-current="true" @endif>
+                                <header class="hc-vgroup-head">
+                                    <strong><i class="{{ $group->icon }}" aria-hidden="true"></i> {{ $group->label }}</strong>
+                                    <span class="hc-vgroup-price">{{ $group->price_display }}</span>
+                                    <span @class(['hc-avail', 'is-full' => $group->vacant < 1])>{{ \App\Http\Controllers\Web\HomeCity\PropertyController::vacancyText((int) $group->vacant, $sale) }}</span>
+                                </header>
+
+                                @if ($list->isNotEmpty())
+                                    <ul class="hc-vlist">
+                                        @foreach ($list as $unit)
+                                            <li>
+                                                <span class="hc-vunit">
+                                                    <b>{{ $unit->name }}</b>
+                                                    @if ($unit->detail)<small>{{ $unit->detail }}</small>@endif
+                                                </span>
+                                                <span class="hc-vprice">@if ($unit->price > 0)KES {{ number_format($unit->price) }}@if ($suffixText !== '') <em>{{ $suffixText }}</em>@endif @else Price on request @endif</span>
+                                                @if ($intl)
+                                                    <a href="https://wa.me/{{ $intl }}?text={{ rawurlencode('Hi, I saw "' . $property->title . '" on Home City. Is ' . $unit->name . ' (' . $group->label . ') still available?') }}"
+                                                       class="sv-btn sv-btn--primary" target="_blank" rel="noopener">{{ $sale ? 'Enquire' : 'Book' }}</a>
+                                                @else
+                                                    <button type="button" class="sv-btn" disabled>{{ $sale ? 'Enquire' : 'Book' }}</button>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @elseif ($group->kind === 'container' && $group->vacant > 0 && $intl)
+                                    <a href="https://wa.me/{{ $intl }}?text={{ rawurlencode('Hi, I saw "' . $property->title . '" on Home City. Is a ' . $group->label . ' still available?') }}"
+                                       class="sv-btn sv-btn--primary hc-vgroup-cta" target="_blank" rel="noopener">Book a {{ $group->label }}</a>
+                                @endif
+                            </section>
+                        @endforeach
+                    </div>
+                @else
+                    <p>No units listed.</p>
+                @endif
+            </div>
+
+            {{-- charges --}}
+            <div class="tab">
+                <h3>Extra charges</h3>
+                <dl class="sv-rows">
+                    <div><dt>Garbage collection</dt><dd>KES 300</dd></div>
+                    <div><dt>Viewing fee</dt><dd>KES 100</dd></div>
+                </dl>
+                <h3>Bills</h3>
+                <dl class="sv-rows">
+                    <div><dt>Electricity</dt><dd>Tokens</dd></div>
+                    <div><dt>Water</dt><dd>Metered</dd></div>
+                </dl>
             </div>
 
         </div>
-
     </section>
 
+    {{-- lister --}}
+    <aside class="sv-panel hc-lister" aria-label="Listed by">
+        <div class="hc-lister-top">
+            <img src="{{ asset('img/admin.png') }}" alt="">
+            <div>
+                <small>Listed by</small>
+                <h2>{{ $lister->business_name ?? 'Lister' }}</h2>
+            </div>
+        </div>
+
+        @if ($phone !== '')
+            <p class="hc-lister-phone"><i class="fa-solid fa-phone" aria-hidden="true"></i> {{ $phone }}</p>
+            <div class="hc-lister-btns">
+                <a href="tel:+{{ $intl }}" class="sv-btn sv-btn--primary"><i class="fa-solid fa-phone" aria-hidden="true"></i> Call</a>
+                <a href="https://wa.me/{{ $intl }}?text={{ rawurlencode('Hi, I saw "' . $property->title . '" on Home City. Is it still available?') }}"
+                   class="sv-btn" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+            </div>
+        @else
+            <p class="hc-lister-phone"><i class="fa-solid fa-phone-slash" aria-hidden="true"></i> Phone not listed</p>
+        @endif
+
+        <p class="hc-lister-note">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span>Visit the property before you pay any deposit, and only pay the lister through official channels.</span>
+        </p>
+    </aside>
 </div>
+
+{{-- phones: price + call always in reach --}}
+<div class="sv-mbar">
+    <span>
+        <small>{{ $property->type_label ?? 'For Rent' }}</small>
+        <strong>{{ $priceText }}</strong>
+    </span>
+    @if ($intl)
+        <a href="tel:+{{ $intl }}" class="sv-btn sv-btn--primary"><i class="fa-solid fa-phone" aria-hidden="true"></i> Call lister</a>
+    @endif
+</div>
+
+</main>
+
 @endsection

@@ -208,4 +208,16 @@ class BusinessGasInventory extends Model
 
         return $this->discount;
     }
+
+    /**
+     * Refills a buyer may see and order — the Home Market rules (App\Services\CookingGas\GasCatalog):
+     * subscribed shop with e-commerce, open, the cart's gas shop or within the delivery radius,
+     * and filled cylinders in stock.
+     */
+    public function scopeSellable($query)
+    {
+        return $query
+            ->whereIn('business_id', app(\App\Services\CookingGas\GasCatalog::class)->visibleIds() ?: [0])
+            ->where('filled_cylinders', '>', 0);
+    }
 }

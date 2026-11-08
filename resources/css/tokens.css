@@ -137,3 +137,369 @@ body[data-subdivision="home-market"].dark-mode {
     --before-color: #333333;
     --before-color1: #232323;
 }
+
+/* ---------- Liquor Hub: deep wine red. Same page structure as Home Market
+   (homemarket-ui.css covers both); change the accent values here to rebrand. ---------- */
+body[data-subdivision="liquor-hub"] {
+    --ink: #1f1216;
+    --ink-soft: #6b5157;
+    --line: #ecd5da;
+    --surface-tint: #fdf4f6;
+    --shadow-card: 0 1px 2px rgba(31, 18, 22, .06), 0 8px 22px rgba(31, 18, 22, .07);
+
+    --line-strong: #9f1239;
+    --accent: #9f1239;
+    --accent-strong: #881337;   /* text and prices on white */
+    --accent-tint: #ffe4e9;
+    --accent-line: #fecdd6;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #fb7185;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="liquor-hub"].dark-mode {
+    --accent: #e11d48;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+
+    --ink: #f5e9ec;
+    --ink-soft: #b9a3a9;
+    --line: #333333;
+    --line-strong: #fb7185;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #3a1820;
+    --accent-strong: #fb7185;
+    --accent-line: #5c2331;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+
+    --bg-color: #000000;
+    --light-card-bg: #3a1820;
+    --theme-clr: #4c0519;
+    --theme-bgclr: #6b1d33;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Cooking Gas: flame blue. Same page structure as Home Market (homemarket-ui.css); "gas" = its weblink (cart / checkout opened from Cooking Gas). ---------- */
+body:is([data-subdivision="cooking-gas"], [data-subdivision="gas"]) {
+    --ink: #121a2b;
+    --ink-soft: #56607a;
+    --line: #d9e1ef;
+    --surface-tint: #f3f6fc;
+    --shadow-card: 0 1px 2px rgba(18, 26, 43, .06), 0 8px 22px rgba(18, 26, 43, .07);
+
+    --line-strong: #1d63d8;
+    --accent: #1d63d8;
+    --accent-strong: #1650b0;   /* text and prices on white */
+    --accent-tint: #e6efff;
+    --accent-line: #bcd2fb;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #93b8f5;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body:is([data-subdivision="cooking-gas"], [data-subdivision="gas"]).dark-mode {
+    --accent: #3b82f6;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+
+    --ink: #eef2fa;
+    --ink-soft: #a4adc2;
+    --line: #333333;
+    --line-strong: #60a5fa;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #172440;
+    --accent-strong: #7cb3ff;
+    --accent-line: #24406f;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+
+    --bg-color: #000000;
+    --light-card-bg: #172440;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Home City: deep teal. Same page structure as Home Market (homemarket-ui.css). ---------- */
+body[data-subdivision="home-city"] {
+    --ink: #10201e;
+    --ink-soft: #52665f;
+    --line: #d5e5e1;
+    --surface-tint: #f2f8f7;
+    --shadow-card: 0 1px 2px rgba(16, 32, 30, .06), 0 8px 22px rgba(16, 32, 30, .07);
+
+    --line-strong: #0f766e;
+    --accent: #0f766e;
+    --accent-strong: #0b5f58;   /* text and prices on white */
+    --accent-tint: #dff3f0;
+    --accent-line: #a7dcd4;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #5eead4;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="home-city"].dark-mode {
+    --accent: #14b8a6;
+    --on-accent: #04201d;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+
+    --ink: #ebf5f3;
+    --ink-soft: #a0b5b0;
+    --line: #333333;
+    --line-strong: #2dd4bf;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #0f2c29;
+    --accent-strong: #5eead4;
+    --accent-line: #1d4a45;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+
+    --bg-color: #000000;
+    --light-card-bg: #0f2c29;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Airbnb: violet. Same page structure as Home Market (homemarket-ui.css). ---------- */
+body[data-subdivision="airbnb"] {
+    --ink: #1b1530;
+    --ink-soft: #5e5775;
+    --line: #e2dcf2;
+    --surface-tint: #f7f5fd;
+    --shadow-card: 0 1px 2px rgba(27, 21, 48, .06), 0 8px 22px rgba(27, 21, 48, .07);
+
+    --line-strong: #7c3aed;
+    --accent: #7c3aed;
+    --accent-strong: #6d28d9;
+    --accent-tint: #efe8fd;
+    --accent-line: #d4c3fa;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #c4b5fd;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="airbnb"].dark-mode {
+    --accent: #8b5cf6;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --ink: #f1edfb;
+    --ink-soft: #b0a8c7;
+    --line: #333333;
+    --line-strong: #a78bfa;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #231a3a;
+    --accent-strong: #c4b5fd;
+    --accent-line: #3b2d63;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+    --bg-color: #000000;
+    --light-card-bg: #231a3a;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Water: cyan. Same page structure as Home Market (homemarket-ui.css). ---------- */
+body[data-subdivision="water"] {
+    --ink: #0f1f26;
+    --ink-soft: #4f6670;
+    --line: #d3e7ee;
+    --surface-tint: #f1f9fc;
+    --shadow-card: 0 1px 2px rgba(15, 31, 38, .06), 0 8px 22px rgba(15, 31, 38, .07);
+
+    --line-strong: #0891b2;
+    --accent: #0891b2;
+    --accent-strong: #0e7490;
+    --accent-tint: #dff4fa;
+    --accent-line: #a5dcea;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #67e8f9;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="water"].dark-mode {
+    --accent: #06b6d4;
+    --on-accent: #04202a;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --ink: #eaf6fa;
+    --ink-soft: #9fb6be;
+    --line: #333333;
+    --line-strong: #22d3ee;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #0c2a33;
+    --accent-strong: #67e8f9;
+    --accent-line: #164e5c;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+    --bg-color: #000000;
+    --light-card-bg: #0c2a33;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Glam Room: pink. Same page structure as Home Market (homemarket-ui.css). ---------- */
+body[data-subdivision="glam-room"] {
+    --ink: #2a1220;
+    --ink-soft: #6d5161;
+    --line: #f2d6e4;
+    --surface-tint: #fdf4f8;
+    --shadow-card: 0 1px 2px rgba(42, 18, 32, .06), 0 8px 22px rgba(42, 18, 32, .07);
+
+    --line-strong: #db2777;
+    --accent: #db2777;
+    --accent-strong: #be185d;   /* text and prices on white */
+    --accent-tint: #fce7f3;
+    --accent-line: #fbcfe8;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #f9a8d4;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="glam-room"].dark-mode {
+    --accent: #ec4899;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --ink: #fbeef4;
+    --ink-soft: #c3a8b6;
+    --line: #333333;
+    --line-strong: #f472b6;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #3a1428;
+    --accent-strong: #f9a8d4;
+    --accent-line: #5c2240;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+    --bg-color: #000000;
+    --light-card-bg: #3a1428;
+    --before-color: #333333;
+    --before-color1: #232323;
+}
+
+/* ---------- Farm Market: leaf green (lime), set apart from the main site's green. Same page structure as Home Market. ---------- */
+body[data-subdivision="farm-market"] {
+    --ink: #1a2410;
+    --ink-soft: #55624a;
+    --line: #e1ead2;
+    --surface-tint: #f7faf0;
+    --shadow-card: 0 1px 2px rgba(26, 36, 16, .06), 0 8px 22px rgba(26, 36, 16, .07);
+
+    --line-strong: #4d7c0f;
+    --accent: #4d7c0f;
+    --accent-strong: #3f6212;   /* text and prices on white */
+    --accent-tint: #ecfccb;
+    --accent-line: #d9f99d;
+    --on-accent: #ffffff;
+
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --theme-clr: var(--accent);
+    --theme-bgclr: var(--accent);
+    --before-color: #bef264;
+    --before-color1: var(--accent-tint);
+    --light-card-bg: var(--accent-tint);
+    --bg-color: var(--surface-tint);
+    --sweet-color: var(--ink);
+    --green-color: var(--ink);
+}
+
+body[data-subdivision="farm-market"].dark-mode {
+    --accent: #65a30d;
+    --on-accent: #ffffff;
+    --primary: var(--accent);
+    --hold: var(--accent);
+    --best-color: var(--accent);
+    --ink: #f1f7e6;
+    --ink-soft: #b0bea0;
+    --line: #333333;
+    --line-strong: #84cc16;
+    --surface: #1a1a1a;
+    --surface-tint: #000000;
+    --accent-tint: #1f2e0c;
+    --accent-strong: #bef264;
+    --accent-line: #365314;
+    --inverse-bg: #2e2e2e;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5);
+    --bg-color: #000000;
+    --light-card-bg: #1f2e0c;
+    --before-color: #333333;
+    --before-color1: #232323;
+}

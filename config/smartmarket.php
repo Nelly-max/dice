@@ -45,16 +45,31 @@ return [
     | Dates are shown as "Last updated" on the page.
     */
     'pages' => [
-        'about'          => ['title' => 'About Smart Market',   'menu' => 'About',              'icon' => 'fa-solid fa-circle-info',     'updated' => '2026-10-23',
+        'about'          => ['title' => 'About Smart Market',   'menu' => 'About',              'icon' => 'fa-solid fa-circle-info',     'updated' => '2026-11-08',
             'summary' => 'Smart Market brings shops, services and homes near you into one place in Kenya, with delivery from nearby shops and M-Pesa payments.'],
-        'help'           => ['title' => 'Help & FAQ',           'menu' => 'Help & FAQ',         'icon' => 'fa-solid fa-circle-question', 'updated' => '2026-10-22',
+        'help'           => ['title' => 'Help & FAQ',           'menu' => 'Help & FAQ',         'icon' => 'fa-solid fa-circle-question', 'updated' => '2026-11-08',
             'summary' => 'Answers about ordering, delivery, payment with M-Pesa, your account, and joining Smart Market as a rider or marketer.'],
         'contact'        => ['title' => 'Contact & support',    'menu' => 'Contact & support',  'icon' => 'fa-solid fa-headset',         'updated' => '2026-10-22',
             'summary' => 'How to reach Smart Market support about an order, a payment or your account.'],
-        'terms'          => ['title' => 'Terms & Conditions',   'menu' => 'Terms & Conditions', 'icon' => 'fa-solid fa-file-contract',   'updated' => '2026-10-23',
+        'terms'          => ['title' => 'Terms & Conditions',   'menu' => 'Terms & Conditions', 'icon' => 'fa-solid fa-file-contract',   'updated' => '2026-11-08',
             'summary' => 'The simple terms for shopping on Smart Market: accounts, orders, payment, delivery and refunds.'],
-        'privacy-policy' => ['title' => 'Privacy Policy',       'menu' => 'Privacy Policy',     'icon' => 'fa-solid fa-user-shield',     'updated' => '2026-10-23',
+        'privacy-policy' => ['title' => 'Privacy Policy',       'menu' => 'Privacy Policy',     'icon' => 'fa-solid fa-user-shield',     'updated' => '2026-11-08',
             'summary' => 'What information Smart Market collects, how we use it and the choices you have.'],
     ],
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Marketers
+    |--------------------------------------------------------------------------
+    | A marketer earns commission on the first three consecutive monthly subscription
+    | invoices of a business that signed up with their code: 30% of the first month,
+    | 20% of the second and third. Later invoices earn nothing (and are not shown).
+    */
+    'marketer_commission_percent' => 30,                 // first month (shown as "up to 30%")
+    'marketer_commission_months' => [30, 20, 20],        // % per month, in order
+
+    // Hub finance: share of a rider's delivery earnings kept by Smart Market before payout
+    'rider_deduction_percent' => 10,
 
 ];

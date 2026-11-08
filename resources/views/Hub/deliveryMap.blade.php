@@ -24,12 +24,20 @@
             </div>
 
             <div class="quick-actions">
-                <div class="quick-action resize">
-                    <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
-                </div>
-                <div class="quick-action message">
-                    <i class="fa-regular fa-message"></i>
-                </div>
+                {{-- minimise: leave the map; a floating map button on every page brings the rider back --}}
+                <button type="button" class="quick-action resize" id="minimizeMapBtn" aria-label="Minimise the map" title="Minimise the map">
+                    <i class="fa-solid fa-down-left-and-up-right-to-center" aria-hidden="true"></i>
+                </button>
+                {{-- buyer's note for the rider: a red dot when there is one; tap to read it --}}
+                <button type="button"
+                        @class(['quick-action', 'message', 'has-note' => !empty($deliveryNote)])
+                        id="deliveryNoteBtn"
+                        aria-label="{{ !empty($deliveryNote) ? 'Read the delivery note' : 'No delivery note' }}"
+                        title="{{ !empty($deliveryNote) ? 'Delivery note' : 'No delivery note' }}"
+                        aria-haspopup="dialog" aria-controls="deliveryNoteSheet">
+                    <i class="fa-regular fa-message" aria-hidden="true"></i>
+                    @if (!empty($deliveryNote))<span class="dn-dot" aria-hidden="true"></span>@endif
+                </button>
                 <!-- <div class="quick-action route">
                     <i class='bx bx-navigation'></i>
                     <i class="fa-solid fa-route"></i>
@@ -155,6 +163,49 @@
         </div>
     </div>
 
+    {{-- the delivery note (opened by #deliveryNoteBtn) --}}
+    <dialog class="dn-sheet" id="deliveryNoteSheet" aria-labelledby="dnTitle">
+        <div class="dn-head">
+            <span class="dn-icon" aria-hidden="true"><i class="fa-regular fa-message"></i></span>
+            <strong id="dnTitle">Delivery note</strong>
+            <button type="button" class="dn-close" data-dn-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        @if (!empty($deliveryNote))
+            <p class="dn-text">{{ $deliveryNote }}</p>
+            <small class="dn-from">From {{ $delivery->customer_name ?? 'the customer' }}</small>
+        @else
+            <p class="dn-text dn-empty">The customer didn't leave a note for this delivery.</p>
+        @endif
+        <button type="button" class="dn-ok" data-dn-close>OK</button>
+    </dialog>
+
+    <script>
+        (() => {
+            // minimise: back to the page the rider came from (or the Hub); the floating
+            // map button there (toast.openDeliveryMap) reopens this map
+            document.getElementById('minimizeMapBtn')?.addEventListener('click', () => {
+                let back = null;
+                try {
+                    const ref = document.referrer ? new URL(document.referrer) : null;
+                    if (ref && ref.origin === location.origin && !ref.pathname.startsWith('/hub/navigate')) back = ref.href;
+                } catch (e) {}
+                if (!back) { try { back = sessionStorage.getItem('riderLastPage'); } catch (e) {} }
+                window.location.href = back || '/hub';
+            });
+
+            const btn = document.getElementById('deliveryNoteBtn');
+            const sheet = document.getElementById('deliveryNoteSheet');
+            if (!btn || !sheet) return;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (sheet.showModal) sheet.showModal(); else sheet.setAttribute('open', '');
+                btn.classList.add('is-read');
+            });
+            sheet.addEventListener('click', (e) => {
+                if (e.target === sheet || e.target.closest('[data-dn-close]')) sheet.close ? sheet.close() : sheet.removeAttribute('open');
+            });
+        })();
+    </script>
     @endsection
 
     @include('toast.toast')

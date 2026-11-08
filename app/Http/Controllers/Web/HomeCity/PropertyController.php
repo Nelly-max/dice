@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\HomeCity;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\HomeCity\Listing;
@@ -15,432 +16,396 @@ class PropertyController extends Controller
      */
 
     
-    public function index()
+    public function index(Request $request)
     {
-        $listings = Listing::on('homecity')
-            ->where('status', 'active')
-            ->with([
-                'property.location',
-
-                // Residential
-                'property.houseUnits.type.images',
-                'property.houseOnSaleUnits.type.images',
-
-                // Land
-                'property.landUnits.measureUnit',
-
-                // shop & office
-                'property.officeUnits',
-                'property.officeImages', 
-                'property.shopUnits',
-                'property.shopImages',
-
-                // Containers
-                'property.containers',
-                'property.containerImages',
-
-                // Warehouse
-                'property.warehouseUnits',
-                'property.warehouseUnits.images',
-                'property.warehouseType',
-
-                // Hostels
-                'property.hostelUnits',
-                'property.hostelImages',
-            ])
-            ->get();
-
-        $cards = $listings->flatMap(function ($listing) {
-
-            $property = $listing->property;
-            if (!$property) return [];
-
-            /*
-            |----------------------------------------------------------
-            | ICON MAP
-            |----------------------------------------------------------
-            */
-            $icon = fn($type) => match ($type) {
-                'house'      => 'fa-solid fa-house-chimney',
-                'sale'       => 'fa-solid fa-house-circle-check',
-                'land'       => 'fa-solid fa-expand',
-                'office'     => 'fa-regular fa-building',
-                'shop'       => 'fa-solid fa-store',
-                'container'  => 'fa-solid fa-box',
-                'warehouse'  => 'fa-solid fa-warehouse',
-                'hostel'     => 'fa-solid fa-bed',
-                default      => 'fa-solid fa-building',
-            };
-
-            $groupKey = fn($type, $id) => $property->id . '-' . $type . '-' . $id;
-
-            /*
-            |----------------------------------------------------------
-            | HOUSE RENT
-            |----------------------------------------------------------
-            */
-            $house = collect($property->houseUnits)->map(fn($unit) => (object)[
-                'key' => $groupKey('house', $unit->house_unit_type_id),
-                'house_unit_type_id' => 'house-' . $unit->house_unit_type_id,
-                'icon' => $icon('house'),
-                'type_name' => optional($unit->type)->name ?? 'Unit',
-                'unit_label' => optional($unit->type)->name ?? 'Unit',
-                'price' => $unit->price,
-                'price_suffix' => '',
-                'status' => $unit->status,
-                'type' => $unit->type,
-            ]);
-
-            /*
-            |----------------------------------------------------------
-            | HOUSE SALE
-            |----------------------------------------------------------
-            */
-            $sale = collect($property->houseOnSaleUnits)->map(fn($unit) => (object)[
-                'key' => $groupKey('sale', $unit->house_unit_type_id),
-                'house_unit_type_id' => 'sale-' . $unit->house_unit_type_id,
-                'icon' => $icon('sale'),
-                'type_name' => optional($unit->type)->name ?? 'Unit',
-                'unit_label' => optional($unit->type)->name ?? 'Unit',
-                'price' => $unit->price,
-                'price_suffix' => '',
-                'status' => $unit->status,
-                'type' => $unit->type,
-            ]);
-
-            /*
-            |----------------------------------------------------------
-            | LAND
-            |----------------------------------------------------------
-            */
-            $land = collect($property->landUnits)->map(function ($unit) use ($icon) {
-
-                $measure = strtolower(optional($unit->measureUnit)->name ?? '');
-                $size = trim($unit->size);
-                $label = trim("{$size} {$measure}");
-                $slug = str_replace(' ', '-', strtolower($label));
-
-                return (object)[
-                    'house_unit_type_id' => 'land-' . $slug,
-
-                    // IMPORTANT: add this for image matching
-                    'land_measure_unit_id' => $unit->land_measure_unit_id,
-
-                    'icon' => $icon('land'),
-                    'type_name' => $measure ?: 'Land',
-                    'unit_label' => $label,
-                    'price' => $unit->price,
-                    'price_suffix' => '',
-                    'status' => $unit->status,
-                    'type' => null,
-                ];
-            });
-
-            /*
-            |----------------------------------------------------------
-            | OFFICE UNITS
-            |----------------------------------------------------------
-            */
-            $offices = collect($property->officeUnits)->map(function ($unit) use ($icon, $property) {
-                $measure = $unit->measure_unit ?? 'sqft';
-
-                // Get the first available image from the property's office images
-                $image = $property->officeImages->first()?->image_path ?? 'img/placeholder-office.jpg';
-
-                // ONLY override size when by_size
-                $displayValue = ($unit->rental_mode === 'by_size')
-                    ? ($unit->remaining_space ?? $unit->size)
-                    : $unit->size;
-
-                $label = !empty($displayValue)
-                    ? "Office {$displayValue} {$measure}"
-                    : 'Office Units';
-
-                return (object)[
-                    'house_unit_type_id' => 'office',
-                    'icon' => $icon('office'),
-                    'type_name' => 'Office',
-                    'unit_label' => $label,
-                    'price' => $unit->price,
-                    'image' => $image, // Path from office_images table
-
-                    'price_suffix' => ($unit->rental_mode === 'by_size')
-                        ? " per {$measure}"
-                        : '',
-
-                    'status' => $unit->status,
-                    'type' => null,
-                ];
-            });
-
-
-            /*
-            |----------------------------------------------------------
-            | SHOP UNITS
-            |----------------------------------------------------------
-            */
-            $shops = collect($property->shopUnits)->map(function ($unit) use ($icon, $property) {
-                $measure = $unit->measure_unit ?? 'sqft';
-
-                // Get the first shop image from the property's relationship
-                // optional() and the null-safe operator (?) prevent crashes if the relation is missing
-                $image = optional($property->shopImages)->first()?->image_path ?? 'img/placeholder-shop.jpg';
-
-                // ONLY override size when by_size
-                $displayValue = ($unit->rental_mode === 'by_size')
-                    ? ($unit->remaining_space ?? $unit->size)
-                    : $unit->size;
-
-                $label = !empty($displayValue)
-                    ? "Shop {$displayValue} {$measure}"
-                    : 'Shop Units';
-
-                return (object)[
-                    'house_unit_type_id' => 'shop',
-                    'icon' => $icon('shop'),
-                    'type_name' => 'Shop',
-                    'unit_label' => $label,
-                    'price' => $unit->price,
-                    'image' => $image, // Path from shop_images table
-
-                    'price_suffix' => ($unit->rental_mode === 'by_size')
-                        ? " per {$measure}"
-                        : '',
-
-                    'status' => $unit->status,
-                    'type' => null,
-                ];
-            });
-
-
-            /*
-            |----------------------------------------------------------
-            | HOSTELS
-            |----------------------------------------------------------
-            */
-            $hostel = collect($property->hostelUnits)->map(function ($unit) use ($groupKey, $icon) {
-
-                return (object)[
-                    'key' => $groupKey('hostel', $unit->id),
-                    'house_unit_type_id' => 'hostel-' . $unit->total_beds . '-' . strtolower($unit->duration),
-                    'icon' => $icon('hostel'),
-                    'type_name' => 'Hostel Room',
-                    'unit_label' => "{$unit->total_beds} Beds({$unit->duration})",
-                    'price' => $unit->price,
-                    'price_suffix' => ' per ' . strtolower($unit->duration),
-                    'status' => $unit->status,
-                    'type' => null,
-                ];
-            });
-
-            /*
-            |----------------------------------------------------------
-            | CONTAINERS
-            |----------------------------------------------------------
-            */
-            $containers = collect($property->containers)->map(function ($unit) use ($icon, $property) {
-
-                // ✅ Proper filtering using DB column (NOT path)
-                $image = optional(
-                    $property->containerImages
-                        ->where('container_size', $unit->size)
-                        ->first()
-                )->image_path ?? 'img/placeholder-container.jpg';
-
-                return (object)[
-                    'house_unit_type_id' => 'container-' . $unit->size,
-                    'icon' => $icon('container'),
-
-                    'type_name' => $unit->size . ' Container',
-                    'unit_label' => "{$unit->size} Container",
-
-                    'price' => $unit->price,
-                    'price_suffix' => '',
-
-                    'status' => $unit->units_available > 0 ? 'Available' : 'Sold Out',
-
-                    'image' => $image, // ✅ clean & reliable
-
-                    'type' => null,
-                ];
-            });
-            /*
-            |----------------------------------------------------------
-            | WAREHOUSE
-            |----------------------------------------------------------
-            */
-            $warehouseImage = $property->warehouseUnits
-                ->first()
-                ?->images
-                ?->first()
-                ?->image_path;
-
-            $warehouse = collect($property->warehouseUnits)->map(function ($unit) use ($icon, $warehouseImage) {
-
-                $measure = $unit->measure_unit ?? 'sqft';
-
-                $displayValue = match ($unit->mode) {
-                    'space' => $unit->total_space ?? 0,
-                    'unit'  => $unit->unit_count ?? 0,
-                    default => $unit->total_space ?? $unit->unit_count ?? 0,
-                };
-
-                $label = match ($unit->mode) {
-                    'space' => "Warehouse ({$displayValue} {$measure})",
-                    default => "Warehouse",
-                };
-
-                $suffix = match ($unit->mode) {
-                    'space' => " per {$measure}",
-                    default => '',
-                };
-
-                return (object)[
-                    // ✅ KEY FIX: group everything into ONE card
-                    'house_unit_type_id' => 'warehouse',
-
-                    'icon' => $icon('warehouse'),
-                    'type_name' => 'Warehouse',
-                    'unit_label' => $label,
-                    'price' => $unit->price,
-                    'price_suffix' => $suffix,
-                    'status' => $unit->status,
-
-                    // 👇 shared image for all warehouse units
-                    'image' => $warehouseImage,
-                ];
-            });
-            /*
-            |----------------------------------------------------------
-            | MERGE ALL
-            |----------------------------------------------------------
-            */
-            $units = collect()
-                ->concat($house)
-                ->concat($sale)
-                ->concat($land)
-                ->concat($offices)   // ✅ new
-                ->concat($shops)     // ✅ new
-                ->concat($hostel)
-                ->concat($containers)
-                ->concat($warehouse);
-
-            if ($units->isEmpty()) return [];
-
-            /*
-            |----------------------------------------------------------
-            | GROUP & FORMAT CARDS
-            |----------------------------------------------------------
-            */
-            return $units->groupBy('house_unit_type_id')
-                ->map(function ($group) use ($property, $listing) {
-                    $unit = $group->first();
-                    $id = $unit->house_unit_type_id;
-
-                    /*
-
-                    |----------------------------------------------------------
-                    | DYNAMIC IMAGE SELECTION
-                    |----------------------------------------------------------
-                    */
-                    if ($id === 'office') {
-                        $rawPath = $property->officeImages->first()?->image_path;
-
-                    } elseif ($id === 'shop') {
-                        $rawPath = $property->shopImages->first()?->image_path;
-
-                    }elseif (str_starts_with($id, 'sale-')) {
-
-                        $typeId = str_replace('sale-', '', $id);
-
-                        $saleImages = $property->houseOnSaleUnitTypeImages ?? collect();
-
-                        $rawPath = optional(
-                            $saleImages->where('house_unit_type_id', $typeId)->first()
-                        )->image_path
-                        ?? $property->featured_image
-                        ?? 'img/default-property.jpg';
-                    }elseif (str_starts_with($id, 'land-')) {
-
-                        $measureId = $unit->land_measure_unit_id ?? null;
-
-                        $landImages = $property->landImages ?? collect();
-
-                        $rawPath = optional(
-                            $landImages
-                                ->where('land_measure_unit_id', $measureId)
-                                ->first()
-                        )->image_path
-                        ?? optional($landImages->first())->image_path
-                        ?? $property->featured_image
-                        ?? 'img/default-property.jpg';
-                    }elseif (str_starts_with($id, 'hostel-')) {
-
-                        $rawPath = $property->hostelImages->first()?->image_path
-                            ?? $property->featured_image
-                            ?? 'img/default-property.jpg';
-
-                    }elseif ($id === 'warehouse') {
-                        $rawPath = $property->warehouseUnits
-                            ->first()
-                            ?->images
-                            ?->first()
-                            ?->image_path
-                            ?? $property->featured_image
-                            ?? 'img/default-property.jpg';
-
-                    }elseif (str_starts_with($id, 'container-')) {
-                        $rawPath = $unit->image ?? null;
-                    
-
-                    }else {
-                        $rawPath =
-                            $unit->type?->images?->first()?->image_path
-                            ?? $property->featured_image
-                            ?? 'img/default-property.jpg';
-                    }
-
-                    $finalPath = $rawPath ? ltrim($rawPath, '/') : null;
-                    $displayImage = $finalPath
-                        ? rtrim(env('MEDIA_URL'), '/') . '/' . $finalPath
-                        : asset('img/default-property.jpg');
-
-                    $min = $group->min('price');
-                    $max = $group->max('price');
-
-                    return (object)[
-                        'key'           => $listing->id . '-' . $id,
-                        'listing_id'    => $listing->id,
-                        'property_id'   => $property->id,
-                        'display_title' => $property->title,
-                        'icon'          => $unit->icon,
-                        'unit_type'     => $unit->unit_label ?? $unit->type_name,
-                        'display_image' => $displayImage,
-                        'min_price'     => $min,
-                        'max_price'     => $max,
-                        'price_suffix'  => $unit->price_suffix ?? '',
-                        'price_display' => $min == $max
-                            ? number_format($min) . ($unit->price_suffix ?? '')
-                            : number_format($min) . ' - ' . number_format($max) . ($unit->price_suffix ?? ''),
-                        'location'      => $property->formatted_location,
-                        'type_label'    => match ($property->listing_type) {
-                            'onSale'  => 'For Sale',
-                            'forRent' => 'For Rent',
-                            default   => 'Listing',
-                        },
-                    ];
-                })
-                ->values();
-                })
-            ->unique('key')
-            ->values();
+        $cards = $this->cards();
+
+        // live suggestions for the header search (resources/js/hmsearch.js)
+        if ($request->wantsJson()) {
+            return response()->json($this->suggest($cards, (string) $request->query('q', '')));
+        }
 
         return view('HomeCity.home', [
             'listings' => $cards
         ]);
     }
 
+    /**
+     * Business accounts allowed on the site: an ACTIVE subscription whose tariff has the
+     * listing feature (tariffs.listing = 1). Value = 1 when the tariff also has priority_listing.
+     *
+     * @return array<string, int>
+     */
+    private function listableAccounts(): array
+    {
+        return Cache::remember('homecity.listable_accounts', 120, function () {
+            try {
+                return DB::connection('homecity')
+                    ->table('business as b')
+                    ->join('business_subscription as bs', function ($join) {
+                        $join->on(function ($on) {
+                            $on->on('bs.main_branch_account', '=', 'b.main_branch_account')
+                                ->orOn('bs.business_id', '=', 'b.id');
+                        })->where('bs.status', 'active');
+                    })
+                    ->join('tariffs as t', 't.id', '=', 'bs.tariff_id')
+                    ->where('t.listing', 1)
+                    ->groupBy('b.account')
+                    ->selectRaw('b.account, MAX(COALESCE(t.priority_listing, 0)) as priority')
+                    ->pluck('priority', 'account')
+                    ->map(fn ($p) => (int) $p)
+                    ->all();
+            } catch (\Throwable $e) {
+                report($e);     // nothing is shown rather than unpaid listings
+                return [];
+            }
+        });
+    }
 
+    /** All cards (one per unit type per property), priority listings first. Cached for 2 minutes. */
+    private function cards()
+    {
+        return Cache::remember('homecity.cards', 120, fn () => $this->buildCards());
+    }
+
+    /** Header search suggestions in the shape hmsearch.js expects. */
+    private function suggest($cards, string $q): array
+    {
+        $q = trim(mb_strtolower($q));
+        if (mb_strlen($q) < 2) return ['products' => [], 'categories' => [], 'shops' => []];
+
+        $words = preg_split('/\s+/', $q);
+        $here = app(\App\Services\DeliveryLocationService::class)->get(request());
+
+        $hits = collect($cards)->filter(function ($c) use ($words) {
+            $text = mb_strtolower(implode(' ', [$c->display_title, $c->unit_type, $c->location, $c->type_label, $c->kind]));
+            return collect($words)->every(fn ($w) => str_contains($text, $w));
+        });
+
+        $types = collect($cards)->pluck('unit_type')
+            ->map(fn ($t) => preg_replace('/\s*·.*$/u', '', $t))
+            ->unique(fn ($t) => mb_strtolower($t))
+            ->filter(fn ($t) => str_contains(mb_strtolower($t), $q))
+            ->take(4)
+            ->map(fn ($t) => ['label' => $t, 'url' => route('homecity.index', ['q' => $t])])
+            ->values();
+
+        return [
+            'categories' => $types,
+            'shops'      => [],
+            'products'   => $hits->take(8)->map(function ($c) use ($here) {
+                $km = $here ? \App\Support\Distance::km($here['latitude'], $here['longitude'], $c->latitude, $c->longitude) : null;
+                return [
+                    'url'     => route('homecity.listing.view', [$c->listing_id, 'unit' => $c->group]),
+                    'image'   => $c->display_image,
+                    'name'    => $c->display_title,
+                    'variant' => $c->unit_type . ' · ' . $c->vacancy_text,
+                    'shop'    => $c->location,
+                    'km'      => $km !== null ? round($km, 1) : null,
+                    'price'   => $c->min_price,
+                ];
+            })->values(),
+        ];
+    }
+
+    /** "3 vacant units" / "1 vacant unit" / "No vacant units" (for sale: "for sale" / "Sold out"). */
+    public static function vacancyText(int $vacant, bool $sale = false): string
+    {
+        if ($vacant < 1) return $sale ? 'Sold out' : 'No vacant units';
+
+        return $sale
+            ? $vacant . ' ' . \Illuminate\Support\Str::plural('unit', $vacant) . ' for sale'
+            : $vacant . ' vacant ' . \Illuminate\Support\Str::plural('unit', $vacant);
+    }
+
+    private function buildCards()
+    {
+        $accounts = $this->listableAccounts();
+
+        $listings = Listing::on('homecity')
+            ->where('status', 'active')
+            ->whereIn('lister_id', array_keys($accounts) ?: ['__none__'])
+            ->with(self::UNIT_RELATIONS)
+            ->get();
+
+        /*
+        | One card per unit TYPE per property (e.g. "2 Bedroom" at Sunrise Court),
+        | never one card per unit. A property can have several listings (for
+        | example one per unit type); a listing that names a house unit type only
+        | gives that type's card, and the same property + type is shown once.
+        */
+        return $listings->flatMap(function ($listing) use ($accounts) {
+
+            $property = $listing->property;
+            if (!$property) return [];
+
+            $onlyType = $listing->getAttribute('house_unit_type_id');
+
+            $typeLabel = match ($property->listing_type) {
+                'onSale'  => 'For Sale',
+                'onLease' => 'For Lease',
+                'forRent' => 'For Rent',
+                default   => 'Listing',
+            };
+
+            $location = $property->location ?? null;
+
+            return $this->unitGroups($property)
+                ->when($onlyType, fn ($groups) => $groups->filter(
+                    fn ($g) => !in_array($g->kind, ['house', 'sale'], true) || (string) $g->type_id === (string) $onlyType
+                ))
+                ->map(fn ($g) => (object) [
+                    'priority'      => $accounts[$listing->lister_id] ?? 0,
+                    'vacancy_text'  => self::vacancyText($g->vacant, $g->kind === 'sale' || $typeLabel === 'For Sale'),
+                    'key'           => $property->id . '-' . $g->key,
+                    'listing_id'    => $listing->id,
+                    'property_id'   => $property->id,
+                    'group'         => $g->key,
+                    'kind'          => $g->kind,
+                    'display_title' => $property->title,
+                    'icon'          => $g->icon,
+                    'unit_type'     => $g->label,
+                    'display_image' => $g->image,
+                    'min_price'     => $g->min,
+                    'max_price'     => $g->max,
+                    'price_suffix'  => $g->suffix,
+                    'price_display' => $g->price_display,
+                    'units_total'   => $g->total,
+                    'units_vacant'  => $g->vacant,
+                    'location'      => $property->formatted_location,
+                    'type_label'    => $g->kind === 'sale' ? 'For Sale' : $typeLabel,
+                    // for the "within 500 m … 5 km" filter on the Home City page
+                    'latitude'      => is_numeric($location->latitude ?? null) ? (float) $location->latitude : null,
+                    'longitude'     => is_numeric($location->longitude ?? null) ? (float) $location->longitude : null,
+                ])
+                ->values();
+        })
+            ->unique('key')
+            ->sortByDesc('priority')      // priority_listing tariffs first (stable for the rest)
+            ->values();
+    }
+
+    /** Relations needed to group a property's units (index + viewListing). */
+    private const UNIT_RELATIONS = [
+        'property.location',
+
+        // Residential
+        'property.houseUnits.type.images',
+        'property.houseOnSaleUnits.type.images',
+        'property.houseOnSaleTypeImages',
+
+        // Land
+        'property.landUnits.measureUnit',
+        'property.landImages',
+
+        // Shops & offices
+        'property.officeUnits',
+        'property.officeImages',
+        'property.shopUnits',
+        'property.shopImages',
+
+        // Containers
+        'property.containers',
+        'property.containerImages',
+
+        // Warehouses
+        'property.warehouseUnits.images',
+        'property.warehouseType',
+
+        // Hostels
+        'property.hostelUnits',
+        'property.hostelImages',
+    ];
+
+    /** Status of one unit → is it free to take? */
+    private static function isVacant($unit): bool
+    {
+        $status = strtolower(trim((string) ($unit->status ?? '')));
+
+        return in_array($status, ['', 'vacant', 'available', 'open', 'unoccupied', 'empty', 'active', 'for sale', 'onsale'], true);
+    }
+
+    private static function mediaUrl(?string $path): string
+    {
+        $path = $path ? ltrim($path, '/') : '';
+
+        if ($path === '') return asset('img/default-property.jpg');
+        if (str_starts_with($path, 'http')) return $path;
+
+        return rtrim((string) env('MEDIA_URL'), '/') . '/' . $path;
+    }
+
+    /**
+     * A property's units grouped by unit type:
+     *   house / sale  → house unit type ("Bedsitter", "2 Bedroom" …)
+     *   land          → plot size ("50x100", "1/8 acre" …)
+     *   hostel        → beds + period ("4 beds · per month")
+     *   container     → size ("20ft")
+     *   office, shop, warehouse → one group per property
+     *
+     * Each group: key, kind, type_id, icon, label, total, vacant, min, max, suffix, price_display, image (URL).
+     */
+    private function unitGroups($property)
+    {
+        $icons = [
+            'house'     => 'fa-solid fa-house-chimney',
+            'sale'      => 'fa-solid fa-house-circle-check',
+            'land'      => 'fa-solid fa-expand',
+            'office'    => 'fa-regular fa-building',
+            'shop'      => 'fa-solid fa-store',
+            'container' => 'fa-solid fa-box',
+            'warehouse' => 'fa-solid fa-warehouse',
+            'hostel'    => 'fa-solid fa-bed',
+        ];
+
+        $fallbackImage = $property->featured_image ?? null;
+        $rows = collect();
+
+        // houses to rent / for sale: one group per house unit type
+        foreach (['house' => $property->houseUnits, 'sale' => $property->houseOnSaleUnits] as $kind => $units) {
+            foreach (collect($units)->groupBy('house_unit_type_id') as $typeId => $group) {
+                $type = $group->first()->type ?? null;
+                $image = $kind === 'sale'
+                    ? (optional(collect($property->houseOnSaleTypeImages ?? [])->where('house_unit_type_id', $typeId)->first())->image_path
+                        ?? $type?->images?->first()?->image_path)
+                    : $type?->images?->first()?->image_path;
+
+                $rows->push([$kind, $kind . '-' . $typeId, $typeId, $type->name ?? 'Unit', $group, '', $image]);
+            }
+        }
+
+        // land: one group per plot size
+        foreach (collect($property->landUnits)->groupBy(fn ($u) => trim($u->size . ' ' . strtolower(optional($u->measureUnit)->name ?? ''))) as $label => $group) {
+            $measureId = $group->first()->land_measure_unit_id ?? null;
+            $landImages = collect($property->landImages ?? []);
+            $image = optional($landImages->where('land_measure_unit_id', $measureId)->first())->image_path
+                ?? optional($landImages->first())->image_path;
+
+            $rows->push(['land', 'land-' . \Illuminate\Support\Str::slug($label ?: 'plot'), null, $label !== '' ? $label . ' plot' : 'Plot', $group, '', $image]);
+        }
+
+        // hostels: one group per beds + period
+        foreach (collect($property->hostelUnits)->groupBy(fn ($u) => (int) $u->total_beds . '-' . strtolower((string) $u->duration)) as $key => $group) {
+            $u = $group->first();
+            $beds = (int) $u->total_beds;
+            $label = $beds > 0 ? $beds . '-bed room' : 'Hostel room';
+            $suffix = $u->duration ? 'per ' . strtolower($u->duration) : '';
+
+            $rows->push(['hostel', 'hostel-' . $key, null, $label, $group, $suffix, collect($property->hostelImages ?? [])->first()?->image_path]);
+        }
+
+        // containers: one group per size; units_available is a count per row
+        foreach (collect($property->containers)->groupBy('size') as $size => $group) {
+            $image = optional(collect($property->containerImages)->where('container_size', $size)->first())->image_path
+                ?? optional(collect($property->containerImages)->first())->image_path;
+
+            $rows->push(['container', 'container-' . \Illuminate\Support\Str::slug($size ?: 'unit'), null, trim($size . ' container'), $group, '', $image]);
+        }
+
+        // offices, shops: one group each
+        foreach (['office' => [$property->officeUnits, $property->officeImages], 'shop' => [$property->shopUnits, $property->shopImages]] as $kind => [$units, $images]) {
+            $units = collect($units);
+            if ($units->isEmpty()) continue;
+
+            $first = $units->first();
+            $measure = $first->measure_unit ?? 'sqft';
+            $sizes = $units->pluck('size')->filter()->unique();
+            $noun = $kind === 'office' ? 'Office' : 'Shop';
+            $label = $sizes->count() === 1
+                ? $noun . ' · ' . rtrim(rtrim(number_format((float) $sizes->first(), 2), '0'), '.') . ' ' . $measure
+                : $noun . ' space';
+            $suffix = ($first->rental_mode ?? null) === 'by_size' ? 'per ' . $measure : '';
+
+            $rows->push([$kind, $kind, null, $label, $units, $suffix, collect($images)->first()?->image_path]);
+        }
+
+        // warehouses: one group
+        $warehouses = collect($property->warehouseUnits);
+        if ($warehouses->isNotEmpty()) {
+            $first = $warehouses->first();
+            $measure = $first->measure_unit ?? 'sqft';
+            $label = $first->mode === 'space' && $first->total_space
+                ? 'Warehouse · ' . rtrim(rtrim(number_format((float) $first->total_space, 2), '0'), '.') . ' ' . $measure
+                : 'Warehouse';
+            $suffix = $first->mode === 'space' ? 'per ' . $measure : '';
+
+            $rows->push(['warehouse', 'warehouse', null, $label, $warehouses, $suffix, $first->images?->first()?->image_path]);
+        }
+
+        return $rows->map(function ($row) use ($icons, $fallbackImage) {
+            [$kind, $key, $typeId, $label, $units, $suffix, $image] = $row;
+
+            $prices = $units->map(fn ($u) => (float) ($u->price ?? $u->unit_price ?? 0))->filter(fn ($p) => $p > 0);
+            $min = $prices->min() ?? 0;
+            $max = $prices->max() ?? 0;
+
+            if ($kind === 'container') {
+                $total = (int) $units->sum(fn ($u) => max(1, (int) ($u->units_available ?? 0)));
+                $vacant = (int) $units->sum(fn ($u) => max(0, (int) ($u->units_available ?? 0)));
+            } else {
+                $total = $units->count();
+                $vacant = $units->filter(fn ($u) => self::isVacant($u))->count();
+            }
+
+            $suffixText = $suffix !== '' ? ' ' . $suffix : '';
+
+            // each vacant unit, for the listing page (containers are counted, not numbered)
+            $vacantUnits = $kind === 'container' ? collect() : $units
+                ->filter(fn ($u) => self::isVacant($u))
+                ->map(function ($u) use ($kind) {
+                    $measure = $u->measure_unit ?? 'sqft';
+                    $size = fn ($v) => rtrim(rtrim(number_format((float) $v, 2), '0'), '.') . ' ' . $measure;
+
+                    $name = match ($kind) {
+                        'hostel'    => $u->room_number ?? $u->unit_number ?? null,
+                        'land'      => $u->plot_number ?? $u->unit_number ?? null,
+                        'warehouse' => $u->unit_number ?? null,
+                        default     => $u->unit_number ?? null,
+                    };
+
+                    $detail = match ($kind) {
+                        'office', 'shop' => ($u->rental_mode ?? null) === 'by_size' && !empty($u->remaining_space)
+                            ? $size($u->remaining_space) . ' left'
+                            : (!empty($u->size) ? $size($u->size) : null),
+                        'warehouse' => ($u->mode ?? null) === 'space'
+                            ? (!empty($u->total_space) ? $size($u->total_space) : null)
+                            : (!empty($u->unit_count) ? $u->unit_count . ' units' : null),
+                        default => null,
+                    };
+
+                    return (object) [
+                        'id'     => $u->id ?? null,
+                        'name'   => $name ? (string) $name : null,
+                        'detail' => $detail,
+                        'price'  => (float) ($u->price ?? $u->unit_price ?? 0),
+                    ];
+                })
+                ->values()
+                ->map(function ($u, $i) use ($kind) {
+                    // no unit number stored: "Unit 1", "Room 2", "Plot 3" …
+                    $u->name ??= match ($kind) { 'hostel' => 'Room', 'land' => 'Plot', 'office' => 'Office', 'shop' => 'Shop', 'warehouse' => 'Space', default => 'Unit' } . ' ' . ($i + 1);
+                    return $u;
+                });
+
+            return (object) [
+                'key'           => $key,
+                'kind'          => $kind,
+                'type_id'       => $typeId,
+                'icon'          => $icons[$kind] ?? 'fa-solid fa-building',
+                'label'         => $label,
+                'total'         => $total,
+                'vacant'        => $vacant,
+                'min'           => $min,
+                'max'           => $max,
+                'suffix'        => $suffix,
+                'price_display' => $min <= 0
+                    ? 'Price on request'
+                    : 'KES ' . number_format($min) . ($max > $min ? ' – ' . number_format($max) : '') . $suffixText,
+                'image'         => self::mediaUrl($image ?? $fallbackImage),
+                'vacant_units'  => $vacantUnits,
+            ];
+        })->values();
+    }
 
     /**
      * Display a single property with all related info
@@ -480,6 +445,9 @@ class PropertyController extends Controller
 
         'lister'
     ])->findOrFail($id);
+
+    // only listings of businesses with an active subscription that includes listing
+    abort_unless($listing->status === 'active' && array_key_exists($listing->lister_id, $this->listableAccounts()), 404);
 
     $property = $listing->property;
 
@@ -706,6 +674,13 @@ class PropertyController extends Controller
     };
 
     $property->location_label = $property->formatted_location;
+
+    /*
+    |------------------------------------------------------------
+    | UNIT TYPES: one card per type on the Units tab ("2 Bedroom · 3 of 8 vacant")
+    |------------------------------------------------------------
+    */
+    $property->unit_groups = $this->unitGroups($property);
 
     return view('HomeCity.Properties.viewProperty', compact('listing', 'property'));
 }

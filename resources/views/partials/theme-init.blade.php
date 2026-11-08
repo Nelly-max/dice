@@ -10,3 +10,4 @@
     })();
 </script>
 @include('partials.notify-flash')
+@include('partials.rider-request')

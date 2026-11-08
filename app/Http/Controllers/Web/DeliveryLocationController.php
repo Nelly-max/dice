@@ -20,12 +20,22 @@ class DeliveryLocationController extends Controller
                 'numeric',
                 'between:-180,180',
             ],
+            // what the buyer sees for this pin (shown on checkout, which can't change it)
+            'address' => ['nullable', 'string', 'max:255'],
+            'county' => ['nullable', 'string', 'max:120'],
+            'town' => ['nullable', 'string', 'max:120'],
         ]);
 
         $request->session()->put('delivery_location', [
             'latitude' => (float) $validated['latitude'],
             'longitude' => (float) $validated['longitude'],
+            'address' => $validated['address'] ?? null,
+            'county' => $validated['county'] ?? null,
+            'town' => $validated['town'] ?? null,
         ]);
+
+        // a new pin means a new delivery cost
+        $request->session()->forget('checkout.delivery');
 
         return response()->json([
             'success' => true,

@@ -99,6 +99,14 @@ class CheckoutController extends Controller
 
             if ($dbConnection === 'homemarket') {
                 $layout = 'HomeMarket.layouts.app';
+            } elseif ($dbConnection === 'liquorhub') {
+                $layout = 'LiquorHub.layouts.app';
+            } elseif ($dbConnection === 'glamroom') {
+                $layout = 'GlamRoom.layouts.app';
+            } elseif ($dbConnection === 'farmmarket') {
+                $layout = 'FarmMarket.layouts.app';
+            } elseif ($dbConnection === 'water') {
+                $layout = 'Water.layouts.app';
             }
         }
 
@@ -106,15 +114,39 @@ class CheckoutController extends Controller
         // Shipment title from session data
         //------------------------------------------------------------------
 
-        $shipmentTitle = $checkout['shipment'][0]['title'] ?? 'Shipment';
+        // the selected items grouped by shop (one shipment per shop)
+        $shipments = app(\App\Services\ShipmentService::class)->buildShipment($cartItems);
+
+        $shipmentTitle = count($shipments) === 1
+            ? $shipments[0]['shop_name']
+            : count($shipments) . ' shipments';
         $businessName  = $checkout['shipment'][0]['business_account'] ?? null;
 
         //------------------------------------------------------------------
         // View
         //------------------------------------------------------------------
 
+        //------------------------------------------------------------------
+        // Delivery location: the one the buyer chose while shopping (the
+        // cart was built for it). It can't be changed on this page.
+        //------------------------------------------------------------------
+
+        $saved = session('delivery_location');
+        $deliveryLocation = (is_array($saved) && isset($saved['latitude'], $saved['longitude'])
+            && is_numeric($saved['latitude']) && is_numeric($saved['longitude']))
+            ? [
+                'latitude'  => (float) $saved['latitude'],
+                'longitude' => (float) $saved['longitude'],
+                'address'   => $saved['address'] ?? null,
+                'county'    => $saved['county'] ?? null,
+                'town'      => $saved['town'] ?? null,
+            ]
+            : null;
+
         return view('Cart.checkout', [
+            'deliveryLocation' => $deliveryLocation,
             'cartItems'     => $cartItems,
+            'shipments'     => $shipments,
             'shipmentTitle' => $shipmentTitle,
             'businessName'  => $businessName,
             'itemCount'     => $itemCount,
@@ -215,11 +247,9 @@ class CheckoutController extends Controller
             $shipment['subdivision_id']
         );
 
+        // no setting for this subdivision: charge by the distance bands (distance_costs)
         if (!$setting) {
-            return [
-                'fee' => 0,
-                'band' => null,
-            ];
+            return $this->calculateGeneralDelivery($distance);
         }
 
         if ($setting->shipment_option === 'general') {
@@ -236,7 +266,7 @@ class CheckoutController extends Controller
         ];
     }
 
-    private function getSubdivisionDelivery(int $subdivisionId)
+    private function getSubdivisionDelivery(?int $subdivisionId)
     {
         return SubdivisionDelivery::where(
             'sub_division_id',
@@ -244,12 +274,26 @@ class CheckoutController extends Controller
         )->first();
     }
 
+    /**
+     * Fee for a road distance (km) from the distance_costs bands
+     * (distance_from – distance_to, unit km or m, cost). Past the last band
+     * the last band's cost applies.
+     */
     private function calculateGeneralDelivery(float $distance): array
     {
-        $band = DistanceCost::where('distance_from', '<=', $distance)
-            ->where('distance_to', '>=', $distance)
-            ->orderBy('distance_from')
-            ->first();
+        $bands = DistanceCost::orderBy('distance_from')->get();
+
+        $inUnit = function ($band) use ($distance) {
+            $unit = strtolower(trim((string) $band->unit));
+            return in_array($unit, ['m', 'meter', 'meters', 'metre', 'metres'], true) ? $distance * 1000 : $distance;
+        };
+
+        $band = $bands->first(fn ($b) => $inUnit($b) >= (float) $b->distance_from && $inUnit($b) <= (float) $b->distance_to)
+            ?? $bands->filter(fn ($b) => $inUnit($b) > (float) $b->distance_to)->sortByDesc(fn ($b) => (float) $b->distance_to)->first();
+
+        if (!$band) {
+            Log::warning('No delivery band for distance', ['distance_km' => $distance]);
+        }
 
         return [
             'fee' => (float) ($band->cost ?? 0),
@@ -296,10 +340,22 @@ class CheckoutController extends Controller
 
     public function calculateDistance(Request $request)
     {
-        $customerLat = (float) $request->latitude;
-        $customerLng = (float) $request->longitude;
+        // always the location saved in the session (the one the cart was built for),
+        // never coordinates sent by the browser
+        $location = app(\App\Services\DeliveryLocationService::class)->get($request);
 
-        $shipments = session('checkout.shipments', []);
+        if (!$location) {
+            return response()->json([
+                'code' => 'location_required',
+                'message' => 'Set your delivery location first.',
+            ], 422);
+        }
+
+        $customerLat = $location['latitude'];
+        $customerLng = $location['longitude'];
+
+        // cart.js saves the selected shops as checkout.shipment (one entry per shop)
+        $shipments = session('checkout.shipment', session('checkout.shipments', []));
 
         if (empty($shipments)) {
             return response()->json([
@@ -308,6 +364,7 @@ class CheckoutController extends Controller
         }
 
         $businesses = [];
+        $missing = [];      // shops whose road distance could not be worked out
         $totalFee = 0;
         $longestDistance = 0;
         $longestDuration = 0;
@@ -324,6 +381,8 @@ class CheckoutController extends Controller
                 empty($business->latitude) ||
                 empty($business->longitude)
             ) {
+                Log::warning('Delivery: shop location missing', ['shipment' => $shipment]);
+                $missing[] = $shipment['business_account'] ?? null;
                 continue;
             }
 
@@ -339,6 +398,7 @@ class CheckoutController extends Controller
             );
 
             if (!$route) {
+                $missing[] = $shipment['business_account'] ?? null;
                 continue;
             }
 
@@ -382,10 +442,20 @@ class CheckoutController extends Controller
             ];
         }
 
+        $complete = empty($missing);
+
+        // the invoice uses this figure, not one sent by the browser (CheckoutControllerV2)
+        session(['checkout.delivery' => [
+            'fee' => $complete ? $totalFee : null,
+            'latitude' => $customerLat,
+            'longitude' => $customerLng,
+        ]]);
+
         return response()->json([
             'distance' => $longestDistance,
             'duration' => $longestDuration,
-            'fee' => $totalFee,
+            'fee' => $complete ? $totalFee : null,
+            'complete' => $complete,
             'businesses' => $businesses,
         ]);
     }
@@ -398,9 +468,37 @@ class CheckoutController extends Controller
         float $toLng
     ): ?array
     {
+        // same shop + same pin: reuse the answer for 30 minutes (each Routes call is billed)
+        $key = 'road_km:' . md5(implode(',', array_map(fn ($n) => round($n, 5), [$fromLat, $fromLng, $toLat, $toLng])));
+
+        if ($cached = \Illuminate\Support\Facades\Cache::get($key)) {
+            return $cached;
+        }
+
+        try {
+            $route = $this->fetchRoadDistance($fromLat, $fromLng, $toLat, $toLng);
+        } catch (\Throwable $e) {
+            Log::error('Google Routes API unreachable', ['message' => $e->getMessage()]);
+            return null;
+        }
+
+        if ($route) {
+            \Illuminate\Support\Facades\Cache::put($key, $route, now()->addMinutes(30));
+        }
+
+        return $route;
+    }
+
+    private function fetchRoadDistance(
+        float $fromLat,
+        float $fromLng,
+        float $toLat,
+        float $toLng
+    ): ?array
+    {
         $response = Http::timeout(20)
             ->withHeaders([
-                'X-Goog-Api-Key' => env('GOOGLE_MAPS_API_KEY'),
+                'X-Goog-Api-Key' => config('services.google_maps.api_key'),   // env() is empty once config is cached
                 'X-Goog-FieldMask' => 'routes.distanceMeters,routes.duration',
             ])
             ->post('https://routes.googleapis.com/directions/v2:computeRoutes', [
