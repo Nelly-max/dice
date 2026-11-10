@@ -44,9 +44,16 @@ class Listing extends Model
         return $this->belongsTo(HouseUnitType::class, 'house_unit_type_id');
     }
 
+    /**
+     * Listing belongs to a HomeCity Business
+     */
     public function lister()
     {
-        return $this->belongsTo(\App\Models\User::class, 'lister_id');
+        return $this->belongsTo(
+            Business::class,
+            'lister_id',
+            'account'
+        );
     }
 
     /**

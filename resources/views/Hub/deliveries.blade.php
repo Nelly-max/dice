@@ -49,8 +49,8 @@
                                 default => ucwords(str_replace('_', ' ', $status)),
                             };
                         @endphp
-                        <tr class="delivery-row">
-                            <td data-label="Delivery"><strong>{{ $delivery->delivery_number ?? $delivery->id }}</strong></td>
+                        <tr class="delivery-row hub-row-link" data-href="{{ route('hub.deliveries.show', $delivery->id) }}">
+                            <td data-label="Delivery"><a class="hub-row-a" href="{{ route('hub.deliveries.show', $delivery->id) }}"><strong>{{ $delivery->delivery_number ?? $delivery->id }}</strong></a></td>
                             <td data-label="Shop">{{ $delivery->pickup_name ?? '—' }}</td>
                             <td data-label="Customer">{{ $delivery->customer_name ?? '—' }}</td>
                             <td data-label="Distance" class="is-num" data-value="{{ (float) ($delivery->distance_km ?? 0) }}">
@@ -63,8 +63,10 @@
                             <td data-label="Status">
                                 <span class="hub-pill hub-pill--{{ \Illuminate\Support\Str::slug($status) }}">{{ $statusLabel }}</span>
                             </td>
-                            <td class="emptyBack is-action" title="View">
-                                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                            <td class="emptyBack is-action">
+                                <a class="hub-row-go" href="{{ route('hub.deliveries.show', $delivery->id) }}" aria-label="View delivery {{ $delivery->delivery_number ?? $delivery->id }}">
+                                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                                </a>
                             </td>
                         </tr>
                     @empty

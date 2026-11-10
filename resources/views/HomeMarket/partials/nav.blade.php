@@ -52,16 +52,16 @@
     {{-- Sub-categories only. Edit the list in config/homemarket.php (nav_categories). --}}
     <nav class="hm-categories" aria-label="Categories">
         <div class="hm-categories-inner">
-            <a href="{{ route('homemarket.home') }}" @class(['active' => !request()->filled('category')])><i class="ri-dashboard-line" aria-hidden="true"></i> All categories</a>
+            <a href="{{ route('homemarket.home') }}" @class(['active' => request()->routeIs('homemarket.home') && !request()->filled('category')])><i class="ri-dashboard-line" aria-hidden="true"></i> All categories</a>
 
-            @foreach (config('homemarket.nav_categories') as $category)
-                @if ($category['category_id'])
-                    <a href="{{ route('homemarket.home', ['category' => $category['category_id']]) }}"
-                       @class(['active' => (int) request('category') === $category['category_id']])>{{ $category['label'] }}</a>
-                @else
-                    <a href="#">{{ $category['label'] }}</a>
-                @endif
-            @endforeach
+            {{-- only the shop's categories from its database (ShopCatalog::categories), each opening its category page --}}
+            @php $navCats = \App\Support\ShopCatalog::categories('homemarket'); @endphp
+            @if ($navCats->isNotEmpty())
+                @foreach ($navCats as $navCat)
+                    <a href="{{ route('homemarket.category', $navCat->id) }}"
+                       @class(['active' => request()->routeIs('homemarket.category') && (int) request()->route('id') === $navCat->id])>{{ $navCat->name }}</a>
+                @endforeach
+            @endif
         </div>
     </nav>
 </header>

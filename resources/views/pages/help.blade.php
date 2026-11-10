@@ -3,15 +3,23 @@
     $faq = [
         'Ordering' => [
             ['Why do I need to set a delivery location first?', "We only show shops that can deliver to you. Set your location once (tap \"Deliver to\" at the top) and we show shops within {$radiusKm} km, nearest first."],
-            ["Why can't I add items from another shop?", 'A cart holds items from one shop at a time so a single rider can deliver everything together. Finish or clear your current cart to shop somewhere else.'],
+            ['Can I shop in different subdivisions at once?', 'Yes. One cart can hold items from Home Market, Liquor Hub, Glam Room, Farm Market, Cooking Gas and the rest at the same time. Each subdivision is checked out and delivered on its own.'],
+            ["Why can't I add items from another shop in the same subdivision?", 'Within a subdivision your cart holds items from one shop, so a single rider can deliver them together. If you add an item from a different shop, we ask before replacing that subdivision\'s items; the rest of your cart stays.'],
+            ['What are Hot sales and Online exclusives?', 'Hot sales are the best-selling discounts in shops that deliver to you. Online exclusives are discounts you only get when you order on Smart Market. Find them on each shop\'s home page.'],
             ['Why did items disappear from my cart?', 'Items are held for you for a limited time. If the cart is left inactive, they are released so other customers can buy them. Just add them again.'],
             ['Can I change or cancel an order?', 'Contact support as soon as possible with your order number. Once the shop has prepared or sent your order, it may no longer be possible to change it.'],
         ],
         'Delivery' => [
             ['How far do you deliver?', "Shops deliver up to {$radiusKm} km from your delivery location."],
-            ['How much is delivery?', 'The delivery fee depends on the distance and is shown at checkout before you pay.'],
+            ['How much is delivery?', 'The delivery fee depends on the road distance from the shop to your delivery location and is shown at checkout before you pay.'],
+            ['Can I change my delivery location at checkout?', 'No. Your cart was filled from shops that deliver to the location you chose while shopping. To deliver somewhere else, change your location in the shop before you check out.'],
             ['How long does delivery take?', 'Most orders arrive quickly, but times are estimates and can change with traffic, weather or demand.'],
             ['Where can I follow my order?', 'Open My account → Orders to see every order and its status.'],
+        ],
+        'Services' => [
+            ['Who can buy from Liquor Hub?', 'Only customers aged 18 and over. The rider may ask for ID when delivering.'],
+            ['How do I order cooking gas?', 'Open Cooking Gas, choose your brand and cylinder size from a shop near you and tap Order. You can also browse by brand or by the shops closest to you.'],
+            ['How do I rent a house or book a stay?', 'Home City lists houses, bedsitters, hostels, shops, offices, warehouses, containers and land, with the vacant units for each property. Airbnb lists furnished stays. Use Book or Enquire to reach the lister.'],
         ],
         'Payment' => [
             ['How do I pay?', 'With M-Pesa. At checkout you get a payment request on your phone; enter your M-Pesa PIN to confirm. We never ask for your PIN anywhere else.'],

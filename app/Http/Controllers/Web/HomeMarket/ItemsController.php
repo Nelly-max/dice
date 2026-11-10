@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Log;
 
 class ItemsController extends Controller
 {
+    // category, Hot sales and Online exclusives pages + home page category tiles (shared by the shops)
+    use \App\Http\Controllers\Web\Concerns\ShopPages;
+
+    protected function shopKey(): string
+    {
+        return 'homemarket';
+    }
+
     public function __construct(
         private ShopDiscovery $shops,
         private ProductPresenter $presenter,
@@ -60,6 +68,7 @@ class ItemsController extends Controller
                 ? $this->shops->nearbyShops($context['location'], $context['radius'])
                 : collect(),
             'radiusKm'     => $context['radius'] ? $context['radius'] / 1000 : null,
+            'shop'         => $this->shopHome($context, $products),
             'hero'         => $this->media->images('Sliders'),
             'leaflets'     => [
                 1 => $this->media->images('Carousel_1'),

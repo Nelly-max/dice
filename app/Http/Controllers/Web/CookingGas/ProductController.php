@@ -15,20 +15,28 @@ class ProductController extends Controller
      */
     public function index()
     {
+        /*
+        | Home Market rules (App\Services\CookingGas\GasCatalog, applied by ->sellable()):
+        | subscribed shops with e-commerce, open, in stock; the cart's gas shop only once the
+        | cart has gas; otherwise shops within the delivery radius (all without a location).
+        */
+        $gas = app(\App\Services\CookingGas\GasCatalog::class)->context();
+
         $cylinders = BusinessGasInventory::query()
             ->select([
                 'gas_cylinder_id',
                 'gas_quantity_id',
                 'business_id',
+                DB::raw('MIN(id) as id'),                 // the stock row, for "Order" on the card
                 DB::raw('MIN(refill_price) as min_price'),
                 DB::raw('MAX(refill_price) as max_price'),
             ])
-            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+            ->sellable()   // Home Market rules: GasCatalog
             ->groupBy('gas_cylinder_id', 'gas_quantity_id', 'business_id')
             ->with([
                 'cylinder:id,brand_name',
                 'quantity:id,quantity',
-                'business:id,name',
+                'business:id,name,account',
             ])
             ->get();
 
@@ -38,8 +46,14 @@ class ProductController extends Controller
                 ->value('image_path');
         });
 
-        // Pass 'cylinders' to the view
-        return view('CookingGas.home', compact('cylinders'));
+        // "Shops near you" (like Home Market): open gas shops within the delivery radius, nearest first
+        $nearbyShops = app(GasPagesController::class)->nearbyShops($gas['location']);
+        $radiusKm = $gas['radius'] / 1000;
+        $hasLocation = (bool) $gas['location'];
+        $outOfRange = $gas['outOfRange'];
+        $cartShopName = $gas['cartShop']->name ?? null;
+
+        return view('CookingGas.home', compact('cylinders', 'nearbyShops', 'radiusKm', 'hasLocation', 'outOfRange', 'cartShopName'));
     }
 
 
@@ -61,7 +75,7 @@ class ProductController extends Controller
         $baseQuery = BusinessGasInventory::query()
             ->where('gas_cylinder_id', $request->cylinder)
             ->where('gas_quantity_id', $request->quantity)
-            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+            ->sellable()   // Home Market rules: GasCatalog
             ->with([
                 'cylinder:id,brand_name',
                 'quantity:id,quantity',
@@ -90,7 +104,7 @@ class ProductController extends Controller
             $product = BusinessGasInventory::query()
                 ->where('gas_cylinder_id', $request->cylinder)
                 ->where('gas_quantity_id', $request->quantity)
-                ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+                ->sellable()   // Home Market rules: GasCatalog
                 ->with([
                     'cylinder:id,brand_name',
                     'quantity:id,quantity',
@@ -158,7 +172,7 @@ class ProductController extends Controller
             ->where('gas_cylinder_id', $product->gas_cylinder_id)
             ->where('gas_quantity_id', $product->gas_quantity_id)
             ->where('business_id', '!=', $resolvedBusinessId)
-            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+            ->sellable()   // Home Market rules: GasCatalog
             ->with([
                 'business:id,name'
             ])
@@ -193,7 +207,7 @@ class ProductController extends Controller
         $stocks = BusinessGasInventory::query()
             ->where('gas_cylinder_id', $request->cylinder)
             ->where('gas_quantity_id', $request->quantity)
-            ->whereHas('business', fn ($q) => $q->ecommerceEnabled())
+            ->sellable()   // Home Market rules: GasCatalog
             ->with('business:id,name')
             ->orderBy('refill_price')
             ->get();
@@ -220,12 +234,35 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
-        $term = $request->get('term');
+        // "q" from the shop header search panel (hmsearch.js), "term" from older links
+        $term = trim((string) $request->get('q', $request->get('term', '')));
         $query = $this->getCylinderQuery();
 
         $query->when($term, function ($q) use ($term) {
-            $q->whereHas('cylinder', fn($sub) => $sub->where('brand_name', 'LIKE', "{$term}%"));
+            $q->whereHas('cylinder', fn($sub) => $sub->where('brand_name', 'LIKE', "%{$term}%"));
         });
+
+        // Header search panel: suggestions as JSON (same shape as Home Market's search)
+        if ($request->wantsJson()) {
+            $cylinders = $query->limit(10)->get();
+            $this->attachImages($cylinders);
+
+            return response()->json([
+                'products' => $cylinders->map(fn ($c) => [
+                    'url' => route('gas.cylinder.view', ['cylinder' => $c->gas_cylinder_id, 'quantity' => $c->gas_quantity_id]),
+                    'image' => $c->image
+                        ? rtrim(config('app.media_url'), '/') . '/' . ltrim($c->image, '/')
+                        : asset('img/placeholder.png'),
+                    'name' => $c->cylinder->brand_name ?? 'Gas',
+                    'variant' => is_numeric($c->quantity->quantity ?? null)
+                        ? $c->quantity->quantity . ' kg refill'
+                        : trim(($c->quantity->quantity ?? '') . ' refill'),
+                    'price' => (float) $c->min_price,
+                ])->values(),
+                'shops' => [],
+                'categories' => [],
+            ]);
+        }
 
         // For a dropdown, get() is usually better than paginate()
         $cylinders = $request->ajax() ? $query->limit(10)->get() : $query->paginate(20);
@@ -236,7 +273,7 @@ class ProductController extends Controller
             return view('CookingGas.partials.search', compact('cylinders'));
         }
 
-        return view('CookingGas.home', compact('cylinders'));
+        return view('CookingGas.search', ['cylinders' => $cylinders, 'term' => $term]);
     }
 
     /**
@@ -251,7 +288,7 @@ class ProductController extends Controller
                 DB::raw('MIN(refill_price) as min_price'),
                 DB::raw('MAX(refill_price) as max_price'),
             ])
-            ->whereHas('business', fn($q) => $q->ecommerceEnabled())
+            ->sellable()   // Home Market rules: GasCatalog
             ->groupBy('gas_cylinder_id', 'gas_quantity_id')
             ->with(['cylinder:id,brand_name', 'quantity:id,quantity']);
     }

@@ -38,8 +38,9 @@
 <h2 id="who-we-are">1. Who we are</h2>
 <p>
     Smart Market is an online marketplace operating in Kenya. Through our services, you may order products
-    from shops, including Home Market, find homes and other services, make payments using supported payment
-    methods, and interact with participating businesses and service providers.
+    from shops (Home Market, Liquor Hub, Glam Room, Farm Market, Cooking Gas and Water), find homes, spaces
+    and stays (Home City and Airbnb), make payments using supported payment methods, and interact with
+    participating businesses and service providers.
 </p>
 <p>
     Independent shops, service providers, riders and marketers may use Smart Market to provide services

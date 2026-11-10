@@ -17,11 +17,23 @@ class SubdivisionBranding
     /** Subdivisions that live under their own route prefix rather than /{weblink}. */
     private const HOME_ROUTES = [
         'home-market' => 'homemarket.home',
+        'liquor-hub'  => 'liquorhub.home',
+        'glam-room'   => 'glamroom.home',
+        'farm-market' => 'farmmarket.home',
+        'home-city'   => 'homecity.index',
+        'gas'         => 'gas.products.index',
+        'airbnb'      => 'airbnb.index',
+        'water'       => 'water.index',
     ];
 
     /** Subdivisions with their own footer partial; others get partials.shop-footer. */
     private const FOOTERS = [
         'home-market' => 'HomeMarket.partials.footer',
+        'liquor-hub'  => 'LiquorHub.partials.footer',
+        'glam-room'   => 'GlamRoom.partials.footer',
+        'farm-market' => 'FarmMarket.partials.footer',
+        'airbnb'      => 'Airbnb.partials.footer',
+        'water'       => 'Water.partials.footer',
         'home-city'   => 'HomeCity.partials.footer',
         'gas'         => 'CookingGas.partials.footer',
     ];

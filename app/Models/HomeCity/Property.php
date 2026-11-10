@@ -60,10 +60,14 @@ class Property extends Model
     }
 
     /** Lister */
-    public function lister()
-    {
-        return $this->belongsTo(Lister::class, 'lister_id');
-    }
+public function lister()
+{
+    return $this->belongsTo(
+        Business::class,
+        'lister_id',
+        'account'
+    );
+}
 
     public function extraCharges()
     {

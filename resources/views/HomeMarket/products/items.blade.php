@@ -1,4 +1,4 @@
-{{-- Item cards. Expects $products (presented by ProductPresenter). Photo, then price + Add, size, and the name at the bottom. --}}
+{{-- Item cards. Expects $products (presented by ProductPresenter). Photo (the only link to the product page), then price + Add (or "− qty +" once it is in the cart, App\Support\CartQuantities), size, and the name at the bottom. --}}
 @foreach ($products as $product)
     @php
         $size = collect([$product->variant_label ?? null, !empty($product->packaging_name) ? strtolower($product->packaging_name) : null])
@@ -20,26 +20,34 @@
                     @if ($product->has_discount)<s>{{ number_format($product->retail_price) }}</s>@endif
                 </span>
 
-                <button type="button" class="add-to-cart-btn"
-                        aria-label="Add {{ $product->product_name }} to cart"
-                        data-item-id="{{ $product->item_id }}"
-                        data-stockable-id="{{ $product->id }}"
-                        data-stockable-type="retail_inventory"
-                        data-business-account="{{ $product->business_account ?? '' }}"
-                        data-subdivision-code="{{ $product->subdivision_code ?? 'home_market' }}"
-                        data-product-name="{{ $product->product_name }}"
-                        data-image-url="{{ $product->image_url }}"
-                        data-price="{{ $product->final_price }}"
-                        data-variant-label="{{ $product->variant_label ?? '' }}">
-                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
-                </button>
+                @php $inCart = \App\Support\CartQuantities::for('retail_inventory', $product->id); @endphp
+                <div @class(['hm-cart-ctl', 'is-in-cart' => $inCart]) data-cart-key="retail_inventory:{{ $product->id }}" data-cart-id="{{ $inCart['id'] ?? '' }}">
+                    <button type="button" class="add-to-cart-btn"
+                            aria-label="Add {{ $product->product_name }} to cart"
+                            data-item-id="{{ $product->item_id }}"
+                            data-stockable-id="{{ $product->id }}"
+                            data-stockable-type="retail_inventory"
+                            data-business-account="{{ $product->business_account ?? '' }}"
+                            data-subdivision-code="{{ $product->subdivision_code ?? 'home_market' }}"
+                            data-product-name="{{ $product->product_name }}"
+                            data-image-url="{{ $product->image_url }}"
+                            data-price="{{ $product->final_price }}"
+                            data-variant-label="{{ $product->variant_label ?? '' }}">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add
+                    </button>
+                    <div class="hm-stepper" role="group" aria-label="{{ $product->product_name }} in your cart">
+                        <button type="button" class="hm-step" data-cart-step="decrease" aria-label="One less"><i @class(['fa-solid', 'fa-trash-can' => ($inCart['qty'] ?? 0) <= 1, 'fa-minus' => ($inCart['qty'] ?? 0) > 1]) aria-hidden="true"></i></button>
+                        <span class="hm-step-qty" data-step-qty aria-live="polite">{{ $inCart['qty'] ?? 0 }}</span>
+                        <button type="button" class="hm-step" data-cart-step="increase" aria-label="One more"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                    </div>
+                </div>
             </div>
 
             @if ($size !== '')
                 <span class="size">{{ $size }}</span>
             @endif
 
-            <a href="{{ route('item.view', $product->id) }}" class="name">{{ $product->product_name }}</a>
+            <p class="name">{{ $product->product_name }}</p>
         </div>
     </article>
 @endforeach

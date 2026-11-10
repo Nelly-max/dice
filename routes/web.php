@@ -11,6 +11,9 @@ use App\Http\Controllers\Web\DeliveryLocationController;
 
 use App\Http\Controllers\Web\HomeCity\PropertyController;
 use App\Http\Controllers\Web\HomeMarket\ItemsController;
+use App\Http\Controllers\Web\LiquorHub\ItemsController as LiquorItemsController;
+use App\Http\Controllers\Web\GlamRoom\ItemsController as GlamItemsController;
+use App\Http\Controllers\Web\FarmMarket\ItemsController as FarmItemsController;
 use App\Http\Controllers\Web\CookingGas\ProductController;
 
 use App\Http\Controllers\Web\Cart\CartController;
@@ -288,6 +291,11 @@ use App\Models\Customer\Cart;
 
     Route::prefix('home-market')->group(function () {
 
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [ItemsController::class, 'category'])->whereNumber('id')->name('homemarket.category');
+        Route::get('/deals', [ItemsController::class, 'deals'])->name('homemarket.deals');
+        Route::get('/online-exclusives', [ItemsController::class, 'exclusives'])->name('homemarket.exclusives');
+
         Route::get('/', [ItemsController::class, 'index'])
             ->name('homemarket.home');
 
@@ -299,6 +307,119 @@ use App\Models\Customer\Cart;
 
         Route::get('/product/viewItem/{inventoryId}', [ItemsController::class, 'ViewItem'])
             ->name('item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LIQUOR HUB ROUTES (same structure as Home Market)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('liquor-hub')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [LiquorItemsController::class, 'category'])->whereNumber('id')->name('liquorhub.category');
+        Route::get('/deals', [LiquorItemsController::class, 'deals'])->name('liquorhub.deals');
+        Route::get('/online-exclusives', [LiquorItemsController::class, 'exclusives'])->name('liquorhub.exclusives');
+
+        Route::get('/', [LiquorItemsController::class, 'index'])
+            ->name('liquorhub.home');
+
+        Route::get('/search', [LiquorItemsController::class, 'search'])
+            ->name('liquorhub.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [LiquorItemsController::class, 'ViewItem'])
+            ->name('liquorhub.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GLAM ROOM ROUTES (beauty - same structure as Home Market)
+    |--------------------------------------------------------------------------
+    | ?brand=Maybelline  ?shop_by=skin-type.oily  ?category=3
+    */
+
+    Route::prefix('glam-room')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [GlamItemsController::class, 'category'])->whereNumber('id')->name('glamroom.category');
+        Route::get('/deals', [GlamItemsController::class, 'deals'])->name('glamroom.deals');
+        Route::get('/online-exclusives', [GlamItemsController::class, 'exclusives'])->name('glamroom.exclusives');
+
+        Route::get('/', [GlamItemsController::class, 'index'])
+            ->name('glamroom.home');
+
+        Route::get('/search', [GlamItemsController::class, 'search'])
+            ->name('glamroom.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [GlamItemsController::class, 'ViewItem'])
+            ->name('glamroom.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FARM MARKET ROUTES (fresh produce - same structure as Home Market)
+    |--------------------------------------------------------------------------
+    | ?category=3  ?organic=1
+    */
+
+    Route::prefix('farm-market')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [FarmItemsController::class, 'category'])->whereNumber('id')->name('farmmarket.category');
+        Route::get('/deals', [FarmItemsController::class, 'deals'])->name('farmmarket.deals');
+        Route::get('/online-exclusives', [FarmItemsController::class, 'exclusives'])->name('farmmarket.exclusives');
+
+        Route::get('/', [FarmItemsController::class, 'index'])
+            ->name('farmmarket.home');
+
+        Route::get('/search', [FarmItemsController::class, 'search'])
+            ->name('farmmarket.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [FarmItemsController::class, 'ViewItem'])
+            ->name('farmmarket.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AIRBNB ROUTES (short stays; airbnb database, sample data in config/airbnb.php if it cannot be reached)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('airbnb')->group(function () {
+
+        Route::get('/', [\App\Http\Controllers\Web\Airbnb\StayController::class, 'index'])
+            ->name('airbnb.index');
+
+        // {id}: "<house>-<unit type>" for stays from the airbnb database, a number for the sample stays
+        Route::get('/stay/{id}', [\App\Http\Controllers\Web\Airbnb\StayController::class, 'show'])
+            ->where('id', '[0-9]+(-[0-9]+)?')
+            ->name('airbnb.stay');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WATER ROUTES (water database: refills, bottled water, clean water by truck, shops)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('water')->controller(\App\Http\Controllers\Web\Water\WaterController::class)->group(function () {
+
+        Route::get('/', 'index')->name('water.index');
+
+        Route::get('/refill', 'refill')->name('water.refill');
+        Route::get('/bottled', 'bottled')->name('water.bottled');
+        Route::get('/clean-water', 'clean')->name('water.clean');
+
+        Route::get('/shops', 'shops')->name('water.shops');
+        Route::get('/shops/{business}', 'shop')->whereNumber('business')->name('water.shop');
+
+        Route::get('/product/{id}', 'show')->whereNumber('id')->name('water.product');
     });
 
 
@@ -323,6 +444,17 @@ use App\Models\Customer\Cart;
 
         Route::get('/search', [ProductController::class, 'search'])
             ->name('search');
+
+        // browse pages: all refills (?brand= ?size=), brands, shops nearest first, one shop
+        Route::get('/cylinders', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'cylinders'])
+            ->name('gas.cylinders');
+        Route::get('/brands', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'brands'])
+            ->name('gas.brands');
+        Route::get('/shops', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'shops'])
+            ->name('gas.shops');
+        Route::get('/shops/{business}', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'shop'])
+            ->whereNumber('business')
+            ->name('gas.shop');
     });
 
 
@@ -345,6 +477,10 @@ use App\Models\Customer\Cart;
 
             Route::get('/referrals', [MarketerController::class, 'referrals'])
                 ->name('referrals');
+
+            Route::get('/referrals/{referral}', [MarketerController::class, 'referral'])
+                ->whereNumber('referral')
+                ->name('referrals.show');
 
             Route::get('/account', [ProfileController::class, 'index'])
                 ->name('account.index');
@@ -409,7 +545,8 @@ use App\Models\Customer\Cart;
             | FINANCE
             |--------------------------------------------------------------------------
             */
-            Route::get('/account/finance', fn () => view('Hub.finance'))
+            // rider payouts and marketer commission payouts (finance database)
+            Route::get('/account/finance', [\App\Http\Controllers\Web\Hub\FinanceController::class, 'index'])
                 ->name('account.finance');
 
             /*
@@ -420,6 +557,10 @@ use App\Models\Customer\Cart;
 
             Route::get('/deliveries', [DeliveryController::class, 'deliveries'])
                 ->name('deliveries');
+
+            Route::get('/deliveries/{delivery}', [DeliveryController::class, 'show'])
+                ->whereNumber('delivery')
+                ->name('deliveries.show');
 
             Route::get('/navigate/map', [RiderLocationController::class, 'navigate'])
                 ->name('navigate.map');

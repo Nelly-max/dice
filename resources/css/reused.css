@@ -1345,6 +1345,7 @@ footer{
     position: relative;
     top: 3em;
     margin-top: 3em;
+    z-index: -1;
 }
 
 .footer-top{
@@ -1958,3 +1959,82 @@ footer{
         font-size: .9em;
     }
 }
+
+/* iPhone / iPad: Safari zooms the page in when a field with text smaller than 16px is focused.
+   Text fields are 16px on iOS touch screens so typing no longer zooms (pinch-zoom still works). */
+@supports (-webkit-touch-callout: none) {
+    @media (pointer: coarse) {
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"]):not([type="color"]):not([readonly]),
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    }
+}
+
+/* ---------------------------------------------------------------------
+   Rider delivery request card (toast/toast.blade.php, #accept) — every page
+   --------------------------------------------------------------------- */
+#accept.toast.notificationAlert {
+    position: fixed; z-index: 100001; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom));
+    width: min(380px, calc(100vw - 24px)); max-width: none; transform: translate(-50%, 140%);
+    display: block; visibility: hidden; transition: transform .35s cubic-bezier(.2,.8,.2,1), visibility 0s .35s;
+}
+#accept.toast.notificationAlert.active { transform: translate(-50%, 0); visibility: visible; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+#accept .rq-inner {
+    display: flex; flex-direction: column; gap: 12px; padding: 14px;
+    border-radius: 18px; background: #fff; color: #14281c;
+    box-shadow: 0 18px 44px -12px rgba(10, 30, 20, .4), 0 2px 8px rgba(10, 30, 20, .08);
+    font-family: "Nunito", system-ui, sans-serif;
+}
+#accept .rq-head { display: flex; align-items: center; gap: 12px; }
+#accept .rq-pulse {
+    position: relative; display: grid; flex: none; place-items: center; width: 46px; height: 46px;
+    border-radius: 50%; background: #16a34a; color: #fff; font-size: 20px;
+}
+#accept.active .rq-pulse::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%; border: 3px solid #16a34a;
+    animation: rq-ring 1.4s ease-out infinite;
+}
+@keyframes rq-ring { from { transform: scale(1); opacity: .8; } to { transform: scale(1.7); opacity: 0; } }
+#accept .rq-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+#accept .rq-text strong { font-size: 1rem; font-weight: 800; }
+#accept #pickupStore { overflow: hidden; color: #374151; font-size: .86rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+#accept .rq-meta { color: #6b7280; font-size: .78rem; font-weight: 600; }
+#accept button.rq-accept {
+    position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 52px; padding: 0 16px; overflow: hidden;
+    border: 0; border-radius: 14px; background: #15803d; color: #fff;
+    font: 800 1rem/1 "Nunito", system-ui, sans-serif; cursor: pointer;
+}
+#accept button.rq-accept:disabled { opacity: .75; cursor: progress; }
+#accept button.rq-accept .acceptProgress {
+    position: absolute; inset: 0 auto 0 0; width: 100%; height: 100%;
+    background: #16a34a; transition: width .25s linear; z-index: 0;
+}
+#accept button.rq-accept i, #accept button.rq-accept span { position: relative; z-index: 1; }
+body.dark-mode #accept .rq-inner { background: #18211c; color: #e7efe9; }
+body.dark-mode #accept #pickupStore { color: #cbd5d0; }
+body.dark-mode #accept .rq-meta { color: #9fb0a6; }
+@media (prefers-reduced-motion: reduce) { #accept.active .rq-pulse::after { animation: none; } }
+
+/* Floating "back to the delivery map" button (toast/openDeliveryMap.blade.php) — every page */
+#activeDeliveryToast { position: static; }
+#activeDeliveryToast .bottom-toast { width: auto; }
+#activeDeliveryToast button.dm-fab {
+    position: fixed; z-index: 100000; right: 16px; bottom: calc(96px + env(safe-area-inset-bottom));
+    display: inline-flex; align-items: center; gap: 8px; width: auto; height: 52px; min-width: 52px; padding: 0 16px 0 14px;
+    border: 3px solid #fff; border-radius: 999px; background: #15803d; color: #fff;
+    box-shadow: 0 10px 26px -6px rgba(10, 40, 25, .45); font: 800 .85rem/1 "Nunito", system-ui, sans-serif; cursor: pointer;
+    animation: dm-fab-in .3s cubic-bezier(.2,.8,.2,1);
+}
+#activeDeliveryToast button.dm-fab i { font-size: 1.25rem; }
+#activeDeliveryToast button.dm-fab::before {
+    content: ""; position: absolute; inset: -3px; border-radius: inherit; pointer-events: none;
+    animation: dm-pulse 2s ease-out infinite;
+}
+@keyframes dm-pulse { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, .5); } 70%, 100% { box-shadow: 0 0 0 12px rgba(22, 163, 74, 0); } }
+#activeDeliveryToast .dm-fab-label { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 900px) { #activeDeliveryToast button.dm-fab { bottom: 24px; right: 24px; } }
+@keyframes dm-fab-in { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #activeDeliveryToast button.dm-fab, #activeDeliveryToast button.dm-fab::before { animation: none; } }

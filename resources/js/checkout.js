@@ -6,57 +6,36 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
 
+    // this file loads on every cart/checkout/payment page; only the checkout page has the form
+    const form = document.getElementById("checkout-form");
+    if (!form) return;
+
     //------------------------------------------------------------------
-    // Customer Delivery Location
+    // Delivery location: the one saved while shopping (the server put it
+    // in the page). It can't be changed here.
     //------------------------------------------------------------------
 
-    const deliveryLocation = JSON.parse(
-        localStorage.getItem("delivery_location")
-    );
+    const money = (n) => `KES ${Math.round(Number(n) || 0).toLocaleString()}`;
+    const deliveryDisplay = document.getElementById("delivery-cost-display");
+    const hasLocation = document.querySelector("[data-has-location]")?.dataset.hasLocation === "1";
 
-    const addressDisplay = document.getElementById("checkout-address-text");
+    const setTotals = (fee) => {
+        const subtotal = Number(document.getElementById("subtotal-display").dataset.subtotal);
+        const discount = Number(document.getElementById("discount-display").dataset.discount);
+        const total = subtotal + Number(fee || 0) - discount;
+        document.getElementById("grand-total-display").textContent = money(total);
+        document.querySelectorAll(".js-confirm-total").forEach(el => { el.textContent = money(total); });
+    };
 
-    if (!deliveryLocation) {
-
-        console.warn("Delivery location not found.");
-
-        if (addressDisplay) {
-            addressDisplay.innerHTML =
-                '<i class="fa-solid fa-map-pin"></i> No delivery location selected';
-        }
-
+    if (!hasLocation) {
+        if (deliveryDisplay) deliveryDisplay.textContent = "Set location";
+        form.dataset.deliveryReady = "";
         return;
     }
 
     //------------------------------------------------------------------
-    // Display selected address
-    //------------------------------------------------------------------
-
-    if (addressDisplay) {
-
-        addressDisplay.innerHTML =
-            `<i class="fa-solid fa-map-pin"></i> ${deliveryLocation.address}`;
-
-    }
-
-    //------------------------------------------------------------------
-    // Hidden form inputs
-    //------------------------------------------------------------------
-
-    document.getElementById("customer-lat").value =
-        deliveryLocation.latitude;
-
-    document.getElementById("customer-lng").value =
-        deliveryLocation.longitude;
-
-    document.getElementById("customer-county").value =
-        deliveryLocation.county ?? "";
-
-    document.getElementById("customer-town").value =
-        deliveryLocation.town ?? "";
-
-    //------------------------------------------------------------------
-    // Calculate delivery
+    // Delivery cost: road distance from each shop to the saved location,
+    // priced by the distance bands (CheckoutController@calculateDistance)
     //------------------------------------------------------------------
 
     try {
@@ -65,18 +44,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             `${window.location.origin}/cart/checkout/distance`,
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document
-                        .querySelector('meta[name="csrf-token"]')
-                        .content
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
                 },
-
-                body: JSON.stringify({
-                    latitude: deliveryLocation.latitude,
-                    longitude: deliveryLocation.longitude
-                })
+                body: "{}"
             }
         );
 
@@ -86,70 +59,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const data = await response.json();
 
-        console.log("Delivery:", data);
+        // distance per shop
+        (data.businesses || []).forEach(biz => {
+            const km = document.querySelector(`[data-route-account="${CSS.escape(String(biz.account))}"] [data-route-km]`);
+            if (km) km.textContent = `${Number(biz.distance).toFixed(1)} km`;
+        });
 
-        //------------------------------------------------------------------
-        // Update Distance
-        //------------------------------------------------------------------
-
-        const distanceLabel = document.getElementById("distance-km-label");
-
-        if (distanceLabel) {
-            distanceLabel.textContent =
-                `${Number(data.distance).toFixed(2)} km`;
+        if (!data.complete || data.fee === null || data.fee === undefined) {
+            throw new Error("Road distance unavailable for a shop");
         }
 
-        //------------------------------------------------------------------
-        // Update Delivery Fee
-        //------------------------------------------------------------------
-
-        const deliveryDisplay =
-            document.getElementById("delivery-cost-display");
-
         deliveryDisplay.dataset.delivery = data.fee;
-
-        deliveryDisplay.textContent =
-            `Ksh ${Number(data.fee).toLocaleString()}`;
-        
+        deliveryDisplay.textContent = Number(data.fee) > 0 ? money(data.fee) : "Free";
         document.getElementById("delivery-fee-input").value = data.fee;
+        form.dataset.deliveryReady = "1";
 
-        //------------------------------------------------------------------
-        // Update Grand Total
-        //------------------------------------------------------------------
-
-        const subtotal = Number(
-            document.getElementById("subtotal-display")
-                .dataset.subtotal
-        );
-
-        const discount = Number(
-            document.getElementById("discount-display")
-                .dataset.discount
-        );
-
-        const total = subtotal + Number(data.fee) - discount;
-
-        document.getElementById("grand-total-display").textContent =
-            `Ksh ${total.toLocaleString()}`;
-
-        document.querySelectorAll(".js-confirm-total").forEach(el => {
-            el.textContent = `Ksh ${total.toLocaleString()}`;
-        });
+        setTotals(data.fee);
 
     } catch (error) {
 
         console.error("Delivery calculation failed:", error);
 
-        const distanceLabel = document.getElementById("distance-km-label");
-
-        if (distanceLabel) {
-            distanceLabel.textContent = "Unavailable";
+        form.dataset.deliveryReady = "";
+        if (deliveryDisplay) {
+            deliveryDisplay.innerHTML = 'Unavailable <button type="button" class="cx-link" data-retry-delivery>Retry</button>';
         }
-
-        document.getElementById("delivery-cost-display").textContent =
-            "Unavailable";
     }
 
+});
+
+// "Retry" after a failed delivery cost: reload the page (cheap, the route is cached on the server)
+document.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest("[data-retry-delivery]")) location.reload();
 });
 
 
@@ -248,10 +189,37 @@ document.addEventListener('DOMContentLoaded', () => {
 |--------------------------------------------------------------------------
 */
 
-document.getElementById('confirm-order-btn')?.addEventListener('click', function (e) {
+document.getElementById('checkout-form')?.addEventListener('submit', function (e) {
 
-    e.preventDefault();
+    // no delivery location, or its cost isn't worked out yet: don't send the order
+    if (!document.getElementById('customer-lat')?.value) {
+        e.preventDefault();
+        if (window.notify) window.notify.error('Go back to the shop and set your delivery location first.');
+        return;
+    }
+    if (this.dataset.deliveryReady !== '1') {
+        e.preventDefault();
+        if (window.notify) window.notify.error('The delivery cost is still being worked out. Please wait a moment or tap Retry.');
+        return;
+    }
 
-    document.getElementById('checkout-form').submit();
+    if (!this.reportValidity()) {
+        e.preventDefault();
+        return;
+    }
 
+    // one order per tap
+    if (this.dataset.sending) {
+        e.preventDefault();
+        return;
+    }
+    this.dataset.sending = '1';
+    this.querySelectorAll('button[type="submit"], button[form="checkout-form"]').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+    });
+    document.querySelectorAll('button[form="checkout-form"]').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+    });
 });

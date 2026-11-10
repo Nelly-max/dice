@@ -1,3 +1,4 @@
+/* Home Market and Liquor Hub share these styles (same page structure); each shop's colours come from tokens.css */
 /*
 |--------------------------------------------------------------------------
 | Product cards + auto-sliding rows outside the HomeMarket layout
@@ -244,19 +245,19 @@ body.dark-mode[data-subdivision] .item-container .thumb { background: var(--surf
 /* v75: slider titles smaller and grey; compact arrow buttons */
 body[data-subdivision] .cards-slider .head { margin-bottom: .6rem; }
 body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading),
-body[data-subdivision="home-market"] .pdp-related .sub-heading,
+body:is([data-subdivision="home-market"], [data-subdivision="liquor-hub"], [data-subdivision="cooking-gas"], [data-subdivision="gas"], [data-subdivision="home-city"], [data-subdivision="soon"], [data-subdivision="airbnb"], [data-subdivision="water"], [data-subdivision="glam-room"], [data-subdivision="farm-market"]) .pdp-related .sub-heading,
 .fl-page .cart-picks .cards-slider .head .sub-heading {
     color: #6b7280; font-size: 1.05rem; font-weight: 800; letter-spacing: 0;
 }
 body.dark-mode[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { color: #a3a3a3; }
 body[data-subdivision] .cards-slider .head span { gap: .35rem; }
 body[data-subdivision] .cards-slider .head i,
-body[data-subdivision="home-market"] .cards-slider .head i {
+body:is([data-subdivision="home-market"], [data-subdivision="liquor-hub"], [data-subdivision="cooking-gas"], [data-subdivision="gas"], [data-subdivision="home-city"], [data-subdivision="soon"], [data-subdivision="airbnb"], [data-subdivision="water"], [data-subdivision="glam-room"], [data-subdivision="farm-market"]) .cards-slider .head i {
     width: 1.75rem; height: 1.75rem; padding: 0;
     border-radius: .5rem; font-size: .75rem;
 }
 @media (max-width: 40rem) {
     body[data-subdivision] .cards-slider .head :is(.sub-heading, .heading) { font-size: .98rem; }
     body[data-subdivision] .cards-slider .head i,
-    body[data-subdivision="home-market"] .cards-slider .head i { width: 1.6rem; height: 1.6rem; }
+    body:is([data-subdivision="home-market"], [data-subdivision="liquor-hub"], [data-subdivision="cooking-gas"], [data-subdivision="gas"], [data-subdivision="home-city"], [data-subdivision="soon"], [data-subdivision="airbnb"], [data-subdivision="water"], [data-subdivision="glam-room"], [data-subdivision="farm-market"]) .cards-slider .head i { width: 1.6rem; height: 1.6rem; }
 }
