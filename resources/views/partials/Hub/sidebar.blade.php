@@ -49,8 +49,8 @@
         <a href="#" class="hub-link is-soon" aria-disabled="true">
             <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Purchases</span><em>Soon</em>
         </a>
-        <a href="#" class="hub-link is-soon" aria-disabled="true">
-            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span><em>Soon</em>
+        <a href="{{ route('hub.bookings') }}" @class(['hub-link', 'active' => request()->routeIs('hub.bookings')])>
+            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span>
         </a>
 
         @if ($hasRiderAccount || $hasMarketerAccount)

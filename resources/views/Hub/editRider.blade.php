@@ -3,7 +3,7 @@
 
 @section('content')
 
-<div class="hub-content hub-dash no-sidebar fullground">
+<div class="hub-content hub-form hub-dash no-sidebar fullground">
 
     <form
         action="#"
@@ -18,11 +18,13 @@
             <div class="account-details">
 
                 {{-- HEADER --}}
-                <div class="account-detail top-area">
-
-                    <h4>Update your Details</h4>
-
-                </div>
+                @include('partials.Hub.page-hero', [
+                    'back' => route('hub.account.rider.index'),
+                    'tone' => 'rider',
+                    'icon' => 'fa-solid fa-user-pen',
+                    'title' => 'Edit your rider profile',
+                    'text' => 'Keep your details and M-Pesa number up to date so payouts reach you.',
+                ])
 
 
                 {{-- PERSONAL DETAILS --}}

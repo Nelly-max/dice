@@ -2,9 +2,7 @@
 
 @section('content')
 
-<div class="hub-content no-sidebar fullground">
-
-    @include('partials.Hub.back', ['fallback' => route('hub.account.rider.index')])
+<div class="hub-content hub-form no-sidebar fullground">
 
     {{-- photos are resized in the browser before sending (resources/js/upload-shrink.js) --}}
     <form action="{{ route('hub.account.rider.apply') }}"
@@ -17,15 +15,8 @@
 
         {{-- success message appears as a toast (partials/notify-flash) --}}
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        {{-- errors: a short summary here, each message above its own field --}}
+        @include('partials.form-errors')
 
 
         <div class="hub-dash">
@@ -33,9 +24,14 @@
     
                 <div class="account-details">
     
-                    <div class="account-detail top-area">
-                        <h4>Fill your personal Details</h4>
-                    </div>
+                    @include('partials.Hub.page-hero', [
+                        'back' => route('hub.account.rider.index'),
+                        'tone' => 'rider',
+                        'icon' => 'fa-solid fa-motorcycle',
+                        'title' => 'Become a Smart Market rider',
+                        'text' => 'Deliver orders from shops near you and get paid to your M-Pesa. It takes about 5 minutes.',
+                        'steps' => ['Your details', 'Vehicle', 'Area', 'Documents'],
+                    ])
     
     
                     <!-- PERSONAL DETAILS -->
@@ -203,7 +199,7 @@
                                 <input type="text"
                                     name="vehicle_make"
                                     value="{{ old('vehicle_make') }}"
-                                    placeholder="eg. Honda">
+                                    placeholder="eg. Honda (optional)">
     
                             </div>
     
@@ -221,7 +217,7 @@
                                 <input type="text"
                                     name="vehicle_model"
                                     value="{{ old('vehicle_model') }}"
-                                    placeholder="eg. Boxer 150">    
+                                    placeholder="eg. Boxer 150 (optional)">    
                             </div>
     
                         </span>
@@ -294,7 +290,6 @@
                                     </div>
                                     <input type="hidden" name="county_id" id="county_id" value="{{ old('county_id') }}" required>
                                 </div>
-                                @error('county_id') <small class="error">{{ $message }}</small> @enderror
                                 <h6 class="required">*</h6>
     
                             </div>
@@ -331,7 +326,6 @@
 
                                     <input type="hidden" name="town_id" id="town_id" value="{{ old('town_id') }}" required>
                                 </div>
-                                @error('town_id') <small class="error">{{ $message }}</small> @enderror 
                                 <h6 class="required">*</h6>
     
                             </div>
@@ -366,7 +360,6 @@
     
                                     <input type="hidden" name="place_id" id="place_id" value="{{ old('place_id') }}">
                                 </div>
-                                @error('town_id') <small class="error">{{ $message }}</small> @enderror 
                                 <h6 class="required">*</h6>
                             </div>
     

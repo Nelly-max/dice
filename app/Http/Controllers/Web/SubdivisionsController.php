@@ -49,7 +49,23 @@ class SubdivisionsController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        // Return the specific view for the subdivision
+        // Subdivisions with their own pages, whatever their weblink is called in the hub
+        $name = strtolower($subdivision->name . ' ' . $weblink);
+        $pages = [
+            'liquor' => 'liquorhub.home',   // hub weblink may be "liquorhub", "liquor_hub", ...
+            'glam'   => 'glamroom.home',
+            'farm'   => 'farmmarket.home',
+            'beauty' => 'glamroom.home',
+            'airbnb' => 'airbnb.index',
+            'water'  => 'water.index',
+        ];
+        foreach ($pages as $key => $route) {
+            if (str_contains($name, $key) && \Illuminate\Support\Facades\Route::has($route)) {
+                return redirect()->route($route);
+            }
+        }
+
+        // Anything else: the "coming soon" page
         return view('subdivision.details', compact('subdivision'));
     }
 }

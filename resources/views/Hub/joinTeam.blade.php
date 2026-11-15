@@ -2,20 +2,23 @@
 
 @section('content')
 
-    <div class="hub-content hub-dash no-sidebar fullground">
+    <div class="hub-content hub-form hub-dash no-sidebar fullground">
 
         <div class="left">
-
-            @include('partials.Hub.back', ['fallback' => route('hub.account.marketer.index')])
 
             <form method="POST" action="{{ route('hub.marketer.store') }}" data-notify-loading="Submitting…">
                 @csrf
 
                 <div class="account-details">
 
-                    <div class="account-detail top-area">
-                        <h4>Fill your personal details</h4>
-                    </div>
+                    @include('partials.Hub.page-hero', [
+                        'back' => route('hub.account.marketer.index'),
+                        'tone' => 'marketer',
+                        'icon' => 'fa-solid fa-bullhorn',
+                        'title' => 'Become a Smart Market marketer',
+                        'text' => 'Bring businesses on board with your own code and earn commission on their subscriptions.',
+                        'steps' => ['Your details', 'Payment'],
+                    ])
 
                     {{-- Personal Details --}}
                     <div class="account-detail">
@@ -91,7 +94,7 @@
 
                             <inv class="grid-checker">
 
-                                <div class="grid-check">
+                                <label class="grid-check">
                                     <input
                                         type="radio"
                                         name="gender"
@@ -100,9 +103,9 @@
                                     >
 
                                     <h5>Male</h5>
-                                </div>
+                                </label>
 
-                                <div class="grid-check">
+                                <label class="grid-check">
                                     <input
                                         type="radio"
                                         name="gender"
@@ -111,7 +114,7 @@
                                     >
 
                                     <h5>Female</h5>
-                                </div>
+                                </label>
 
                             </inv>
 

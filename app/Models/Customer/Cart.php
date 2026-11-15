@@ -57,7 +57,7 @@ class Cart extends Model
         return $query->where(
             'updated_at',
             '>',
-           now()->subDay()
+           now()->subDays((int) config('smartmarket.cart_keep_days', 30))
         );
     }
     

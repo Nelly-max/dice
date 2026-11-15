@@ -2,10 +2,14 @@
 <section class="category-icons main-cat-icons" aria-label="Categories">
     @foreach (config('homemarket.category_tiles') as $tile)
         @php
-            $href = $tile['href']
-                ?? (!empty($tile['category_id'])
-                    ? route('homemarket.home', ['category' => $tile['category_id']])
-                    : '#');
+            $tileLabel = mb_strtolower($tile['label'] ?? '');
+            $href = match (true) {
+                    str_contains($tileLabel, 'hot') => route('homemarket.deals'),
+                    str_contains($tileLabel, 'exclusive') => route('homemarket.exclusives'),
+                    !empty($tile['category_id']) => route('homemarket.category', $tile['category_id']),
+                    !empty($tile['href']) && $tile['href'] !== '#' => $tile['href'],
+                    default => route('homemarket.search', ['q' => $tile['label']]),
+                };
         @endphp
 
         <a href="{{ $href }}" class="category-icon">

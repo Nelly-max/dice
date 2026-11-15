@@ -62,8 +62,9 @@ class CheckoutControllerV2 extends Controller
             |--------------------------------------------------------------------------
             */
 
-            'county' => ['required', 'string'],
-            'town'   => ['required', 'string'],
+            // the place itself comes from the saved delivery location (session); these are only labels
+            'county' => ['nullable', 'string'],
+            'town'   => ['nullable', 'string'],
 
             'latitude'  => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
@@ -168,7 +169,28 @@ class CheckoutControllerV2 extends Controller
             return ($item->stockable->discount ?? 0) * $item->quantity;
         });
 
-        $delivery = (float) ($request->delivery_fee ?? 0);
+        /*
+        | Delivery: the location saved in the session (the one the cart was built for)
+        | and the fee CheckoutController@calculateDistance worked out for it from the
+        | road distance and the distance_costs bands. Nothing sent by the browser.
+        */
+        $location = session('delivery_location');
+        $quote = session('checkout.delivery');
+
+        if (
+            !is_array($location) || !isset($location['latitude'], $location['longitude']) ||
+            !is_array($quote) || !isset($quote['fee']) ||
+            round((float) $quote['latitude'], 6) !== round((float) $location['latitude'], 6) ||
+            round((float) $quote['longitude'], 6) !== round((float) $location['longitude'], 6)
+        ) {
+            return redirect()
+                ->route('cart.checkout')
+                ->with('error', 'We could not work out the delivery cost yet. Please try again.');
+        }
+
+        $delivery = (float) $quote['fee'];
+        $deliveryPlace = $location['address']
+            ?? trim(implode(', ', array_filter([$location['county'] ?? $request->county, $location['town'] ?? $request->town])), ', ');
 
         $total = $subtotal + $delivery - $discount;
 
@@ -192,6 +214,8 @@ class CheckoutControllerV2 extends Controller
 
         $invoice = DB::connection('customer')->transaction(function () use (
             $request,
+            $location,
+            $deliveryPlace,
             $customer,
             $paymentData,
             $invoiceData,
@@ -244,9 +268,9 @@ class CheckoutControllerV2 extends Controller
                 |--------------------------------------------------------------------------
                 */
 
-                'delivery_location' => $request->county . ', ' . $request->town,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'delivery_location' => $deliveryPlace ?: 'Pinned location',
+                'latitude' => $location['latitude'],
+                'longitude' => $location['longitude'],
                 'delivery_note' => $request->delivery_note,
 
                 /*

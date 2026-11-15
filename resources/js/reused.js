@@ -1076,6 +1076,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         calculateLayout();
 
+        // arrows and auto-slide on every row, as on the live site (the copies at both ends make it loop)
+
         originalCards.slice(-cardPerView).reverse().forEach(card => {
             track.insertAdjacentHTML("afterbegin", card.outerHTML);
         });

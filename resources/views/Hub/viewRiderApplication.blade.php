@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="hub-content no-sidebar fullground">
+<div class="hub-content hub-form no-sidebar fullground">
     <form
         action="{{ route('hub.account.rider.apply') }}"
         method="POST"
@@ -21,15 +21,8 @@
 
                 <div class="account-details">
 
-                    {{-- APPLICATION STATUS --}}
-                    <div class="account-detail top-area">
-
-                        <h4>
-                            Status -
-                            {{ ucfirst($rider->account_status ?? 'Pending') }}
-                        </h4>
-
-                    </div>
+                    {{-- APPLICATION STATUS: badge, Sent -> Review -> Decision steps, the team's note --}}
+                    @include('partials.Hub.application-status', ['rider' => $rider])
 
 
                     {{-- =================================================

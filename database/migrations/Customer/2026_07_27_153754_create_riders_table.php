@@ -115,7 +115,9 @@ return new class extends Migration
 
             ])->default('pending');
 
-            $table->text('rejection_reason')->nullable();
+            // a note from the team the rider can act on (any stage, not only a rejection)
+            $table->text('comment')->nullable();
+            $table->timestamp('comment_at')->nullable();
 
             $table->timestamp('verified_at')->nullable();
 

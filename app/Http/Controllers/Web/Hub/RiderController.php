@@ -47,6 +47,18 @@ public function riderAccount()
     $rider = Rider::where('customer_id', $customerId)
         ->first();
 
+    // not approved yet (pending, in review or not approved): the "Rider" page is the
+    // application itself, with its progress on top
+    // added as a rider by a business (account_status "business") but never applied:
+    // show the page as for someone without a rider account, so they can apply
+    if ($rider && $rider->account_status === 'business') {
+        return view('Hub.rider', ['rider' => null]);
+    }
+
+    if ($rider && in_array($rider->account_status, ['pending', 'processing', 'rejected'], true)) {
+        return redirect()->route('hub.account.rider.view');
+    }
+
     return view('Hub.rider', compact('rider'));
 }
 
@@ -268,7 +280,12 @@ public function updateRider(Request $request)
     {
         // one rider account per customer
         $existing = Rider::where('customer_id', Auth::guard('customer')->id())->first();
-        if ($existing) {
+
+        // a rider account a business created for this customer (status "business") is reused:
+        // the application fills it in and moves it to "pending" instead of creating a second account
+        $businessRider = $existing && $existing->account_status === 'business' ? $existing : null;
+
+        if ($existing && !$businessRider) {
             return redirect()
                 ->route('hub.account.rider.index')
                 ->with('info', 'You already have a rider account.');
@@ -300,8 +317,9 @@ public function updateRider(Request $request)
 
             // Vehicle
             'vehicle_type' => 'required|in:motorcycle,car,bicycle,van,truck',
-            'vehicle_make' => 'required|string',
-            'vehicle_model' => 'required|string',
+            // make and model are optional (the columns are NOT NULL, so blanks are saved as '')
+            'vehicle_make' => 'nullable|string|max:60',
+            'vehicle_model' => 'nullable|string|max:60',
             'plate_number' => 'required|string',
 
 
@@ -336,7 +354,7 @@ public function updateRider(Request $request)
 
 
 
-        DB::connection('customer')->transaction(function () use ($request) {
+        DB::connection('customer')->transaction(function () use ($request, $businessRider) {
 
 
             /*
@@ -345,7 +363,7 @@ public function updateRider(Request $request)
             |--------------------------------------------------------------------------
             */
 
-            $riderAccount = $this->generateRiderAccount();
+            $riderAccount = $businessRider ? $businessRider->rider_account : $this->generateRiderAccount();
 
 
 
@@ -357,7 +375,7 @@ public function updateRider(Request $request)
 
             $customer = Auth::guard('customer')->user();
 
-            $rider = Rider::create([
+            $riderData = [
 
                 'customer_id' => $customer->id,
 
@@ -385,7 +403,14 @@ public function updateRider(Request $request)
 
                 'account_status' => 'pending',
 
-            ]);
+            ];
+
+            if ($businessRider) {
+                $rider = Rider::whereKey($businessRider->id)->lockForUpdate()->firstOrFail();
+                $rider->fill($riderData)->save();
+            } else {
+                $rider = Rider::create($riderData);
+            }
 
 
 
@@ -550,7 +575,7 @@ public function updateRider(Request $request)
 
 
 
-            RiderPersonalDetail::create([
+            RiderPersonalDetail::updateOrCreate(['rider_id' => $rider->id], [
 
                 'rider_id' => $rider->id,
 
@@ -678,7 +703,7 @@ public function updateRider(Request $request)
             */
 
 
-            RiderCarDetail::create([
+            RiderCarDetail::updateOrCreate(['rider_id' => $rider->id], [
 
 
                 'rider_id' => $rider->id,
@@ -687,10 +712,10 @@ public function updateRider(Request $request)
                 'vehicle_type' => $request->vehicle_type,
 
 
-                'vehicle_make' => $request->vehicle_make,
+                'vehicle_make' => (string) ($request->vehicle_make ?? ''),
 
 
-                'vehicle_model' => $request->vehicle_model,
+                'vehicle_model' => (string) ($request->vehicle_model ?? ''),
 
 
                 'plate_number' => strtoupper($request->plate_number),

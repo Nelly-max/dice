@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.closeModal();
 
     const modal = document.getElementById(modalId);
-    if (!modal) return console.error("Modal not found:", modalId);
+    if (!modal) return; // element not in DOM yet — skip silently
 
     modal.classList.remove("closing");
     modal.style.display = "block";
