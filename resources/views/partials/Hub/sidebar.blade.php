@@ -17,24 +17,20 @@
 
 <aside class="sidebar hub-side" aria-label="Hub menu">
 
+    {{-- top: whose Hub this is (opens My account); the close button shows on phones only --}}
     <div class="hub-side-head">
-        <a href="{{ route('hub.index') }}" class="hub-brand">
-            <img src="{{ asset('img/favicon.webp') }}" alt="">
-            <span>Smart Market <small>Hub</small></span>
+        <a href="{{ route('hub.account.index') }}" class="hub-user" title="My account">
+            <img src="{{ $avatar }}" alt="">
+            <span>
+                <strong>{{ $customer->name }}</strong>
+                <small>{{ $customer->account }}</small>
+            </span>
         </a>
 
         <button type="button" class="hub-side-close remove-sidebar" aria-label="Close menu">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
     </div>
-
-    <a href="{{ route('hub.account.index') }}" class="hub-user" title="My account">
-        <img src="{{ $avatar }}" alt="">
-        <span>
-            <strong>{{ $customer->name }}</strong>
-            <small>{{ $customer->account }}</small>
-        </span>
-    </a>
 
     <nav class="hub-menu">
         <p class="hub-menu-label">Overview</p>
@@ -49,8 +45,8 @@
         <a href="#" class="hub-link is-soon" aria-disabled="true">
             <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Purchases</span><em>Soon</em>
         </a>
-        <a href="#" class="hub-link is-soon" aria-disabled="true">
-            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span><em>Soon</em>
+        <a href="{{ route('hub.bookings') }}" @class(['hub-link', 'active' => request()->routeIs('hub.bookings')])>
+            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span>
         </a>
 
         @if ($hasRiderAccount || $hasMarketerAccount)
@@ -63,6 +59,9 @@
             @if ($hasMarketerAccount)
                 <a href="{{ route('hub.referrals') }}" @class(['hub-link', 'active' => request()->routeIs('hub.referral*')])>
                     <i class="fa-solid fa-link" aria-hidden="true"></i><span>Referrals</span>
+                </a>
+                <a href="{{ route('hub.leads') }}" @class(['hub-link', 'active' => request()->routeIs('hub.leads*')])>
+                    <i class="fa-solid fa-store" aria-hidden="true"></i><span>Leads</span>
                 </a>
             @endif
         @endif

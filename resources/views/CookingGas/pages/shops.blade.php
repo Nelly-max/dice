@@ -1,0 +1,63 @@
+@extends('CookingGas.layouts.app')
+
+@section('title', 'Gas shops near you')
+
+@section('content')
+{{-- Gas shops (GasPagesController@shops): nearest to the saved delivery location first,
+     "Delivers to you" inside the delivery radius. Each card opens the shop's refills (gas.shop). --}}
+<main class="wrapper sp-page">
+
+    <nav class="sv-crumbs" aria-label="Breadcrumb">
+        <a href="{{ route('gas.products.index') }}">Cooking Gas</a>
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        <span>Shops</span>
+    </nav>
+
+    <header class="sp-hero">
+        <span class="sp-hero-icon" aria-hidden="true"><i class="fa-solid fa-store"></i></span>
+        <div class="sp-hero-text">
+            <h1>Gas shops near you</h1>
+            <p>
+                @if ($hasLocation) Nearest to your delivery location first. Shops within {{ $radiusKm }} km deliver to you.
+                @else Set your delivery location to see the gas shops closest to you.
+                @endif
+            </p>
+        </div>
+        @if (!$hasLocation)
+            <button type="button" class="sp-hero-tag" onclick="showModal('mapModal')"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Set location</button>
+        @endif
+    </header>
+
+    @if ($shops->isNotEmpty())
+        <div class="gp-grid">
+            @foreach ($shops as $s)
+                <a href="{{ $s->url }}" @class(['gp-card', 'gp-card--shop', 'is-far' => $hasLocation && !$s->delivers])>
+                    <span class="gp-mark" aria-hidden="true">{{ $s->initial }}@if ($s->open)<i class="gp-open"></i>@endif</span>
+                    <span class="gp-body">
+                        <strong>{{ $s->name }}</strong>
+                        <span class="gp-meta">
+                            @if ($s->distance_m !== null)
+                                <em class="gp-dist"><i class="fa-solid fa-route" aria-hidden="true"></i> {{ $s->distance_m < 100 ? 'Under 100 m' : number_format($s->distance_m / 1000, 1) . ' km' }}</em>
+                            @endif
+                            <b>From KES {{ number_format($s->from) }}</b>
+                            @if ($hasLocation)
+                                <em @class(['gp-tag', 'gp-tag--ok' => $s->delivers])>{{ $s->delivers ? 'Delivers to you' : 'Too far to deliver' }}</em>
+                            @endif
+                            @unless ($s->open)<em class="gp-tag">Closed now</em>@endunless
+                        </span>
+                    </span>
+                    <i class="fa-solid fa-chevron-right gp-go" aria-hidden="true"></i>
+                </a>
+            @endforeach
+        </div>
+    @else
+        @include('partials.shops-empty', [
+            'what' => 'gas shops',
+            'state' => ($outOfRange ?? false) ? 'far' : ($hasLocation ? 'none' : 'noloc'),
+            'radiusKm' => $radiusKm ?? null,
+            'homeUrl' => route('gas.products.index'),
+            'homeLabel' => 'Cooking Gas',
+        ])
+    @endif
+</main>
+@endsection

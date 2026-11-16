@@ -36,16 +36,18 @@ body.hub-body {
     overflow-x: clip;
 }
 body.hub-body.dark-mode {
+    /* green-tinted near-blacks (was blue-grey, which fought the green accent) */
     --hub-accent: #22c55e;
     --hub-accent-strong: #4ade80;
-    --hub-accent-soft: #0f2a1a;
-    --hub-bg: #0b0d10;
-    --hub-surface: #14171c;
-    --hub-surface-2: #1a1e24;
-    --hub-ink: #f3f4f6;
-    --hub-ink-2: #d1d5db;
-    --hub-muted: #9aa3af;
-    --hub-line: #252a32;
+    --hub-accent-soft: #102b1b;
+    --hub-bg: #0b0f0d;
+    --hub-surface: #141a17;
+    --hub-surface-2: #1a221e;
+    --hub-ink: #eef4f0;
+    --hub-ink-2: #cdd8d1;
+    --hub-muted: #94a59b;
+    --hub-line: #24302a;
+    color-scheme: dark;
     --hub-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 28px rgba(0, 0, 0, .35);
 }
 
@@ -147,6 +149,9 @@ body.hub-body .hub-side-close { display: none; width: 34px; height: 34px; border
 .hub-user span { display: grid; min-width: 0; }
 .hub-user strong { font-size: .9rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hub-user small { color: var(--hub-muted); font-size: .75rem; font-weight: 600; letter-spacing: .02em; }
+/* the account card is the top of the sidebar (the brand row is gone) */
+.hub-side-head .hub-user { flex: 1; min-width: 0; margin: 0; }
+body.hub-body .sidebar.close .hub-side-head .hub-user { flex: none; }
 
 .hub-menu { display: flex; flex-direction: column; gap: 2px; }
 .hub-menu-label { margin: 14px 10px 6px; color: var(--hub-muted); font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap; }
@@ -322,7 +327,7 @@ body.hub-body :is(.submit-data button, .button.submit-data button, .btn-continue
     text-decoration: none;
     opacity: 1;
     cursor: pointer;
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--hub-accent) 25%, transparent);
+    box-shadow: none;
     transition: background .15s ease, transform .1s ease;
 }
 body.hub-body :is(.submit-data button, .btn-continue, .wallet-buttons button, .add-event-btn):hover { background: var(--hub-accent-strong); }
@@ -418,7 +423,7 @@ body.hub-body .rightCalendar-side .today-date .event-day { font-size: 1.1rem; fo
 body.hub-body .rightCalendar-side .today-date .event-date { color: var(--hub-muted); font-size: .85rem; font-weight: 700; }
 body.hub-body .events .event { border-radius: 12px; background: var(--hub-surface-2); color: var(--hub-ink); }
 body.hub-body .events .no-event { color: var(--hub-muted); font-weight: 700; }
-body.hub-body .add-event { width: 44px; height: 44px; border: 0; border-radius: 14px; background: var(--hub-accent); color: #fff; box-shadow: 0 8px 18px color-mix(in srgb, var(--hub-accent) 35%, transparent); }
+body.hub-body .add-event { width: 44px; height: 44px; border: 0; border-radius: 14px; background: var(--hub-accent); color: #fff; box-shadow: none; }
 body.hub-body .add-event-wrapper { border-radius: 14px; background: var(--hub-surface); box-shadow: var(--hub-shadow); }
 body.hub-body .add-event-body .add-event-input input { border: 1px solid var(--hub-line); border-radius: 10px; background: var(--hub-surface); color: var(--hub-ink); }
 
@@ -1101,3 +1106,913 @@ body.hub-body .activator.rider button.is-locating { opacity: .85; cursor: progre
     body.hub-body .activator.rider button { width: 34px; padding: 0; justify-content: center; }
     body.hub-body .activator.rider button .rider-lbl-short { display: none; }
 }
+
+/* =====================================================================
+   Delivery / referral detail pages and the referral commission summary (hd-*)
+   ===================================================================== */
+body.hub-body .hub-content.hd-page { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: none; margin: 0; }
+.hd-back { display: inline-flex; align-items: center; gap: 8px; width: fit-content; color: var(--hub-muted); font-size: .85rem; font-weight: 800; text-decoration: none; }
+.hd-back:hover { color: var(--hub-accent-strong); }
+.hd-head { display: flex; align-items: center; gap: 14px; }
+.hd-head > div { flex: 1; min-width: 0; }
+.hd-head h1 { margin: 0; overflow: hidden; color: var(--hub-ink); font-size: 1.35rem; font-weight: 900; letter-spacing: -.01em; text-overflow: ellipsis; white-space: nowrap; }
+.hd-head p { margin: 2px 0 0; color: var(--hub-muted); font-size: .85rem; font-weight: 600; }
+.hd-head-icon { display: grid; flex: none; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--hub-accent-soft); color: var(--hub-accent-strong); font-size: 1.2rem; }
+.hd-cta { display: flex; align-items: center; justify-content: center; gap: 10px; height: 50px; border-radius: 14px; background: var(--hub-accent-strong); color: #fff; font-weight: 900; text-decoration: none; }
+.hd-cta:hover { background: var(--hub-accent); }
+
+.hd-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.hd-page .hd-stats { margin-bottom: 0; }
+.hd-stat { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--hub-line); border-radius: var(--hub-radius); background: var(--hub-surface); box-shadow: var(--hub-shadow); }
+.hd-stat > div { display: flex; flex-direction: column; min-width: 0; }
+.hd-stat small { color: var(--hub-muted); font-size: .75rem; font-weight: 800; }
+.hd-stat strong { color: var(--hub-ink); font-size: 1.08rem; font-weight: 900; white-space: nowrap; }
+.hd-stat-icon { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--hub-surface-2); color: var(--hub-ink-2); }
+.hd-stat.is-good .hd-stat-icon { background: #ecfdf3; color: #15803d; }
+.hd-stat.is-good strong { color: #15803d; }
+.hd-stat.is-wait .hd-stat-icon { background: #fffbeb; color: #b45309; }
+.hd-stats-note { grid-column: 1 / -1; margin: 0; color: var(--hub-muted); font-size: .82rem; font-weight: 600; }
+
+.hd-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.hd-list { display: grid; gap: 0; margin: 0; }
+.hd-list > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hub-line); }
+.hd-list > div:last-child { border-bottom: 0; }
+.hd-list dt { color: var(--hub-muted); font-size: .85rem; font-weight: 700; }
+.hd-list dd { margin: 0; color: var(--hub-ink); font-size: .88rem; font-weight: 800; text-align: right; }
+.hd-text { margin: 0 0 10px; color: var(--hub-ink-2); font-size: .9rem; line-height: 1.55; }
+.hd-sum { padding: 10px 12px; border-radius: var(--hub-radius-s); background: var(--hub-surface-2); }
+.hd-money { color: #15803d; font-weight: 900; }
+.hd-months { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hd-months li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px dashed var(--hub-line); border-radius: var(--hub-radius-s); color: var(--hub-muted); font-size: .88rem; font-weight: 700; }
+.hd-months li b { color: var(--hub-muted); font-weight: 800; }
+.hd-months li.is-paid { border-style: solid; border-color: #bbf7d0; background: #f0fdf4; color: var(--hub-ink-2); }
+.hd-months li.is-paid b { color: #15803d; }
+.hd-months li.is-wait { border-style: solid; border-color: #fde68a; background: #fffbeb; color: var(--hub-ink-2); }
+.hd-months li.is-wait b { color: #b45309; }
+.hd-money-wait { color: #b45309; font-weight: 800; }
+
+.hd-route { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.hd-route li { display: flex; gap: 12px; }
+.hd-route li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hd-route small { color: var(--hub-muted); font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.hd-route strong { color: var(--hub-ink); font-size: .98rem; font-weight: 900; }
+.hd-dot { flex: none; width: 14px; height: 14px; margin-top: 4px; border: 3px solid; border-radius: 50%; }
+.hd-dot.is-pickup { border-color: var(--hub-accent); }
+.hd-dot.is-drop { border-color: #ef4444; }
+.hd-actions { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; }
+.hd-actions a { display: inline-flex; align-items: center; gap: 6px; color: var(--hub-accent-strong); font-size: .82rem; font-weight: 800; text-decoration: none; }
+.hd-sub { margin: 18px 0 8px; color: var(--hub-ink); font-size: .9rem; font-weight: 900; }
+.hd-note { margin: 0; padding: 10px 12px; border-radius: var(--hub-radius-s); background: var(--hub-surface-2); color: var(--hub-ink); font-size: .9rem; font-weight: 600; line-height: 1.5; white-space: pre-wrap; }
+.hd-note.is-empty { color: var(--hub-muted); }
+
+.hd-timeline { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.hd-timeline li { position: relative; display: flex; gap: 12px; padding-bottom: 16px; }
+.hd-timeline li:not(:last-child)::before { content: ""; position: absolute; top: 34px; bottom: 2px; left: 15px; width: 2px; background: var(--hub-line); }
+.hd-timeline li.is-done:not(:last-child)::before { background: var(--hub-accent); }
+.hd-tl-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--hub-surface-2); color: var(--hub-muted); font-size: .8rem; }
+.hd-timeline li.is-done .hd-tl-icon { background: var(--hub-accent); color: #fff; }
+.hd-timeline li.is-cancel .hd-tl-icon { background: #fef2f2; color: #b91c1c; }
+.hd-timeline li > div { display: flex; flex-direction: column; }
+.hd-timeline strong { color: var(--hub-ink); font-size: .9rem; font-weight: 800; }
+.hd-timeline li:not(.is-done) strong { color: var(--hub-muted); }
+.hd-timeline small { color: var(--hub-muted); font-size: .78rem; font-weight: 600; }
+
+/* tables: full width, clickable rows, second line under a cell value */
+@media (min-width: 701px) {
+    /* responsive.css makes every .hub-content .table a block, so rows stopped short of the card's edge */
+    body.hub-body .hub-content table.hub-table { display: table; width: 100%; max-width: none; overflow: visible; }
+    body.hub-body .hub-table.hub-table--full :is(th, td) { padding-left: 14px; padding-right: 14px; }
+    body.hub-body .hub-table.hub-table--full :is(th, td):first-child { padding-left: 20px; }
+}
+body.hub-body .hub-table td small { display: block; margin-top: 2px; color: var(--hub-muted); font-size: .74rem; font-weight: 600; }
+body.hub-body .hub-row-link { cursor: pointer; }
+body.hub-body .hub-row-link:hover td { background: var(--hub-surface-2); }
+.hub-row-a { color: inherit; text-decoration: none; }
+.hub-row-go { display: inline-grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--hub-line); border-radius: 50%; color: var(--hub-muted); text-decoration: none; }
+.hub-row-go:hover { border-color: var(--hub-accent); color: var(--hub-accent-strong); }
+
+body.hub-body.dark-mode .hd-stat.is-good .hd-stat-icon { background: rgba(34, 197, 94, .14); }
+body.hub-body.dark-mode .hd-stat.is-wait .hd-stat-icon { background: rgba(245, 158, 11, .14); }
+@media (max-width: 760px) {
+    .hd-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .hd-stat { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 12px; }
+    .hd-stat-icon { width: 30px; height: 30px; border-radius: 9px; font-size: .8rem; }
+    .hd-stat strong { font-size: .92rem; white-space: normal; }
+    .hd-grid { grid-template-columns: 1fr; }
+    .hd-head h1 { font-size: 1.1rem; white-space: normal; }
+}
+
+/* Hub finance (Hub/finance.blade.php): header with Rider / Marketer tabs, four totals, payouts and earnings tables */
+.fin-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.fin-head h1 { margin: 0; color: var(--hub-ink); font-size: 1.45rem; font-weight: 900; }
+.fin-head p { margin: 2px 0 0; color: var(--hub-muted); font-size: .88rem; font-weight: 600; }
+.fin-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--hub-line); border-radius: 999px; background: var(--hub-surface); }
+.fin-tabs a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; color: var(--hub-muted); font-size: .86rem; font-weight: 800; text-decoration: none; }
+.fin-tabs a:hover { color: var(--hub-ink); }
+.fin-tabs a.is-active { background: var(--hub-accent-strong); color: #fff; }
+.hd-stats.fin-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.hd-stat.fin-due .hd-stat-icon { background: var(--hub-accent-strong); color: #fff; }
+.hd-stat.fin-due strong { color: var(--hub-accent-strong); }
+.fin-more { display: inline-flex; align-items: center; gap: 6px; color: var(--hub-accent-strong); font-size: .85rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.fin-more i { font-size: .7rem; }
+.fin-more:hover { text-decoration: underline; }
+.fin-fail { display: block; color: #b91c1c !important; }
+.fin-join { width: fit-content; height: 44px; margin-top: 8px; padding: 0 20px; }
+@media (max-width: 900px) { .hd-stats.fin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+    .fin-head { align-items: stretch; }
+    .fin-tabs { width: 100%; }
+    .fin-tabs a { flex: 1; justify-content: center; }
+}
+
+/* v2: finance cards carry a small line under the amount; deduction in red */
+.hd-stat em { color: var(--hub-muted); font-size: .74rem; font-style: normal; font-weight: 700; }
+.hd-stat.is-bad .hd-stat-icon { background: #fef2f2; color: #b91c1c; }
+.hd-stat.is-bad strong { color: #b91c1c; }
+body.hub-body.dark-mode .hd-stat.is-bad .hd-stat-icon { background: rgba(239, 68, 68, .14); }
+.hd-stats-note .fin-more { margin-left: 6px; }
+
+/* Referrals: performance (activated ÷ all) — green from 60%, orange under 60%, red under 40% */
+.ref-perf > div { flex: 1; }
+.ref-perf-bar { display: block; height: 6px; margin-top: 6px; border-radius: 999px; background: var(--hub-surface-2, #eef2f0); overflow: hidden; }
+.ref-perf-bar i { display: block; height: 100%; border-radius: inherit; background: #15803d; }
+.hd-stat.ref-perf.is-high .hd-stat-icon { background: #ecfdf3; color: #15803d; }
+.hd-stat.ref-perf.is-high strong { color: #15803d; }
+.hd-stat.ref-perf.is-mid { border-color: #fdba74; background: #fff7ed; }
+.hd-stat.ref-perf.is-mid .hd-stat-icon { background: #ffedd5; color: #c2410c; }
+.hd-stat.ref-perf.is-mid strong { color: #c2410c; }
+.hd-stat.ref-perf.is-mid .ref-perf-bar i { background: #f97316; }
+.hd-stat.ref-perf.is-low { border-color: #fca5a5; background: #fef2f2; }
+.hd-stat.ref-perf.is-low .hd-stat-icon { background: #fee2e2; color: #b91c1c; }
+.hd-stat.ref-perf.is-low strong { color: #b91c1c; }
+.hd-stat.ref-perf.is-low .ref-perf-bar i { background: #ef4444; }
+body.hub-body.dark-mode .hd-stat.ref-perf.is-mid { background: rgba(249, 115, 22, .1); border-color: rgba(249, 115, 22, .45); }
+body.hub-body.dark-mode .hd-stat.ref-perf.is-low { background: rgba(239, 68, 68, .1); border-color: rgba(239, 68, 68, .45); }
+
+/* Referrals table: All / This week / Pending / Active */
+.ref-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.ref-chips a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--hub-line); border-radius: 999px; background: var(--hub-surface); color: var(--hub-muted); font-size: .8rem; font-weight: 800; text-decoration: none; }
+.ref-chips a b { padding: 1px 7px; border-radius: 999px; background: var(--hub-surface-2, #eef2f0); color: var(--hub-ink); font-size: .72rem; }
+.ref-chips a:hover { color: var(--hub-ink); }
+.ref-chips a.is-active { border-color: var(--hub-accent-strong); background: var(--hub-accent-strong); color: #fff; }
+.ref-chips a.is-active b { background: rgba(255, 255, 255, .22); color: #fff; }
+@media (max-width: 700px) { .ref-chips { width: 100%; } }
+
+/* Gender and other choice pills: the whole pill is the <label>, so any part of it picks the option */
+body.hub-body .account-details .account-detail span .grid-check { cursor: pointer; user-select: none; }
+body.hub-body .account-details .account-detail span .grid-check:hover { border-color: var(--hub-accent); }
+body.hub-body .account-details .account-detail span .grid-check:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--hub-accent-soft); }
+body.hub-body .account-details .account-detail span .grid-check input { cursor: pointer; }
+
+/* =====================================================================
+   Account: rider application card (pending / in review / not approved / on hold).
+   Hidden once approved. The team's note shows as a message bubble.
+   ===================================================================== */
+body.hub-body .app-card { display: flex; flex-direction: column; gap: 18px; }
+body.hub-body .app-card-head { display: flex; align-items: flex-start; gap: 14px; }
+body.hub-body .app-card-head > div:nth-child(2) { flex: 1; min-width: 0; }
+body.hub-body .app-card .app-card-head .sub-heading { margin: 0; padding: 0; border: 0; }
+body.hub-body .app-card-sub { margin: 4px 0 0; color: var(--hub-muted); font-size: .88rem; font-weight: 600; line-height: 1.45; }
+body.hub-body .app-card-icon { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 14px; background: var(--hub-accent-soft); color: var(--hub-accent-strong); font-size: 1.1rem; }
+body.hub-body .app-card--rejected .app-card-icon { background: #fef2f2; color: #dc2626; }
+body.hub-body .app-card--hold .app-card-icon { background: #fff7ed; color: #c2410c; }
+
+body.hub-body .app-pill { flex: none; padding: 5px 12px; border-radius: 999px; font-size: .76rem; font-weight: 900; letter-spacing: .02em; white-space: nowrap; }
+body.hub-body .app-pill--waiting { background: #fef9c3; color: #854d0e; }
+body.hub-body .app-pill--review { background: #e0f2fe; color: #075985; }
+body.hub-body .app-pill--rejected { background: #fee2e2; color: #b91c1c; }
+body.hub-body .app-pill--hold { background: #ffedd5; color: #c2410c; }
+
+/* progress: sent -> review -> decision */
+body.hub-body .app-steps { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; counter-reset: none; }
+body.hub-body .app-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+body.hub-body .app-steps li::before {
+    content: "";
+    position: absolute;
+    top: 17px;
+    right: 50%;
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--hub-line);
+    z-index: 0;
+}
+body.hub-body .app-steps li:first-child::before { display: none; }
+body.hub-body .app-steps li.is-done::before,
+body.hub-body .app-steps li.is-now::before,
+body.hub-body .app-steps li.is-failed::before { background: var(--hub-accent); }
+body.hub-body .app-steps li.is-failed::before { background: linear-gradient(90deg, var(--hub-accent), #dc2626); }
+body.hub-body .app-steps li > i {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--hub-surface);
+    border-radius: 50%;
+    background: var(--hub-surface-2, #eef2f0);
+    color: var(--hub-muted);
+    font-size: .8rem;
+    box-shadow: 0 0 0 1px var(--hub-line);
+}
+body.hub-body .app-steps li.is-done > i { background: var(--hub-accent); color: #fff; box-shadow: none; }
+body.hub-body .app-steps li.is-now > i { background: var(--hub-surface); color: var(--hub-accent-strong); box-shadow: 0 0 0 2px var(--hub-accent); animation: app-pulse 1.8s ease-out infinite; }
+body.hub-body .app-steps li.is-failed > i { background: #dc2626; color: #fff; box-shadow: none; }
+body.hub-body .app-steps strong { margin-top: 4px; color: var(--hub-ink); font-size: .84rem; font-weight: 800; }
+body.hub-body .app-steps time,
+body.hub-body .app-steps em { color: var(--hub-muted); font-size: .74rem; font-style: normal; font-weight: 700; }
+@keyframes app-pulse { 0% { box-shadow: 0 0 0 2px var(--hub-accent), 0 0 0 0 color-mix(in srgb, var(--hub-accent) 40%, transparent); } 70% { box-shadow: 0 0 0 2px var(--hub-accent), 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 2px var(--hub-accent), 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { body.hub-body .app-steps li.is-now > i { animation: none; } }
+
+/* the team's note: a message bubble */
+body.hub-body .app-note { display: flex; align-items: flex-start; gap: 12px; margin: 0; }
+body.hub-body .app-note-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hub-accent), var(--hub-accent-strong));
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+}
+body.hub-body .app-note-bubble {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 4px 16px 16px 16px;
+    background: #fff5f5;
+}
+body.hub-body .app-card--hold .app-note-bubble { border-color: #fed7aa; background: #fffaf3; }
+body.hub-body .app-note-bubble::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -9px;
+    width: 10px;
+    height: 14px;
+    border-top: 1px solid #fecaca;
+    background: inherit;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+body.hub-body .app-card--hold .app-note-bubble::before { border-color: #fed7aa; }
+body.hub-body .app-note figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+body.hub-body .app-note figcaption strong { color: var(--hub-ink); font-size: .86rem; font-weight: 900; }
+body.hub-body .app-note figcaption time { color: var(--hub-muted); font-size: .74rem; font-weight: 700; white-space: nowrap; }
+body.hub-body .app-note blockquote { margin: 0; color: var(--hub-ink-2); font-size: .92rem; font-weight: 600; line-height: 1.55; }
+body.hub-body.dark-mode .app-note-bubble { border-color: rgba(248, 113, 113, .35); background: rgba(127, 29, 29, .18); }
+body.hub-body.dark-mode .app-card--hold .app-note-bubble { border-color: rgba(251, 146, 60, .35); background: rgba(124, 45, 18, .18); }
+body.hub-body.dark-mode .app-pill--waiting { background: rgba(234, 179, 8, .16); color: #fde68a; }
+body.hub-body.dark-mode .app-pill--review { background: rgba(14, 165, 233, .16); color: #7dd3fc; }
+body.hub-body.dark-mode .app-pill--rejected { background: rgba(239, 68, 68, .16); color: #fca5a5; }
+body.hub-body.dark-mode .app-pill--hold { background: rgba(249, 115, 22, .16); color: #fdba74; }
+
+body.hub-body .app-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+body.hub-body .app-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--hub-line);
+    border-radius: 999px;
+    background: var(--hub-surface);
+    color: var(--hub-ink);
+    font-size: .88rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+body.hub-body .app-btn:hover { border-color: var(--hub-accent); color: var(--hub-accent-strong); }
+body.hub-body .app-btn--primary { border-color: var(--hub-accent-strong); background: var(--hub-accent-strong); color: #fff; }
+body.hub-body .app-btn--primary:hover { color: #fff; filter: brightness(1.06); }
+@media (max-width: 520px) {
+    body.hub-body .app-card-head { flex-wrap: wrap; }
+    body.hub-body .app-actions .app-btn { flex: 1 1 100%; justify-content: center; }
+}
+
+/* Back button the layout adds to every Hub page that is not in the sidebar (layouts/hub) */
+body.hub-body .hub-backbar { display: flex; margin: 0 0 4px; }
+body.hub-body .hub-backbar:has(+ .hub-content.hub-dash) { max-width: 880px; margin: 0 auto 4px; }
+
+/* Notifications panel (partials/Hub/notifications): drops from the bell */
+body.hub-body .hub-notif {
+    position: fixed;
+    top: 72px;
+    right: 20px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    width: min(380px, calc(100vw - 24px));
+    max-height: min(70vh, 560px);
+    border: 1px solid var(--hub-line);
+    border-radius: 18px;
+    background: var(--hub-surface);
+    box-shadow: 0 24px 60px -24px rgba(15, 23, 42, .35), 0 2px 8px rgba(15, 23, 42, .06);
+    overflow: hidden;
+    animation: hub-notif-in .16s ease both;
+}
+body.hub-body .hub-notif[hidden] { display: none; }
+@keyframes hub-notif-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+body.hub-body .hub-notif-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--hub-line); }
+body.hub-body .hub-notif-head strong { color: var(--hub-ink); font-size: 1rem; font-weight: 900; }
+body.hub-body .hub-notif-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--hub-surface-2); color: var(--hub-ink); cursor: pointer; }
+body.hub-body .hub-notif-list { margin: 0; padding: 6px; overflow-y: auto; list-style: none; }
+body.hub-body .hub-notif-item { position: relative; display: flex; gap: 12px; padding: 12px 12px 12px 14px; border-radius: 12px; color: inherit; text-decoration: none; }
+body.hub-body .hub-notif-item:hover { background: var(--hub-surface-2); }
+body.hub-body .hub-notif-item.is-unread { background: var(--hub-accent-soft); }
+body.hub-body .hub-notif-item.is-unread::after { content: ""; position: absolute; top: 18px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--hub-accent); }
+body.hub-body .hub-notif-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px; background: var(--hub-surface); color: var(--hub-accent-strong); box-shadow: 0 0 0 1px var(--hub-line); font-size: .95rem; }
+body.hub-body .hub-notif-item > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-right: 14px; }
+body.hub-body .hub-notif-item strong { color: var(--hub-ink); font-size: .9rem; font-weight: 800; line-height: 1.3; }
+body.hub-body .hub-notif-item p { margin: 0; color: var(--hub-ink-2); font-size: .84rem; font-weight: 600; line-height: 1.45; }
+body.hub-body .hub-notif-item time { color: var(--hub-muted); font-size: .74rem; font-weight: 700; }
+body.hub-body .hub-notif-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 34px 22px; text-align: center; }
+body.hub-body .hub-notif-empty i { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 4px; border-radius: 50%; background: var(--hub-accent-soft); color: var(--hub-accent-strong); font-size: 1.2rem; }
+body.hub-body .hub-notif-empty strong { color: var(--hub-ink); font-weight: 900; }
+body.hub-body .hub-notif-empty small { color: var(--hub-muted); font-size: .84rem; font-weight: 600; }
+@media (max-width: 560px) {
+    body.hub-body .hub-notif { top: 64px; right: 12px; left: 12px; width: auto; }
+}
+
+/* the team's comment on an application while it is still open (pending / in review): a softer bubble */
+body.hub-body .app-card--waiting .app-note-bubble,
+body.hub-body .app-card--review .app-note-bubble { border-color: color-mix(in srgb, var(--hub-accent) 35%, var(--hub-line)); background: var(--hub-accent-soft); }
+body.hub-body .app-card--waiting .app-note-bubble::before,
+body.hub-body .app-card--review .app-note-bubble::before { border-color: color-mix(in srgb, var(--hub-accent) 35%, var(--hub-line)); }
+body.hub-body .app-note-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--hub-surface); color: var(--hub-accent-strong); font-size: .68rem; font-weight: 900; letter-spacing: .03em; vertical-align: 1px; }
+
+/* ==========================================================================
+   Application, profile and edit pages (rider, marketer, my account): revamp
+   ========================================================================== */
+
+/* the header card: partials/Hub/page-hero.blade.php */
+body.hub-body .account-details .account-detail.hub-hero {
+    --hero-a: #16a34a;
+    --hero-b: #0f766e;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 6px 18px;
+    padding: 26px 26px 22px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 22px;
+    background:
+        radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, .18) 0, transparent 55%),
+        linear-gradient(135deg, var(--hero-a), var(--hero-b));
+    color: #fff;
+    box-shadow: 0 14px 34px -18px color-mix(in srgb, var(--hero-a) 70%, transparent);
+}
+body.hub-body .account-details .account-detail.hub-hero--marketer { --hero-a: #ea580c; --hero-b: #be123c; }
+body.hub-body .account-details .account-detail.hub-hero--account { --hero-a: #2563eb; --hero-b: #7c3aed; }
+body.hub-body .account-details .account-detail.hub-hero::after {
+    content: "";
+    position: absolute;
+    right: -60px;
+    bottom: -90px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+    pointer-events: none;
+}
+body.hub-body .hub-hero-icon {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25);
+    font-size: 1.55rem;
+    color: #fff;
+}
+body.hub-body .hub-hero-text { min-width: 0; }
+body.hub-body .account-details .account-detail.hub-hero h1 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: #fff;
+    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: left;
+}
+body.hub-body .account-details .account-detail.hub-hero p {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, .88);
+    font-size: .95rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+body.hub-body .hub-hero-steps {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    position: relative;
+    z-index: 1;
+}
+body.hub-body .hub-hero-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 800;
+}
+body.hub-body .hub-hero-steps li b {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--hero-b);
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+/* hero extras: a status pill, Back / Edit buttons */
+body.hub-body .hub-hero-badge {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .22);
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+body.hub-body .hub-hero-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+    position: relative;
+    z-index: 1;
+}
+body.hub-body .hub-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background-color .15s, transform .15s;
+}
+body.hub-body .hub-hero-btn:hover { background: rgba(255, 255, 255, .26); transform: translateY(-1px); }
+body.hub-body .hub-hero-btn.is-solid { background: #fff; box-shadow: none; color: var(--hero-b); }
+body.hub-body .hub-hero-btn.is-solid:hover { background: rgba(255, 255, 255, .9); }
+
+/* cards on these pages: rounder, softly lifted */
+body.hub-body .hub-content.hub-form .account-details .account-detail,
+body.hub-body .hub-content:has(.top-area) .account-details .account-detail {
+    border-radius: 20px;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, .04), 0 10px 30px -12px rgba(17, 24, 39, .10);
+}
+
+/* numbered section headings on the form pages (the hero card is not counted) */
+body.hub-body .hub-content.hub-form { counter-reset: hub-sec; }
+body.hub-body .hub-content.hub-form .account-detail:not(.hub-hero, .app-card) > .sub-heading {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--hub-line);
+    color: var(--hub-ink);
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-align: left;
+}
+body.hub-body .hub-content.hub-form .account-detail:not(.hub-hero, .app-card) > .sub-heading::before {
+    counter-increment: hub-sec;
+    content: counter(hub-sec);
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: var(--hub-accent-soft);
+    color: var(--hub-accent-strong);
+    font-size: .85rem;
+    font-weight: 900;
+}
+
+/* fields: taller, soft fill, white with a ring on focus */
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail span {
+    border-bottom-style: solid;
+    border-bottom-color: color-mix(in srgb, var(--hub-line) 60%, transparent);
+}
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail span > h4 {
+    color: var(--hub-ink-2);
+    font-weight: 800;
+}
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail :is(input:not([type=file]):not([type=radio]):not([type=checkbox]):not(.option-search), select, textarea, .select-btn) {
+    min-height: 46px;
+    border: 1px solid var(--hub-line);
+    border-radius: 12px;
+    background: var(--hub-surface-2);
+    transition: border-color .15s, background-color .15s, box-shadow .15s;
+}
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail :is(input:not([type=file]):not([type=radio]):not([type=checkbox]):not(.option-search), select, textarea):hover { border-color: color-mix(in srgb, var(--hub-accent) 35%, var(--hub-line)); }
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail :is(input:not([type=file]):not([type=radio]):not([type=checkbox]):not(.option-search), select, textarea):focus {
+    outline: 0;
+    border-color: var(--hub-accent);
+    background: var(--hub-surface);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--hub-accent) 16%, transparent);
+}
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) .account-details .account-detail input[readonly] { background: var(--hub-surface); border-style: dashed; }
+
+/* uploads: a tile with an icon bubble, lifts on hover */
+body.hub-body .hub-content.hub-form .account-details .account-detail > .head {
+    margin: 10px 0 6px;
+    color: var(--hub-muted);
+    font-size: .75rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-align: left;
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select {
+    gap: 8px;
+    min-height: 9.5rem;
+    border: 1.5px dashed color-mix(in srgb, var(--hub-accent) 40%, var(--hub-line));
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--hub-accent) 8%, transparent) 0, transparent 60%),
+        var(--hub-surface-2);
+    color: var(--hub-ink-2);
+    transition: transform .15s, border-color .15s, box-shadow .15s, background-color .15s;
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select:hover {
+    transform: translateY(-2px);
+    border-color: var(--hub-accent);
+    box-shadow: 0 10px 22px -14px color-mix(in srgb, var(--hub-accent) 60%, transparent);
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select > i {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--hub-accent-soft);
+    font-size: 1.25rem;
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select h6 {
+    margin: 0;
+    color: var(--hub-ink-2);
+    font-size: .85rem;
+    font-weight: 800;
+    text-transform: capitalize;
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select h6::after {
+    content: "Tap to upload a photo";
+    display: block;
+    margin-top: 2px;
+    color: var(--hub-muted);
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: none;
+}
+body.hub-body .hub-content.hub-form .account-details .account-detail span .file-select:has(img) h6::after { content: "Tap to change"; }
+
+/* the send button: a gradient pill */
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) :is(.submit-data button, .button.submit-data button) {
+    min-height: 50px;
+    padding: 0 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--hub-accent), #0f766e);
+    box-shadow: none;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: .01em;
+}
+body.hub-body .hub-content:is(.hub-form, :has(.top-area)) :is(.submit-data button, .button.submit-data button):hover {
+    background: linear-gradient(135deg, var(--hub-accent-strong), #115e59);
+    box-shadow: none;
+}
+
+/* dark mode */
+body.hub-body.dark-mode .account-details .account-detail.hub-hero { box-shadow: none; }
+
+@media (max-width: 560px) {
+    body.hub-body .account-details .account-detail.hub-hero { grid-template-columns: 1fr; padding: 20px 18px 18px; border-radius: 18px; }
+    body.hub-body .hub-hero-icon { width: 48px; height: 48px; border-radius: 15px; font-size: 1.3rem; }
+    body.hub-body .hub-hero-steps { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; }
+    body.hub-body .hub-hero-steps li { flex: none; }
+    body.hub-body .hub-content:is(.hub-form, :has(.top-area)) :is(.submit-data button, .button.submit-data button) { width: 100%; }
+}
+
+/* a <form> wrapping a page's columns (edit marketer): it keeps the page's grid as it is */
+body.hub-body .hub-form-wrap { display: contents; }
+
+/* ==========================================================================
+   My account: the profile header (Hub/account.blade.php .acct-hero)
+   ========================================================================== */
+body.hub-body .account-details .account-detail.acct-hero {
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+}
+body.hub-body .acct-hero-main { display: flex; align-items: center; gap: 18px; min-width: 0; }
+
+body.hub-body .acct-avatar {
+    position: relative;
+    flex: none;
+    width: 92px;
+    height: 92px;
+    padding: 3px;
+    border-radius: 30px;
+    background: var(--hub-accent);              /* one colour ring */
+    cursor: pointer;
+    box-shadow: 0 8px 20px -14px rgba(17, 24, 39, .45);
+}
+body.hub-body .account-details .account-detail .acct-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 26px;
+    border: 3px solid var(--hub-surface);
+    background: var(--hub-surface-2);
+    object-fit: cover;
+    box-shadow: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+body.hub-body .acct-avatar input { display: none; }
+body.hub-body .acct-avatar-edit {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--hub-surface);
+    border-radius: 50%;
+    background: var(--hub-ink);
+    color: #fff;
+    font-size: .72rem;
+    pointer-events: none;
+    transition: transform .15s;
+}
+body.hub-body .acct-avatar:hover .acct-avatar-edit { transform: scale(1.1); }
+
+body.hub-body .acct-id { min-width: 0; }
+body.hub-body .account-details .account-detail.acct-hero .acct-id h2 {
+    margin: 0 0 10px;
+    overflow: hidden;
+    color: var(--hub-ink);
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+body.hub-body .acct-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+body.hub-body .acct-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 11px;
+    border: 1px solid var(--hub-line);
+    border-radius: 999px;
+    background: var(--hub-surface);
+    color: var(--hub-ink-2);
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+body.hub-body .acct-chip i { font-size: .8rem; opacity: .8; }
+body.hub-body .acct-chip.is-customer { border-color: transparent; background: #eef2ff; color: #4338ca; }
+body.hub-body .acct-chip.is-rider { border-color: transparent; background: #e0f2fe; color: #0369a1; }
+body.hub-body .acct-chip.is-marketer { border-color: transparent; background: #fff1e6; color: #c2410c; }
+
+/* approved disbursements */
+body.hub-body .acct-wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+body.hub-body .acct-wallet {
+    --w: #0284c7;
+    --w-soft: #e0f2fe;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 16px 16px 14px;
+    border: 1px solid var(--hub-line);
+    border-radius: 18px;
+    background: var(--hub-surface);
+    color: var(--hub-ink);
+    text-decoration: none;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+body.hub-body .acct-wallet.is-marketer { --w: #ea580c; --w-soft: #ffedd5; }
+body.hub-body .acct-wallet:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--w) 45%, var(--hub-line)); box-shadow: 0 10px 22px -18px rgba(17, 24, 39, .35); }
+body.hub-body .acct-wallet > i:first-child {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: var(--w-soft);
+    color: var(--w);
+    font-size: 1.1rem;
+}
+body.hub-body .acct-wallet > div { display: grid; gap: 2px; min-width: 0; }
+body.hub-body .acct-wallet small { color: var(--hub-muted); font-size: .72rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+body.hub-body .acct-wallet strong { color: var(--hub-ink); font-size: 1.35rem; font-weight: 900; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+body.hub-body .acct-wallet em { overflow: hidden; color: var(--hub-muted); font-size: .8rem; font-style: normal; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+body.hub-body .acct-wallet-go { color: var(--hub-muted); font-size: .8rem; transition: transform .15s, color .15s; }
+body.hub-body .acct-wallet:hover .acct-wallet-go { color: var(--w); transform: translateX(3px); }
+
+/* role shortcuts */
+body.hub-body .acct-shortcuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; padding-top: 18px; border-top: 1px solid var(--hub-line); }
+body.hub-body .acct-shortcut {
+    --s: #ea580c;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--hub-line);
+    border-radius: 16px;
+    background: var(--hub-surface);
+    color: var(--hub-ink);
+    text-decoration: none;
+    transition: transform .15s, border-color .15s, background-color .15s;
+}
+body.hub-body .acct-shortcut.is-rider { --s: #0284c7; }
+body.hub-body .acct-shortcut.is-finance { --s: #ca8a04; }
+body.hub-body .acct-shortcut:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--s) 45%, var(--hub-line)); background: color-mix(in srgb, var(--s) 5%, var(--hub-surface)); }
+body.hub-body .acct-shortcut > i {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--s) 13%, var(--hub-surface));
+    color: var(--s);
+}
+body.hub-body .acct-shortcut > div { display: grid; gap: 1px; min-width: 0; }
+body.hub-body .acct-shortcut b { font-size: .92rem; font-weight: 900; }
+body.hub-body .acct-shortcut small { overflow: hidden; color: var(--hub-muted); font-size: .76rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+body.hub-body.dark-mode .acct-chip.is-customer { background: rgba(99, 102, 241, .16); color: #a5b4fc; }
+body.hub-body.dark-mode .acct-chip.is-rider { background: rgba(14, 165, 233, .16); color: #7dd3fc; }
+body.hub-body.dark-mode .acct-chip.is-marketer { background: rgba(249, 115, 22, .16); color: #fdba74; }
+body.hub-body.dark-mode .acct-wallet { --w-soft: rgba(14, 165, 233, .14); }
+body.hub-body.dark-mode .acct-wallet.is-marketer { --w-soft: rgba(249, 115, 22, .14); }
+body.hub-body.dark-mode .acct-avatar-edit { background: var(--hub-accent); }
+
+@media (max-width: 560px) {
+    body.hub-body .account-details .account-detail.acct-hero { padding: 18px; gap: 16px; }
+    body.hub-body .acct-hero-main { gap: 14px; }
+    body.hub-body .acct-avatar { width: 74px; height: 74px; border-radius: 24px; padding: 3px; }
+    body.hub-body .account-details .account-detail .acct-avatar img { border-radius: 21px; }
+    body.hub-body .acct-shortcuts { grid-template-columns: 1fr; }
+    body.hub-body .acct-shortcut small { white-space: normal; }
+    body.hub-body .acct-wallet em { white-space: normal; }
+}
+
+/* ==========================================================================
+   My account layout: the header across the top, then the profile form and, while a rider
+   application is open, its status card beside it (right column, stays in view)
+   ========================================================================== */
+body.hub-body .hub-content.hub-account.hub-dash {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "top" "left" "right";
+    gap: 20px;
+    max-width: none;                          /* the full content area, like the other Hub pages */
+    margin: 0;
+}
+body.hub-body .hub-content.hub-account.hub-dash > .acct-top { grid-area: top; min-width: 0; }
+body.hub-body .hub-content.hub-account.hub-dash > .left { grid-area: left; min-width: 0; }
+body.hub-body .hub-content.hub-account.hub-dash > .right { grid-area: right; min-width: 0; }
+body.hub-body .hub-content.hub-account.hub-dash > :is(.acct-top, .left, .right) > .account-details { margin: 0; }
+
+@media (min-width: 1100px) {
+    body.hub-body .hub-content.hub-account.hub-dash:has(> .right) {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+        grid-template-areas: "top top" "left right";
+        align-items: start;
+    }
+    body.hub-body .hub-content.hub-account.hub-dash > .right { position: sticky; top: 88px; }
+}
+/* phones and tablets: an open application matters more than the form, so it comes first */
+@media (max-width: 1099.98px) {
+    body.hub-body .hub-content.hub-account.hub-dash:has(> .right) { grid-template-areas: "top" "right" "left"; }
+}
+
+/* the header photo saves on its own */
+body.hub-body .acct-avatar-form { position: relative; flex: none; margin: 0; }
+body.hub-body .acct-avatar:focus-visible { outline: 3px solid color-mix(in srgb, var(--hub-accent) 45%, transparent); outline-offset: 3px; }
+body.hub-body .acct-avatar-busy {
+    position: absolute;
+    inset: 4px;
+    display: none;
+    place-items: center;
+    border-radius: 26px;
+    background: rgba(17, 24, 39, .45);
+    color: #fff;
+    font-size: 1.3rem;
+}
+body.hub-body .acct-avatar.is-busy .acct-avatar-busy { display: grid; }
+body.hub-body .acct-avatar.is-busy .acct-avatar-edit { display: none; }
+body.hub-body .acct-avatar-error {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 2;
+    width: max-content;
+    max-width: 240px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: .76rem;
+    font-weight: 800;
+    box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .4);
+}
+
+/* =====================================================================
+   Leads (marketers): Hub/leads, Hub/leadForm, Hub/lead
+   ===================================================================== */
+.lead-pill--new { background: #e0f2fe; color: #0369a1; }
+.lead-pill--contacted { background: #ede9fe; color: #6d28d9; }
+.lead-pill--interested { background: #fffbeb; color: #b45309; }
+.lead-pill--onboarded { background: #ecfdf3; color: #15803d; }
+.lead-pill--not_interested { background: var(--hub-surface-2); color: var(--hub-muted); }
+.lead-add { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border-radius: 11px; background: var(--hub-accent); color: #fff; font-size: .88rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.lead-add:hover { background: var(--hub-accent-strong); color: #fff; }
+body.hub-body .account-details .account-detail span h4 .lead-opt { margin-left: 4px; color: var(--hub-muted); font-size: .72rem; font-weight: 600; }
+body.hub-body .account-details .account-detail span .lead-addr { display: flex; gap: 8px; align-items: center; min-width: 0; padding: 0; border: 0; }
+body.hub-body .account-details .account-detail span .lead-addr input { flex: 1; min-width: 0; }
+.lead-gps { display: inline-flex; flex: none; align-items: center; gap: 7px; height: 42px; padding: 0 13px; border: 1px dashed var(--hub-line); border-radius: 11px; background: var(--hub-surface); color: var(--hub-accent); font: inherit; font-size: .82rem; cursor: pointer; white-space: nowrap; }
+.lead-gps b { font-weight: 800; }
+.lead-gps:hover { border-style: solid; border-color: var(--hub-accent); background: var(--hub-accent-soft); }
+.lead-gps.is-set { border-style: solid; border-color: #16a34a; color: #15803d; }
+.lead-gps:disabled { opacity: .7; cursor: progress; }
+body.hub-body .account-details .account-detail span.lead-notes { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+body.hub-body .account-details .account-detail span.lead-notes textarea[name][rows][maxlength] { height: auto; min-height: 96px; padding: 10px 12px; resize: vertical; font-family: inherit; }
+@media (max-width: 640px) {
+    body.hub-body .account-details .account-detail span .lead-addr { flex-direction: column; align-items: stretch; }
+    .lead-gps { justify-content: center; }
+    .hub-table-tools .lead-add { width: 100%; justify-content: center; }
+}
+
+/* a lead's stage: New → Contacted → Interested → Onboarded */
+.lead-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 6px 0 12px; padding: 0; list-style: none; }
+.lead-flow li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.lead-flow li::before { content: ''; position: absolute; top: 19px; left: calc(-50% + 24px); right: calc(50% + 24px); height: 3px; border-radius: 3px; background: var(--hub-line); }
+.lead-flow li:first-child::before { display: none; }
+.lead-flow li:is(.is-done, .is-current)::before { background: var(--hub-accent); }
+.lead-flow-dot { display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--hub-line); border-radius: 50%; background: var(--hub-surface); color: var(--hub-muted); font-size: .9rem; }
+.lead-flow li.is-done .lead-flow-dot { border-color: var(--hub-accent); background: var(--hub-accent); color: #fff; }
+.lead-flow li.is-current .lead-flow-dot { border-color: var(--hub-accent); background: var(--hub-accent); color: #fff; box-shadow: 0 0 0 5px color-mix(in srgb, var(--hub-accent) 18%, transparent); }
+.lead-flow-text b { display: block; color: var(--hub-ink); font-size: .85rem; font-weight: 800; }
+.lead-flow li.is-todo .lead-flow-text b { color: var(--hub-muted); }
+.lead-flow-text small { display: block; margin-top: 2px; color: var(--hub-muted); font-size: .74rem; }
+.lead-out { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 12px; border-radius: 11px; background: var(--hub-surface-2); color: var(--hub-ink-2); font-size: .85rem; font-weight: 700; }
+.lead-flow-card { margin-bottom: 16px; }
+@media (max-width: 640px) {
+    .lead-flow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .lead-flow li { flex-direction: row; text-align: left; }
+    .lead-flow li::before { top: -12px; left: 18px; right: auto; width: 3px; height: 18px; }
+}
+
+/* a two-column .hub-dash with no right column (e.g. Add a lead): the left one takes the full width */
+body.hub-body .hub-dash:not(:has(> .right, > .right-content)) { grid-template-columns: minmax(0, 1fr); }
+
+/* required dropdowns: the * sits left of the arrow instead of on it */
+body.hub-body .account-details .required-input:has(> .ui-select) .required { right: 36px; }

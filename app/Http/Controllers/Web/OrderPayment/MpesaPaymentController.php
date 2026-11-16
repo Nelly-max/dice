@@ -223,6 +223,10 @@ class MpesaPaymentController extends Controller
 
         $checkoutRequestId = $callback['CheckoutRequestID'] ?? null;
 
+        if (! $checkoutRequestId) {
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+        }
+
         $transaction = MpesaTransactionOrder::where(
             'checkout_request_id',
             $checkoutRequestId
@@ -241,79 +245,87 @@ class MpesaPaymentController extends Controller
         }
 
         /**
-         * Prevent duplicate processing.
+         * Settle under a row lock: two copies of the same callback arriving
+         * together must not both credit the invoice.
          */
-        if ($transaction->payment_status === 'success') {
+        $outcome = \Illuminate\Support\Facades\DB::connection($transaction->getConnectionName())
+            ->transaction(function () use ($transaction, $callback, $payload) {
 
-            return response()->json([
-                'ResultCode' => 0,
-                'ResultDesc' => 'Already processed',
-            ]);
+            $transaction = MpesaTransactionOrder::on($transaction->getConnectionName())
+                ->whereKey($transaction->getKey())
+                ->lockForUpdate()
+                ->first();
 
-        }
-
-        $data = [
-            'result_code'      => $callback['ResultCode'] ?? null,
-            'result_desc'      => $callback['ResultDesc'] ?? null,
-            'callback_payload' => $payload,
-        ];
-
-        if (($callback['ResultCode'] ?? 1) == 0) {
-
-            $metadata = collect(
-                data_get($callback, 'CallbackMetadata.Item', [])
-            );
-
-            $amount = optional(
-                $metadata->firstWhere('Name', 'Amount')
-            )['Value'] ?? 0;
-
-            $receipt = optional(
-                $metadata->firstWhere('Name', 'MpesaReceiptNumber')
-            )['Value'] ?? null;
-
-            $transactionDate = optional(
-                $metadata->firstWhere('Name', 'TransactionDate')
-            )['Value'] ?? null;
-
-            $phone = optional(
-                $metadata->firstWhere('Name', 'PhoneNumber')
-            )['Value'] ?? null;
-
-            $data['payment_status'] = 'success';
-            $data['mpesa_receipt'] = $receipt;
-            $data['amount'] = $amount;
-            $data['phone'] = $phone;
-
-            if ($transactionDate) {
-                $data['transaction_date'] = Carbon::createFromFormat(
-                    'YmdHis',
-                    $transactionDate
-                );
+            // already settled (success or failure): never settle twice
+            if (in_array($transaction->payment_status, ['success', 'failed'], true)) {
+                return 'duplicate';
             }
 
-        } else {
+            $data = [
+                'result_code'      => $callback['ResultCode'] ?? null,
+                'result_desc'      => $callback['ResultDesc'] ?? null,
+                'callback_payload' => $payload,
+            ];
 
-            $data['payment_status'] = 'failed';
+            $amount = 0;
 
+            if (($callback['ResultCode'] ?? 1) == 0) {
+
+                $metadata = collect(
+                    data_get($callback, 'CallbackMetadata.Item', [])
+                );
+
+                $amount = (float) (optional(
+                    $metadata->firstWhere('Name', 'Amount')
+                )['Value'] ?? 0);
+
+                // must be the amount we asked M-Pesa to collect
+                $requested = (float) ($transaction->amount ?? 0);
+
+                if ($requested > 0 && (int) round($amount) !== (int) round($requested)) {
+                    Log::critical('M-Pesa callback amount differs from the requested amount; not credited.', [
+                        'transaction_id' => $transaction->id,
+                        'requested'      => $requested,
+                        'reported'       => $amount,
+                    ]);
+
+                    $transaction->update($data + ['payment_status' => 'failed']);
+
+                    return 'mismatch';
+                }
+
+                $data['payment_status'] = 'success';
+                $data['mpesa_receipt'] = optional($metadata->firstWhere('Name', 'MpesaReceiptNumber'))['Value'] ?? null;
+                $data['amount'] = $amount;
+                $data['phone'] = optional($metadata->firstWhere('Name', 'PhoneNumber'))['Value'] ?? null;
+
+                $transactionDate = optional($metadata->firstWhere('Name', 'TransactionDate'))['Value'] ?? null;
+
+                if ($transactionDate) {
+                    $data['transaction_date'] = Carbon::createFromFormat('YmdHis', (string) $transactionDate);
+                }
+
+            } else {
+
+                $data['payment_status'] = 'failed';
+
+            }
+
+            $transaction->update($data);
+
+            if ($data['payment_status'] === 'success') {
+                $this->orderPaymentService->processSuccessfulPayment($transaction, $amount);
+            }
+
+            return $data['payment_status'];
+        });
+
+        if ($outcome === 'duplicate') {
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Already processed']);
         }
 
-        /**
-         * Update transaction.
-         */
-        $transaction->update($data);
-
-        /**
-         * Delegate business logic to the service.
-         */
-        if ($data['payment_status'] === 'success') {
-
-            $this->orderPaymentService->processSuccessfulPayment(
-                $transaction,
-                $amount
-            );
-
-        }
+        $transaction->refresh();
+        $data = ['payment_status' => $transaction->payment_status, 'mpesa_receipt' => $transaction->mpesa_receipt];
 
         Log::info('M-Pesa transaction updated.', [
             'transaction_id' => $transaction->id,

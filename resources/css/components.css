@@ -520,6 +520,25 @@ body[data-subdivision] #mapModal.loc-sheet .loc-search #place-search,
 #mapModal.loc-sheet .loc-pin small { margin-bottom: .3rem; padding: .3rem .6rem; border-radius: .5rem; background: #1f2a24; color: #fff; font: 700 .72rem var(--loc-font); white-space: nowrap; }
 #mapModal.loc-sheet .loc-pin i { color: var(--accent, #16a34a); font-size: 2.1rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); }
 
+/* map illustration while locating / when the location could not be read (modals/map, map.js) */
+#mapModal.loc-sheet .loc-placeholder {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
+    padding: .8rem 1rem; background: var(--loc-card); text-align: center;
+}
+#mapModal.loc-sheet .loc-placeholder[hidden] { display: none; }
+#mapModal.loc-sheet .loc-placeholder img { width: auto; height: 70%; max-height: 12rem; object-fit: contain; margin-bottom: .2rem; }
+#mapModal.loc-sheet .loc-placeholder strong { font: 800 .95rem var(--loc-font); }
+#mapModal.loc-sheet .loc-placeholder span { max-width: 22rem; color: var(--loc-soft); font-size: .82rem; line-height: 1.35; }
+#mapModal.loc-sheet .loc-placeholder[data-state="locating"] img { animation: loc-bob 1.2s ease-in-out infinite alternate; }
+#mapModal.loc-sheet .loc-placeholder[data-state="locating"] .loc-ph-map { visibility: hidden; }
+#mapModal.loc-sheet .loc-ph-map {
+    margin-top: .35rem; padding: .45rem .9rem; border: 1px solid var(--accent-line, #bbf7d0); border-radius: 999px;
+    background: var(--surface, #fff); color: var(--accent-strong, #15803d); font: 700 .8rem var(--loc-font); cursor: pointer;
+}
+@keyframes loc-bob { to { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { #mapModal.loc-sheet .loc-placeholder img { animation: none; } }
+
 #mapModal.loc-sheet .loc-picked { display: flex; align-items: flex-start; gap: .6rem; margin: .75rem 0 0; padding: .8rem 1rem; border-radius: .8rem; background: var(--loc-card); font-size: .9rem; font-weight: 700; line-height: 1.35; }
 #mapModal.loc-sheet .loc-picked i { margin-top: .15rem; color: var(--accent, #16a34a); }
 

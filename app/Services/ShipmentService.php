@@ -2,168 +2,182 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Customer\ShipmentType;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * Groups cart items into shipments: one shipment per shop.
+ *
+ * Every item from the same shop (same subdivision + business account) goes in
+ * the same shipment, because one rider collects them together. Items from a
+ * different shop, or a different subdivision (Home Market, Liquor Hub, ...),
+ * become a separate shipment.
+ *
+ * The keys used by the cart page and cart.js are kept:
+ * number, title, shipment_type, shipment_type_id, info, mode, subdivision,
+ * min_amount, time_range, items, item_count, total_quantity, subtotal.
+ * Each item also gets explicit_db_connection / explicit_biz_name /
+ * explicit_latitude / explicit_longitude for the checkout payload.
+ */
 class ShipmentService
 {
-    public function buildShipment($cartItems)
+    private const INFO = [
+        'quick' => [
+            'icon'  => 'fa-solid fa-motorcycle',
+            'label' => 'Quick delivery',
+            'eta'   => '10 – 50 mins',
+        ],
+        'standard' => [
+            'icon'  => 'fa-solid fa-truck',
+            'label' => 'Standard delivery',
+            'eta'   => 'Same day',
+        ],
+        'specific_shop' => [
+            'icon'  => 'fa-solid fa-store',
+            'label' => 'Order to specific shop',
+            'eta'   => 'Shop confirms the time',
+        ],
+    ];
+
+    public function buildShipment(Collection $cartItems): array
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Load Shipment Types From Customer Database
-        |--------------------------------------------------------------------------
-        */
+        if ($cartItems->isEmpty()) {
+            return [];
+        }
 
         $shipmentTypes = ShipmentType::all()->keyBy('id');
 
-        $shipmentInfo = [
-            'quick' => [
-                'icon' => 'ri-e-bike-2-line',
-                'label' => 'Quick in 10 - 50 Mins',
-            ],
-            'standard' => [
-                'icon' => 'ri-truck-line',
-                'label' => 'Standard delivery',
-            ],
-            'specific_shop' => [
-                'icon' => 'ri-riding-line',
-                'label' => 'Order to specific shop',
-            ],
-        ];
+        // hub: subdivision id => db connection / name
+        $subdivisions = DB::table('sub_divisions')
+            ->select('id', 'name', 'db_connection')
+            ->get()
+            ->keyBy('id');
 
         /*
         |--------------------------------------------------------------------------
-        | Load Subdivision Connections From HUB
+        | One group per shop
         |--------------------------------------------------------------------------
         */
 
-        $connections = DB::table('sub_divisions')
-            ->pluck('db_connection', 'id');
+        $groups = $cartItems->groupBy(function ($item) {
+            return ($item->sub_division_id ?? 0) . '|' . ($item->business_account ?? 'unknown');
+        });
 
-        $businessCache = [];
+        $shipments = [];
+        $number = 1;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Group Items By Seller (business_account)
-        |--------------------------------------------------------------------------
-        | Items from the same seller belong to the same shipment.
-        */
+        foreach ($groups as $items) {
 
-        $groupedBySeller = $cartItems->groupBy('business_account');
+            $first = $items->first();
+            $subdivision = $subdivisions->get($first->sub_division_id);
+            $dbConnection = $subdivision->db_connection ?? null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Format Shipments
-        |--------------------------------------------------------------------------
-        */
+            $business = $this->business($dbConnection, $first->business_account);
 
-        $formattedShipments = [];
-        $shipmentNumber = 1;
-
-        foreach ($groupedBySeller as $businessAccount => $items) {
-
-            $subtotal = $items->sum(function ($item) {
-                return ($item->price ?? 0) * ($item->quantity ?? 0);
-            });
-
-            /*
-            |--------------------------------------------------------------------------
-            | Resolve Shipment Type From First Item
-            |--------------------------------------------------------------------------
-            */
-
-            $firstItem = $items->first();
-
-            $typeId = $firstItem->shipment_type_id;
-            $typeRule = $shipmentTypes->get($typeId);
-            $typeName = strtolower($typeRule->name ?? 'standard');
-
-            $minAmount = $typeRule->min_amount ?? 0;
-
-            $timeRange = [
-                'from' => $typeRule->time1 ?? null,
-                'to' => $typeRule->time2 ?? null,
-            ];
-
-            /*
-            |--------------------------------------------------------------------------
-            | Resolve Business Details For Each Item
-            |--------------------------------------------------------------------------
-            */
-
-            $storeName = null;
+            $shopName = $business->name
+                ?? $first->business_name
+                ?? 'Shop';
 
             foreach ($items as $item) {
-                $subdivisionId = $item->sub_division_id;
-
-                $dbConn = $connections[$subdivisionId] ?? null;
-
-                $cacheKey = $subdivisionId . '_' . $item->business_account;
-
-                if (!isset($businessCache[$cacheKey])) {
-                    $businessCache[$cacheKey] = null;
-
-                    if ($dbConn) {
-                        $businessCache[$cacheKey] = DB::connection($dbConn)
-                            ->table('business')
-                            ->where('account', $item->business_account)
-                            ->select('name', 'latitude', 'longitude')
-                            ->first();
-                    }
-                }
-
-                $business = $businessCache[$cacheKey];
-
-                $item->explicit_db_connection = $dbConn;
-                $item->explicit_biz_name = $business?->name;
-                $item->explicit_latitude = $business?->latitude;
-                $item->explicit_longitude = $business?->longitude;
-
-                if (!$storeName && $business?->name) {
-                    $storeName = $business->name;
-                }
+                $item->explicit_db_connection = $dbConnection;
+                $item->explicit_biz_name = $shopName;
+                $item->explicit_latitude = $business->latitude ?? null;
+                $item->explicit_longitude = $business->longitude ?? null;
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Use Business Name As Shipment Title
-            |--------------------------------------------------------------------------
-            */
+            // delivery type: the slowest type in the group decides (quick only if every item is quick)
+            $typeId = $this->groupTypeId($items, $shipmentTypes);
+            $typeRule = $shipmentTypes->get($typeId);
+            $typeName = strtolower($typeRule->name ?? 'quick');
 
-            $title = $storeName ?? $businessAccount ?? 'Shipment ' . $shipmentNumber;
+            $subtotal = $items->sum(fn ($item) => ($item->price ?? 0) * ($item->quantity ?? 0));
+            $discount = $items->sum(fn ($item) => ($item->stockable->discount ?? 0) * ($item->quantity ?? 0));
 
-            $formattedShipments[] = [
-                'number' => $shipmentNumber,
-                'title' => $title,
+            $shipments[] = [
+                'number' => $number,
+                'title' => $shopName,
 
-                'business_account' => $businessAccount,
+                'shop_name' => $shopName,
+                'shop_initial' => mb_strtoupper(mb_substr($shopName, 0, 1)),
+                'business_account' => $first->business_account,
+                'subdivision_id' => $first->sub_division_id,
+                'subdivision_name' => $subdivision->name ?? null,
+                'db_connection' => $dbConnection,
 
                 'shipment_type' => $typeName,
                 'shipment_type_id' => $typeId,
-
-                'info' => $shipmentInfo[$typeName] ?? [
-                    'icon' => 'ri-package-line',
-                    'label' => ucfirst($typeName),
+                'info' => self::INFO[$typeName] ?? [
+                    'icon' => 'fa-solid fa-box',
+                    'label' => ucfirst(str_replace('_', ' ', $typeName)),
+                    'eta' => null,
                 ],
 
-                'subdivision' => $firstItem->subdivision,
-                'subdivision_id' => $firstItem->sub_division_id,
+                'mode' => 'shop',
+                'subdivision' => $first->subdivision,
 
-                'min_amount' => $minAmount,
-                'time_range' => $timeRange,
+                'min_amount' => $typeRule->min_amount ?? 0,
+                'time_range' => [
+                    'from' => $typeRule->time1 ?? null,
+                    'to' => $typeRule->time2 ?? null,
+                ],
 
-                'items' => $items,
-
+                'items' => $items->values(),
                 'item_count' => $items->count(),
                 'total_quantity' => $items->sum('quantity'),
 
                 'subtotal' => $subtotal,
+                'discount' => $discount,
             ];
 
-            $shipmentNumber++;
+            $number++;
         }
 
-        return $formattedShipments;
+        return $shipments;
+    }
+
+    /**
+     * Shop details from the subdivision's own database (Home Market, Liquor Hub, ...).
+     */
+    private function business(?string $connection, ?string $account): ?object
+    {
+        static $cache = [];
+
+        if (!$connection || !$account) {
+            return null;
+        }
+
+        $key = $connection . '|' . $account;
+
+        if (!array_key_exists($key, $cache)) {
+            try {
+                $cache[$key] = DB::connection($connection)
+                    ->table('business')
+                    ->where('account', $account)
+                    ->select('name', 'latitude', 'longitude')
+                    ->first();
+            } catch (\Throwable $e) {
+                report($e);
+                $cache[$key] = null;
+            }
+        }
+
+        return $cache[$key];
+    }
+
+    /**
+     * The shipment type for a shop's items: if they differ, use the one with
+     * the longest delivery time (time2), so the shipment never promises more
+     * than the slowest item allows.
+     */
+    private function groupTypeId(Collection $items, Collection $shipmentTypes): ?int
+    {
+        $ids = $items->pluck('shipment_type_id')->filter()->unique()->values();
+
+        if ($ids->count() <= 1) {
+            return $ids->first();
+        }
+
+        return $ids->sortByDesc(fn ($id) => (float) ($shipmentTypes->get($id)->time2 ?? 0))->first();
     }
 }

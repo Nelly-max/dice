@@ -22,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Real client IP behind a proxy/tunnel (used by the M-Pesa callback IP check)
+        if ($proxies = trim((string) config('mpesa_security.trusted_proxies', ''))) {
+            \Illuminate\Http\Middleware\TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
+
         Relation::morphMap(config('stockables', []));
 
         // Logo and name of the current subdivision, shared with every view.

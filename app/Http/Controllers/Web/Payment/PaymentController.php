@@ -36,7 +36,9 @@ class PaymentController extends Controller
 
     public function mpesa($invoice)
     {
+        // only the customer who made the invoice sees its payment page
         $invoice = CheckoutInvoice::where('uuid', $invoice)
+            ->where('customer_id', auth('customer')->id())
             ->firstOrFail();
 
         return view('payment.mpesa', compact('invoice'));

@@ -30,7 +30,10 @@ class ShopDiscovery
      */
     public function cartShop(): ?string
     {
+        // Only Home Market items in the cart lock the Home Market catalogue to one shop;
+        // the cart may also hold items from other subdivisions (each checked out on its own).
         return Cart::forCurrent()
+            ->where('stockable_type', 'retail_inventory')
             ->whereNotNull('business_account')
             ->value('business_account');
     }
@@ -103,6 +106,7 @@ class ShopDiscovery
                 'p.code as product_code',
                 'p.name as product_name',
                 'p.brand',
+                'p.origin',
                 'p.description',
                 'p.category_id',
                 'pi.id as item_id',

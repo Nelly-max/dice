@@ -3,118 +3,152 @@
 namespace App\Http\Controllers\Web\OrderPayment;
 
 use App\Http\Controllers\Controller;
-use App\Services\OrderPayment\MpesaService;
-use Illuminate\Http\Request;
+use App\Models\Customer\CheckoutInvoice;
+use App\Models\Customer\MpesaTransactionOrder;
+use App\Services\OrderPayment\PaymentProcessingService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Paybill payments (C2B): the customer pays from the M-Pesa menu with the invoice's
+ * payment account as the account number.
+ *
+ * Both endpoints are called by Safaricom only, through /pay/hook/c2b/... (guarded by
+ * App\Http\Middleware\VerifySafaricomCallback: secret key in the address + Safaricom IP).
+ * The addresses are registered once with:  php artisan mpesa:register-urls
+ */
 class MpesaC2BPaymentController extends Controller
 {
-    protected MpesaService $mpesaService;
+    public function __construct(
+        protected PaymentProcessingService $orderPaymentService
+    ) {}
 
     /**
-     * Inject the updated MpesaService.
-     */
-    public function __construct(MpesaService $mpesaService)
-    {
-        $this->mpesaService = $mpesaService;
-    }
-
-    /**
-     * Handshake Trigger: Registers Validation and Confirmation URLs with Safaricom.
-     * Endpoint: POST /api/mpesa/c2b/register
-     */
-    public function register(): JsonResponse
-    {
-        $response = $this->mpesaService->registerUrls();
-        
-        return response()->json($response);
-    }
-
-    /**
-     * 1. Safaricom VALIDATION Webhook (Pre-auth checkpoint)
-     * Safaricom pings this to check if the payment should be accepted or rejected.
-     * Endpoint: POST /api/mpesa/c2b/validation
+     * Safaricom asks before taking the money (only if "external validation" is switched on
+     * for the shortcode): accept only an account number that belongs to an unpaid invoice.
+     * Route: POST /pay/hook/c2b/validate/{key}
      */
     public function validatePayment(Request $request): JsonResponse
     {
-        Log::info('M-Pesa C2B Validation Payload Received:', $request->all());
+        Log::info('M-Pesa C2B validation', $request->only(['TransID', 'TransAmount', 'BillRefNumber']));
 
-        $accountNumber = trim($request->input('BillRefNumber'));
-        $amount = $request->input('TransAmount');
+        $invoice = $this->openInvoice((string) $request->input('BillRefNumber'));
 
-        // TODO: Add database validation rule checks here.
-        // Example: Reject if the order or account number doesn't exist in your database
-        // if (!Order::where('id', $accountNumber)->exists()) {
-        //     return response()->json([
-        //         'ResultCode' => 'C2B00011', // Safaricom code for Invalid Account Number
-        //         'ResultDesc' => 'Rejected. Account number does not exist.'
-        //     ]);
-        // }
+        if (! $invoice) {
+            return response()->json([
+                'ResultCode' => 'C2B00012',            // invalid account number
+                'ResultDesc' => 'Rejected',
+            ]);
+        }
 
-        // Accept the transaction request package
-        return response()->json([
-            'ResultCode' => 0,
-            'ResultDesc' => 'Accepted'
-        ]);
-    }
-
-    /**
-     * 2. Safaricom CONFIRMATION Webhook (State resolution checkpoint)
-     * Safaricom sends this when the payment clears. Use this to credit your users.
-     * Endpoint: POST /api/mpesa/c2b/confirmation
-     */
-    public function confirmPayment(Request $request): JsonResponse
-    {
-        Log::info('M-Pesa C2B Confirmation Payload Received:', $request->all());
-
-        $receipt       = $request->input('TransID');       // M-Pesa Receipt Code (e.g., RQA1234567)
-        $amount        = $request->input('TransAmount');   // Paid Amount
-        $accountNumber = trim($request->input('BillRefNumber')); // Typed Account ID / Reference
-        $phoneNumber   = $request->input('MSISDN');        // Customer Phone Number
-
-        Log::info("C2B Credit Successful: Receipt {$receipt} | Account {$accountNumber} | KES {$amount}");
-
-        try {
-            // TODO: Process your database transaction logging records here
-            // Example:
-            // Payment::create([
-            //     'transaction_id' => $receipt,
-            //     'amount' => $amount,
-            //     'account_number' => $accountNumber,
-            //     'phone' => $phoneNumber,
-            //     'status' => 'completed'
-            // ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to save M-Pesa C2B payment records: ' . $e->getMessage());
-            // Note: Safaricom expects a success payload once confirmation drops to close the loop
+        if ((float) $request->input('TransAmount') < 1) {
+            return response()->json([
+                'ResultCode' => 'C2B00013',            // invalid amount
+                'ResultDesc' => 'Rejected',
+            ]);
         }
 
         return response()->json([
             'ResultCode' => 0,
-            'ResultDesc' => 'Success'
+            'ResultDesc' => 'Accepted',
         ]);
     }
 
     /**
-     * Admin Sandbox Testing Tool: Simulates a manual customer payment event.
-     * Endpoint: POST /api/mpesa/c2b/simulate
+     * Safaricom reports a completed Paybill payment: credit the invoice once per M-Pesa
+     * receipt (TransID). A part payment leaves the invoice "partial"; the order is placed
+     * when the total is reached (PaymentProcessingService).
+     * Route: POST /pay/hook/c2b/confirm/{key}
      */
-    public function simulate(Request $request): JsonResponse
+    public function confirmPayment(Request $request): JsonResponse
     {
-        $request->validate([
-            'phone'          => 'required|string',
-            'amount'         => 'required|numeric|min:1',
-            'account_number' => 'required|string',
-        ]);
+        $receipt = trim((string) $request->input('TransID'));
+        $amount = (float) $request->input('TransAmount');
+        $account = (string) $request->input('BillRefNumber');
+        $phone = (string) $request->input('MSISDN');
 
-        $response = $this->mpesaService->simulateTransaction(
-            $request->input('phone'),
-            $request->input('amount'),
-            $request->input('account_number')
-        );
+        Log::info('M-Pesa C2B confirmation', ['TransID' => $receipt, 'TransAmount' => $amount, 'BillRefNumber' => $account]);
 
-        return response()->json($response);
+        if ($receipt === '' || $amount <= 0) {
+            return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+        }
+
+        try {
+            $outcome = DB::connection('finance')->transaction(fn () => DB::connection('customer')->transaction(function () use ($request, $receipt, $amount, $account, $phone) {
+
+                // the same receipt twice (Safaricom retries): credit it once
+                if (MpesaTransactionOrder::where('mpesa_receipt', $receipt)->lockForUpdate()->exists()) {
+                    return 'duplicate';
+                }
+
+                $invoice = $this->openInvoice($account, true);
+
+                if (! $invoice) {
+                    // money received with an account number we do not know: kept in the log
+                    // for the finance team to refund or match by hand
+                    Log::warning('M-Pesa C2B payment with no matching invoice.', $request->all());
+                    return 'unmatched';
+                }
+
+                $transaction = MpesaTransactionOrder::create([
+                    'checkout_invoice_id' => $invoice->id,
+                    'payment_account' => $invoice->payment_account,
+                    'mpesa_receipt' => $receipt,
+                    'amount' => $amount,
+                    'phone' => $phone !== '' ? substr($phone, 0, 20) : null,
+                    'payment_method' => 'paybill',
+                    'payment_status' => 'success',
+                    'transaction_date' => $this->transTime((string) $request->input('TransTime')),
+                    'result_code' => 0,
+                    'result_desc' => 'Paybill payment',
+                    'callback_payload' => $request->all(),
+                ]);
+
+                $this->orderPaymentService->processSuccessfulPayment($transaction, $amount);
+
+                return 'credited';
+            }));
+        } catch (\Throwable $e) {
+            Log::error('M-Pesa C2B confirmation failed.', ['TransID' => $receipt, 'message' => $e->getMessage()]);
+            $outcome = 'error';
+        }
+
+        Log::info('M-Pesa C2B confirmation handled.', ['TransID' => $receipt, 'outcome' => $outcome]);
+
+        // Safaricom only needs to know we received it
+        return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Accepted']);
+    }
+
+    /**
+     * The newest unpaid invoice with this payment account (accounts repeat on the same
+     * day of a later year, so only the last 60 days count).
+     */
+    private function openInvoice(string $account, bool $lock = false): ?CheckoutInvoice
+    {
+        $account = strtoupper(preg_replace('/\s+/', '', $account));
+
+        if ($account === '') {
+            return null;
+        }
+
+        return CheckoutInvoice::where('payment_account', $account)
+            ->where('payment_method', 'mpesa')
+            ->whereIn('status', ['pending', 'partial'])
+            ->where('created_at', '>=', now()->subDays(60))
+            ->latest('id')
+            ->when($lock, fn ($q) => $q->lockForUpdate())
+            ->first();
+    }
+
+    private function transTime(string $value): ?Carbon
+    {
+        try {
+            return $value !== '' ? Carbon::createFromFormat('YmdHis', $value) : now();
+        } catch (\Throwable $e) {
+            return now();
+        }
     }
 }

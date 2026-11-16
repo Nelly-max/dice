@@ -30,7 +30,7 @@ class PurgeExpiredCarts extends Command
         $count = Cart::where(
             'updated_at',
             '<=',
-            now()->subDay()
+            now()->subDays((int) config('smartmarket.cart_keep_days', 30))
         )->delete();
 
         $this->info("Deleted {$count} expired item(s).");

@@ -4,7 +4,13 @@
  |--------------------------------------------------------------------------
  | One screen: search (Google Places suggestions drop down over the map),
  | "Use current location", the map with a centred pin, Confirm.
- | The map opens on the last saved location, or Nairobi area by default.
+ |
+ | Where the map opens:
+ |   1. the saved delivery location, if there is one;
+ |   2. otherwise the user's current location (the browser asks once);
+ |   3. if that cannot be read (blocked, no GPS, not https, timed out), the map
+ |      illustration (#loc-placeholder) stays up with the reason, and the user
+ |      can search, try "Use current location" again, or choose on the map.
  */
 
 let map;
@@ -13,6 +19,7 @@ let placesService;      // AutocompleteService
 let sessionToken;
 let searchTimer;
 let lastQuery = '';
+let locating = false;
 
 const DEFAULT_CENTER = { lat: -1.392, lng: 36.764 };
 
@@ -20,17 +27,111 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mapsReady = () => !!(window.google && google.maps && google.maps.places);
 
+/* the Google Maps script loads async; wait for it (up to 15 s) instead of giving up */
+function whenMapsReady(timeout = 15000) {
+    if (mapsReady()) return Promise.resolve(true);
+    return new Promise((resolve) => {
+        const started = Date.now();
+        const tick = setInterval(() => {
+            if (mapsReady()) { clearInterval(tick); resolve(true); }
+            else if (Date.now() - started > timeout) { clearInterval(tick); resolve(false); }
+        }, 200);
+    });
+}
+
 function savedCenter() {
     try {
         const saved = JSON.parse(localStorage.getItem('delivery_location') || 'null');
         const lat = Number(saved?.latitude), lng = Number(saved?.longitude);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng };
+        if (saved && Number.isFinite(lat) && Number.isFinite(lng) && (lat || lng)) return { lat, lng };
     } catch (e) { /* ignore */ }
-    return DEFAULT_CENTER;
+    return null;
+}
+
+/* ---------- the map illustration ----------
+ | Shown while the location is being read and whenever there is no location
+ | (none saved, or the browser did not give one). It is just the picture:
+ | no error wording; the search box and "Use current location" sit above it.
+ */
+function showPlaceholder(state = 'idle') {
+    const ph = $('loc-placeholder');
+    if (!ph) return;
+    ph.dataset.state = state === 'locating' ? 'locating' : 'idle';
+    ph.hidden = false;
+}
+
+function hidePlaceholder() {
+    const ph = $('loc-placeholder');
+    if (ph) ph.hidden = true;
+}
+
+/* ---------- reading the user's position ---------- */
+
+/* resolves {lat, lng}; rejects with 'denied' | 'insecure' | 'timeout' | 'unavailable' | 'unsupported' */
+function readPosition() {
+    return new Promise(async (resolve, reject) => {
+        if (!('geolocation' in navigator)) return reject('unsupported');
+        if (window.isSecureContext === false) return reject('insecure');
+
+        // already blocked: fail at once instead of waiting for a prompt that never comes
+        try {
+            const perm = await navigator.permissions?.query({ name: 'geolocation' });
+            if (perm?.state === 'denied') return reject('denied');
+        } catch (e) { /* Permissions API not available: just ask */ }
+
+        const ok = (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude });
+        const reason = (err) => (err?.code === 1 ? 'denied' : err?.code === 3 ? 'timeout' : 'unavailable');
+
+        // GPS first; laptops and indoor phones often time out on it, so fall back to
+        // the network position (Wi-Fi / cell), accepting one up to 5 minutes old
+        navigator.geolocation.getCurrentPosition(ok, (err) => {
+            if (err?.code === 1) return reject('denied');
+            navigator.geolocation.getCurrentPosition(ok, (err2) => reject(reason(err2)),
+                { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    });
+}
+
+/* map ready + position known: centre on it; when the map cannot load, keep the coordinates so Confirm still works */
+async function goToPosition(pos) {
+    if (await whenMapsReady()) {
+        closeDrop();
+        hidePlaceholder();
+        moveTo(new google.maps.LatLng(pos.lat, pos.lng), 'Finding address…');
+        return;
+    }
+    window.currentDeliveryLocation = { address: 'Your current location', latitude: pos.lat, longitude: pos.lng };
+    $('latitude') && ($('latitude').value = pos.lat);
+    $('longitude') && ($('longitude').value = pos.lng);
+    $('selected-address') && ($('selected-address').textContent = 'Your current location');
+    showPlaceholder();
+}
+
+/* first open without a saved location: try the user's position, quietly */
+async function locateOnOpen() {
+    if (locating) return;
+    locating = true;
+    showPlaceholder('locating');
+    try {
+        await goToPosition(await readPosition());
+    } catch (why) {
+        if (!map) showPlaceholder();
+    } finally {
+        locating = false;
+    }
+}
+
+/* "Choose on the map instead": open the map on the default area */
+async function showMapAnyway() {
+    if (!(await whenMapsReady(5000))) { showPlaceholder(); return; }
+    ensureMap(DEFAULT_CENTER);
+    hidePlaceholder();
+    google.maps.event.trigger(map, 'resize');
+    map.setCenter(DEFAULT_CENTER);
 }
 
 /* called by modal.js every time the sheet opens */
-window.initDeliveryMap = function () {
+window.initDeliveryMap = async function () {
     const input = $('place-search');
     if (!input) return;
 
@@ -58,14 +159,28 @@ window.initDeliveryMap = function () {
         $('mapModal')?.addEventListener('pointerdown', (e) => {
             if (!e.target.closest('.loc-searchbox')) closeDrop();
         });
+        $('mapModal')?.querySelector('[data-loc-show-map]')?.addEventListener('click', showMapAnyway);
     }
 
-    if (!mapsReady()) return;
-    if (!map) {
-        ensureMap(savedCenter());
-    } else {
+    if (map) {
+        hidePlaceholder();
         google.maps.event.trigger(map, 'resize');
+        return;
     }
+
+    const saved = savedCenter();
+    if (saved) {
+        showPlaceholder('locating');
+        if (await whenMapsReady()) {
+            ensureMap(saved);
+            hidePlaceholder();
+        } else {
+            showPlaceholder();
+        }
+        return;
+    }
+
+    locateOnOpen();
 };
 
 function closeDrop() {
@@ -91,10 +206,10 @@ function renderResults(predictions, query) {
     if (drop) drop.hidden = !query;
 }
 
-function suggest(query) {
+async function suggest(query) {
     lastQuery = query;
     if (!query) { renderResults([], ''); return; }
-    if (!mapsReady()) return;
+    if (!(await whenMapsReady(5000))) return;
 
     placesService ||= new google.maps.places.AutocompleteService();
     sessionToken ||= new google.maps.places.AutocompleteSessionToken();
@@ -128,6 +243,7 @@ function ensureMap(center) {
 function moveTo(location, label) {
     if (label) $('selected-address').textContent = label;
     ensureMap(location);
+    hidePlaceholder();
     google.maps.event.trigger(map, 'resize');
     map.setCenter(location);
     map.setZoom(18);
@@ -150,27 +266,26 @@ function pickPrediction(placeId, label) {
 }
 
 /* "Use current location" */
-window.useCurrentLocation = function () {
-    if (!navigator.geolocation) {
-        window.notify?.error?.('Your browser cannot share your location. Search for your street instead.');
-        return;
+window.useCurrentLocation = async function () {
+    if (locating) return;
+    locating = true;
+
+    // with the map showing, a small toast; otherwise the illustration says what is happening
+    const finding = map && window.notify ? window.notify.loading('Finding your location…') : null;
+    if (!map) showPlaceholder('locating');
+
+    try {
+        const pos = await readPosition();
+        finding?.close?.();
+        await goToPosition(pos);
+    } catch (why) {
+        // no location: keep the picture up; a gentle hint, never an error about permissions
+        if (finding) finding.info('Search for your street, estate or building instead.', { title: 'Location not found' });
+        if (!map) showPlaceholder();
+        $('place-search')?.focus();
+    } finally {
+        locating = false;
     }
-    if (!mapsReady()) return;
-
-    const finding = window.notify ? window.notify.loading('Finding your location…') : null;
-
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            finding?.close?.();
-            closeDrop();
-            moveTo(new google.maps.LatLng(position.coords.latitude, position.coords.longitude), 'Finding address…');
-        },
-        () => {
-            if (finding) finding.error('We could not read your location. Search for your street instead.');
-            $('place-search')?.focus();
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-    );
 };
 
 /*
@@ -413,9 +528,13 @@ window.confirmDeliveryLocation = function () {
             "X-CSRF-TOKEN": csrfToken
         },
 
+        // the address goes with it so checkout can show the place the cart was built for
         body: JSON.stringify({
             latitude,
-            longitude
+            longitude,
+            address: locationToSave.address || null,
+            county: locationToSave.county || null,
+            town: locationToSave.town || null
         })
     })
     .then(response => {

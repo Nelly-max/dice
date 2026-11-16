@@ -43,14 +43,12 @@
                     data-variant-label="{{ $galleryImg->variant_label }}"
                 >
 
-                    <img src="{{ $galleryImg->image_url }}"
-                         class="small-img"
-                         alt="{{ $galleryImg->variant_label }} preview"
-                         width="100%">
-
-                    <span style="display: block; font-size: 10px; font-weight: bold; margin-top: 3px; color: #878787;">
-                        {{ $galleryImg->variant_label }}
+                    <span class="sit-pic">
+                        <img src="{{ $galleryImg->image_url }}" class="small-img" alt="{{ $galleryImg->variant_label }} preview" loading="lazy">
+                        @if ($galleryImg->has_discount && $galleryImg->discount_percentage)<em class="sit-off">-{{ $galleryImg->discount_percentage }}%</em>@endif
                     </span>
+                    <span class="sit-label">{{ $galleryImg->variant_label ?: 'Option' }}</span>
+                    <span class="sit-price">KES {{ number_format($galleryImg->final_price) }}</span>
 
                 </div>
 
@@ -103,37 +101,52 @@
             </span>
             </span>
 
-            <!-- Origin -->
+            <!-- Origin (products.origin) -->
+            @if (!empty($product->origin))
             <span>
             <i class="fa-solid fa-location-dot"></i>
             <h5>Origin:</h5>
-            <h5>{{ $product->origin ?? 'Kenya' }}</h5>
+            <h5>{{ $product->origin }}</h5>
             </span>
+            @endif
 
             @if (!empty($product->business_name))
                 <div class="sold-by">
-                    <span class="shop-chip-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->business_name, 0, 1)) }}</span>
+                    <span class="shop-chip-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->business_name, 0, 1)) }}<i class="sold-by-open"></i></span>
                     <span><small>Sold by</small><strong>{{ $product->business_name }}</strong></span>
                     @if (isset($product->distance_meters))
-                        <em class="dist">{{ number_format($product->distance_meters / 1000, 1) }} km</em>
+                        <em class="dist"><i class="fa-solid fa-route" aria-hidden="true"></i> {{ $product->distance_meters < 100 ? 'Under 100 m' : number_format($product->distance_meters / 1000, 1) . ' km away' }}</em>
                     @endif
                 </div>
             @endif
 
             <!-- Basket Counter Add Actions Panel -->
-            <span class="btns">
+            {{-- once this item is in the cart: "− qty +" for the cart instead of the quantity + Add button
+                 (cart.js syncCardCart; data-cart-map lets it follow the size/variant picked) --}}
+            @php
+                $pdpInCart = \App\Support\CartQuantities::for('retail_inventory', $product->id);
+                $pdpCartMap = collect(\App\Support\CartQuantities::all())->filter(fn ($v, $k) => str_starts_with($k, 'retail_inventory:'));
+            @endphp
+            <div @class(['hm-cart-ctl', 'pdp-cart-ctl', 'is-in-cart' => $pdpInCart]) data-cart-key="retail_inventory:{{ $product->id }}" data-cart-id="{{ $pdpInCart['id'] ?? '' }}" data-cart-type="retail_inventory" data-cart-map='@json($pdpCartMap)'>
+                <span class="btns">
 
-            <button type="button" class="dec" aria-label="Less" disabled><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+                <button type="button" class="dec" aria-label="Less" disabled><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
 
-            <input type="number" class="quantity-val" value="1" min="1" max="999" readonly aria-label="Quantity">
+                <input type="number" class="quantity-val" value="1" min="1" max="999" readonly aria-label="Quantity">
 
-            <button type="button" class="inc" aria-label="More"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                <button type="button" class="inc" aria-label="More"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
 
-            <h4 class="add-to-cart-btn" id="AddToCartBtn" role="button" tabindex="0" data-item-id="{{ $product->item_id }}">
-                <i class="fa-solid fa-basket-shopping"></i>Add to cart
-            </h4>
+                <h4 class="add-to-cart-btn" id="AddToCartBtn" role="button" tabindex="0" data-item-id="{{ $product->item_id }}">
+                    <i class="fa-solid fa-basket-shopping"></i>Add to cart
+                </h4>
 
-            </span>
+                </span>
+                <div class="hm-stepper pdp-stepper" role="group" aria-label="In your cart">
+                    <button type="button" class="hm-step" data-cart-step="decrease" aria-label="One less"><i @class(['fa-solid', 'fa-trash-can' => ($pdpInCart['qty'] ?? 0) <= 1, 'fa-minus' => ($pdpInCart['qty'] ?? 0) > 1]) aria-hidden="true"></i></button>
+                    <span class="hm-step-qty"><b data-step-qty aria-live="polite">{{ $pdpInCart['qty'] ?? 0 }}</b> in your cart</span>
+                    <button type="button" class="hm-step" data-cart-step="increase" aria-label="One more"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                </div>
+            </div>
 
             <!-- ================= CART CONTRACT (ADDED ONLY, NO RENAMES) ================= -->
             <input type="hidden" id="businessAccount" value="{{ $product->business_account ?? '' }}">
