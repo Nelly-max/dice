@@ -2,9 +2,7 @@
 
 @section('content')
 
-<div class="hub-content no-sidebar fullground">
-
-    @include('partials.Hub.back', ['fallback' => route('hub.account.rider.index')])
+<div class="hub-content hub-form no-sidebar fullground">
 
     {{-- photos are resized in the browser before sending (resources/js/upload-shrink.js) --}}
     <form action="{{ route('hub.account.rider.apply') }}"
@@ -17,15 +15,8 @@
 
         {{-- success message appears as a toast (partials/notify-flash) --}}
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        {{-- errors: a short summary here, each message above its own field --}}
+        @include('partials.form-errors')
 
 
         <div class="hub-dash">
@@ -33,9 +24,14 @@
     
                 <div class="account-details">
     
-                    <div class="account-detail top-area">
-                        <h4>Fill your personal Details</h4>
-                    </div>
+                    @include('partials.Hub.page-hero', [
+                        'back' => route('hub.account.rider.index'),
+                        'tone' => 'rider',
+                        'icon' => 'fa-solid fa-motorcycle',
+                        'title' => 'Become a Smart Market rider',
+                        'text' => 'Deliver orders from shops near you and get paid to your M-Pesa. It takes about 5 minutes.',
+                        'steps' => ['Your details', 'Vehicle', 'Area', 'Documents'],
+                    ])
     
     
                     <!-- PERSONAL DETAILS -->
@@ -203,7 +199,7 @@
                                 <input type="text"
                                     name="vehicle_make"
                                     value="{{ old('vehicle_make') }}"
-                                    placeholder="eg. Honda">
+                                    placeholder="eg. Honda (optional)">
     
                             </div>
     
@@ -221,7 +217,7 @@
                                 <input type="text"
                                     name="vehicle_model"
                                     value="{{ old('vehicle_model') }}"
-                                    placeholder="eg. Boxer 150">    
+                                    placeholder="eg. Boxer 150 (optional)">    
                             </div>
     
                         </span>
@@ -276,25 +272,7 @@
                             <div class="required-input">
     
                                 {{-- County --}}
-                                <div class="custom-select"
-                                    id="countySelect"
-                                    data-options='@json($counties)'
-                                    data-selected="{{ $business->county_id ?? '' }}">
-
-                                    <div class="select-btn">
-                                        <span>County</span>
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-
-                                    <div class="select-options">
-                                        <div class="search">
-                                            <input class="option-search" type="text" placeholder="Search...">
-                                        </div>
-                                        <ul class="options"></ul>
-                                    </div>
-                                    <input type="hidden" name="county_id" id="county_id" value="{{ old('county_id') }}" required>
-                                </div>
-                                @error('county_id') <small class="error">{{ $message }}</small> @enderror
+                                @include('partials.Hub.picker', ['name' => 'county_id', 'label' => 'County', 'options' => $counties, 'value' => old('county_id'), 'required' => true])
                                 <h6 class="required">*</h6>
     
                             </div>
@@ -312,26 +290,7 @@
     
                             <div class="required-input">
                                 {{-- Town --}}
-                                <div class="custom-select" 
-                                    id="townSelect" 
-                                    data-options='[]'
-                                    data-selected="{{ $business->town_id ?? '' }}">
-
-                                    <div class="select-btn">
-                                        <span>Town</span>
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-
-                                    <div class="select-options">
-                                        <div class="search">
-                                            <input class="option-search" type="text" placeholder="Search...">
-                                        </div>
-                                        <ul class="options"></ul>
-                                    </div>
-
-                                    <input type="hidden" name="town_id" id="town_id" value="{{ old('town_id') }}" required>
-                                </div>
-                                @error('town_id') <small class="error">{{ $message }}</small> @enderror 
+                                @include('partials.Hub.picker', ['name' => 'town_id', 'label' => 'Town', 'options' => [], 'value' => old('town_id'), 'required' => true])
                                 <h6 class="required">*</h6>
     
                             </div>
@@ -347,26 +306,7 @@
 
                             <div class="required-input">
                                 {{-- Place --}}
-                                <div class="custom-select"
-                                    id="placeSelect"
-                                    data-options='[]'
-                                    data-selected="{{ $business->place_id ?? '' }}">
-    
-                                    <div class="select-btn">
-                                        <span>Place</span>
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-    
-                                    <div class="select-options">
-                                        <div class="search">
-                                            <input class="option-search" type="text" placeholder="Search...">
-                                        </div>
-                                        <ul class="options"></ul>
-                                    </div>
-    
-                                    <input type="hidden" name="place_id" id="place_id" value="{{ old('place_id') }}">
-                                </div>
-                                @error('town_id') <small class="error">{{ $message }}</small> @enderror 
+                                @include('partials.Hub.picker', ['name' => 'place_id', 'label' => 'Place', 'options' => [], 'value' => old('place_id')])
                                 <h6 class="required">*</h6>
                             </div>
     

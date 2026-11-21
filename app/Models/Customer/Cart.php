@@ -57,7 +57,7 @@ class Cart extends Model
         return $query->where(
             'updated_at',
             '>',
-           now()->subDay()
+           now()->subDays((int) config('smartmarket.cart_keep_days', 30))
         );
     }
     
@@ -93,7 +93,7 @@ class Cart extends Model
             return $this->stockable->getCartImage();
         }
 
-        return asset('img/placeholder.png');
+        return null;   // no photo: the cart shows an image icon (there is no img/placeholder.png)
     }
 
     public function getBusinessNameAttribute()

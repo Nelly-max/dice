@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="hub-content no-sidebar fullground">
+<div class="hub-content hub-form no-sidebar fullground">
     <form
         action="{{ route('hub.account.rider.apply') }}"
         method="POST"
@@ -21,15 +21,8 @@
 
                 <div class="account-details">
 
-                    {{-- APPLICATION STATUS --}}
-                    <div class="account-detail top-area">
-
-                        <h4>
-                            Status -
-                            {{ ucfirst($rider->account_status ?? 'Pending') }}
-                        </h4>
-
-                    </div>
+                    {{-- APPLICATION STATUS: badge, Sent -> Review -> Decision steps, the team's note --}}
+                    @include('partials.Hub.application-status', ['rider' => $rider])
 
 
                     {{-- =================================================
@@ -327,49 +320,7 @@
                                     );
                                 @endphp
 
-                                <div
-                                    class="custom-select"
-                                    id="countySelect"
-                                    data-options='@json($counties)'
-                                    data-selected="{{ $selectedCountyId }}"
-                                >
-
-                                    <div class="select-btn">
-
-                                        <span>
-                                            {{ $selectedCounty->name ?? 'County' }}
-                                        </span>
-
-                                        <i class="fa-solid fa-chevron-down"></i>
-
-                                    </div>
-
-
-                                    <div class="select-options">
-
-                                        <div class="search">
-
-                                            <input
-                                                class="option-search"
-                                                type="text"
-                                                placeholder="Search..."
-                                            >
-
-                                        </div>
-
-                                        <ul class="options"></ul>
-
-                                    </div>
-
-
-                                    <input
-                                        type="hidden"
-                                        name="county_id"
-                                        id="county_id"
-                                        value="{{ $selectedCountyId }}"
-                                    >
-
-                                </div>
+                                @include('partials.Hub.picker', ['name' => 'county_id', 'label' => 'County', 'options' => $counties, 'value' => $selectedCountyId])
 
                             </div>
 
@@ -383,49 +334,7 @@
 
                             <div class="required-input">
 
-                                <div
-                                    class="custom-select"
-                                    id="townSelect"
-                                    data-options='@json($towns ?? [])'
-                                    data-selected="{{ old('town_id', $rider->town_id ?? '') }}"
-                                >
-
-                                    <div class="select-btn">
-
-                                        <span>
-                                            {{ $town->name ?? 'Town' }}
-                                        </span>
-
-                                        <i class="fa-solid fa-chevron-down"></i>
-
-                                    </div>
-
-
-                                    <div class="select-options">
-
-                                        <div class="search">
-
-                                            <input
-                                                class="option-search"
-                                                type="text"
-                                                placeholder="Search..."
-                                            >
-
-                                        </div>
-
-                                        <ul class="options"></ul>
-
-                                    </div>
-
-
-                                    <input
-                                        type="hidden"
-                                        name="town_id"
-                                        id="town_id"
-                                        value="{{ old('town_id', $rider->town_id ?? '') }}"
-                                    >
-
-                                </div>
+                                @include('partials.Hub.picker', ['name' => 'town_id', 'label' => 'Town', 'options' => $towns ?? [], 'value' => old('town_id', $rider->town_id ?? '')])
 
                             </div>
 
@@ -439,49 +348,7 @@
 
                             <div class="required-input">
 
-                                <div
-                                    class="custom-select"
-                                    id="placeSelect"
-                                    data-options='@json($places ?? [])'
-                                    data-selected="{{ old('place_id', $rider->place_id ?? '') }}"
-                                >
-
-                                    <div class="select-btn">
-
-                                        <span>
-                                            {{ $place->name ?? 'Place' }}
-                                        </span>
-
-                                        <i class="fa-solid fa-chevron-down"></i>
-
-                                    </div>
-
-
-                                    <div class="select-options">
-
-                                        <div class="search">
-
-                                            <input
-                                                class="option-search"
-                                                type="text"
-                                                placeholder="Search..."
-                                            >
-
-                                        </div>
-
-                                        <ul class="options"></ul>
-
-                                    </div>
-
-
-                                    <input
-                                        type="hidden"
-                                        name="place_id"
-                                        id="place_id"
-                                        value="{{ old('place_id', $rider->place_id ?? '') }}"
-                                    >
-
-                                </div>
+                                @include('partials.Hub.picker', ['name' => 'place_id', 'label' => 'Place', 'options' => $places ?? [], 'value' => old('place_id', $rider->place_id ?? '')])
 
                             </div>
 

@@ -263,6 +263,29 @@ public function navigate(Delivery $delivery)
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | The buyer's note for the rider (checkout "Note for the rider"), saved on
+    | the order: deliveries.order_id → order_businesses → orders.delivery_note
+    |--------------------------------------------------------------------------
+    */
+
+    $deliveryNote = null;
+
+    try {
+        $order = optional($delivery->order)->order;
+        $deliveryNote = $order->delivery_note ?? null;
+
+        if (!$deliveryNote && $order) {
+            $deliveryNote = \App\Models\Customer\OrderCustomerDetail::where('order_id', $order->id)
+                ->value('delivery_note');
+        }
+    } catch (\Throwable $e) {
+        report($e);
+    }
+
+    $deliveryNote = trim((string) $deliveryNote) ?: null;
+
     return view(
         'Hub.deliveryMap',
         [
@@ -271,6 +294,9 @@ public function navigate(Delivery $delivery)
 
             'riderLocation' =>
                 $riderLocation,
+
+            'deliveryNote' =>
+                $deliveryNote,
         ]
     );
 }

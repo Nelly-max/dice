@@ -2,15 +2,26 @@
 
 @section('content')
 
-<div class="hub-content hub-dash no-sidebar fullground">
+<div class="hub-content hub-form hub-dash no-sidebar fullground">
+
+<form method="POST" action="{{ route('hub.account.marketer.update') }}" class="hub-form-wrap" data-notify-loading="Saving your details…">
+    @csrf
+    @method('PUT')
+
+    {{-- errors: a short summary here, each message above its own field --}}
+    @include('partials.form-errors')
 
     <div class="left">
 
         <div class="account-details">
 
-            <div class="account-detail top-area">
-                <h4>Update your Details</h4>
-            </div>
+            @include('partials.Hub.page-hero', [
+                'back' => route('hub.account.marketer.index'),
+                'tone' => 'marketer',
+                'icon' => 'fa-solid fa-user-pen',
+                'title' => 'Edit your marketer profile',
+                'text' => 'Keep your details and M-Pesa number up to date so commission reaches you.',
+            ])
 
             <div class="account-detail">
 
@@ -19,7 +30,7 @@
                 <span>
                     <h4>Name</h4>
 
-                    <inv class="required-input">
+                    <div class="required-input">
                         <input
                             type="text"
                             name="name"
@@ -33,14 +44,14 @@
                         >
 
                         <h6 class="required">*</h6>
-                    </inv>
+                    </div>
                 </span>
 
 
                 <span>
                     <h4>Phone</h4>
 
-                    <inv class="required-input">
+                    <div class="required-input">
                         <input
                             type="text"
                             name="phone"
@@ -51,14 +62,14 @@
                         >
 
                         <h6 class="required">*</h6>
-                    </inv>
+                    </div>
                 </span>
 
 
                 <span>
                     <h4>Email</h4>
 
-                    <inv class="required-input">
+                    <div class="required-input">
                         <input
                             type="email"
                             name="email"
@@ -69,16 +80,16 @@
                         >
 
                         <h6 class="required">*</h6>
-                    </inv>
+                    </div>
                 </span>
 
 
                 <span>
                     <h4>Gender</h4>
 
-                    <inv class="grid-checker">
+                    <div class="grid-checker">
 
-                        <div class="grid-check">
+                        <label class="grid-check">
                             <input
                                 type="radio"
                                 name="gender"
@@ -87,9 +98,9 @@
                             >
 
                             <h5>Male</h5>
-                        </div>
+                        </label>
 
-                        <div class="grid-check">
+                        <label class="grid-check">
                             <input
                                 type="radio"
                                 name="gender"
@@ -98,9 +109,9 @@
                             >
 
                             <h5>Female</h5>
-                        </div>
+                        </label>
 
-                    </inv>
+                    </div>
                 </span>
 
 
@@ -127,7 +138,7 @@
                 <span>
                     <h4>Mpesa Number</h4>
 
-                    <inv class="required-input">
+                    <div class="required-input">
                         <input
                             type="text"
                             name="mpesa_number"
@@ -138,7 +149,7 @@
                         >
 
                         <h6 class="required">*</h6>
-                    </inv>
+                    </div>
                 </span>
 
             </div>
@@ -155,6 +166,8 @@
             Update Details
         </button>
     </div>
+
+</form>
 
 </div>
 

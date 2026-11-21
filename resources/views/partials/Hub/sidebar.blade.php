@@ -8,6 +8,10 @@
 
     $hasMarketerAccount = \App\Models\Hub\Marketer::where('customer_id', $customer->id)->exists();
     $hasRiderAccount = \App\Models\Hub\Rider::where('customer_id', $customer->id)->exists();
+    // professionals see their jobs (bookings); the badge is the new ones waiting for an answer
+    $professional = \App\Models\Hub\Professional::mine();
+    $newJobs = $professional ? (int) rescue(fn () => \Illuminate\Support\Facades\DB::connection('customer')->table('professional_jobs')
+        ->where('professional_id', $professional->id)->where('status', 'new')->count(), 0, false) : 0;
 
     $mediaBase = rtrim(config('app.media_url'), '/');
     $avatar = $customer->profile_image
@@ -17,24 +21,20 @@
 
 <aside class="sidebar hub-side" aria-label="Hub menu">
 
+    {{-- top: whose Hub this is (opens My account); the close button shows on phones only --}}
     <div class="hub-side-head">
-        <a href="{{ route('hub.index') }}" class="hub-brand">
-            <img src="{{ asset('img/favicon.webp') }}" alt="">
-            <span>Smart Market <small>Hub</small></span>
+        <a href="{{ route('hub.account.index') }}" class="hub-user" title="My account">
+            <img src="{{ $avatar }}" alt="">
+            <span>
+                <strong>{{ $customer->name }}</strong>
+                <small>{{ $customer->account }}</small>
+            </span>
         </a>
 
         <button type="button" class="hub-side-close remove-sidebar" aria-label="Close menu">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
     </div>
-
-    <a href="{{ route('hub.account.index') }}" class="hub-user" title="My account">
-        <img src="{{ $avatar }}" alt="">
-        <span>
-            <strong>{{ $customer->name }}</strong>
-            <small>{{ $customer->account }}</small>
-        </span>
-    </a>
 
     <nav class="hub-menu">
         <p class="hub-menu-label">Overview</p>
@@ -49,12 +49,17 @@
         <a href="#" class="hub-link is-soon" aria-disabled="true">
             <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Purchases</span><em>Soon</em>
         </a>
-        <a href="#" class="hub-link is-soon" aria-disabled="true">
-            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span><em>Soon</em>
+        <a href="{{ route('hub.bookings') }}" @class(['hub-link', 'active' => request()->routeIs('hub.bookings')])>
+            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Bookings</span>
         </a>
 
-        @if ($hasRiderAccount || $hasMarketerAccount)
+        @if ($hasRiderAccount || $hasMarketerAccount || $professional)
             <p class="hub-menu-label">Work</p>
+            @if ($professional)
+                <a href="{{ route('hub.jobs') }}" @class(['hub-link', 'active' => request()->routeIs('hub.jobs*')])>
+                    <i class="fa-solid fa-briefcase" aria-hidden="true"></i><span>Jobs</span>@if ($newJobs)<b class="hub-link-count" title="New bookings">{{ $newJobs }}</b>@endif
+                </a>
+            @endif
             @if ($hasRiderAccount)
                 <a href="{{ route('hub.deliveries') }}" @class(['hub-link', 'active' => request()->routeIs('hub.deliveries*')])>
                     <i class="fa-solid fa-motorcycle" aria-hidden="true"></i><span>Deliveries</span>
@@ -63,6 +68,9 @@
             @if ($hasMarketerAccount)
                 <a href="{{ route('hub.referrals') }}" @class(['hub-link', 'active' => request()->routeIs('hub.referral*')])>
                     <i class="fa-solid fa-link" aria-hidden="true"></i><span>Referrals</span>
+                </a>
+                <a href="{{ route('hub.leads') }}" @class(['hub-link', 'active' => request()->routeIs('hub.leads*')])>
+                    <i class="fa-solid fa-store" aria-hidden="true"></i><span>Leads</span>
                 </a>
             @endif
         @endif

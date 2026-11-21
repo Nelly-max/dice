@@ -105,11 +105,12 @@ class BusinessGasInventory extends Model
             ->where('quantity_id', $this->gas_quantity_id)
             ->value('image_path');
 
+        // same address as the gas cards (MEDIA_URL / image_path); had an extra "/media/"
         if (!$image) {
-            return rtrim(config('app.media_url'), '/') . '/media/img/placeholder.png';
+            return null;   // the cart shows an image icon (there is no img/placeholder.png)
         }
 
-        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
+        return rtrim((string) config('app.media_url'), '/') . '/' . ltrim($image, '/');
     }
     /**
      * Get business name
@@ -207,5 +208,17 @@ class BusinessGasInventory extends Model
         }
 
         return $this->discount;
+    }
+
+    /**
+     * Refills a buyer may see and order — the Home Market rules (App\Services\CookingGas\GasCatalog):
+     * subscribed shop with e-commerce, open, the cart's gas shop or within the delivery radius,
+     * and filled cylinders in stock.
+     */
+    public function scopeSellable($query)
+    {
+        return $query
+            ->whereIn('business_id', app(\App\Services\CookingGas\GasCatalog::class)->visibleIds() ?: [0])
+            ->where('filled_cylinders', '>', 0);
     }
 }

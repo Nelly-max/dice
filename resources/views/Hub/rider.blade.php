@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="hub-content hub-dash no-sidebar fullground">
+<div class="hub-content hub-form hub-dash no-sidebar fullground">
 
     @if($rider)
 
@@ -10,26 +10,15 @@
             <div class="account-details">
 
                 {{-- Header --}}
-                <div class="account-detail top-area">
-
-                    <h4>Rider Account</h4>
-
-                    {{-- Shortcuts --}}
-                    <div class="shortcuts">
-
-                        @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'shortcut'])
-
-                        <a
-                            href="{{ route('hub.account.rider.edit') }}"
-                            class="shortcut"
-                        >
-                            <i class="fa-solid fa-user-pen"></i>
-                            Edit
-                        </a>
-
-                    </div>
-
-                </div>
+                @include('partials.Hub.page-hero', [
+                    'tone' => 'rider',
+                    'icon' => 'fa-solid fa-motorcycle',
+                    'title' => $rider->name ?: 'Rider account',
+                    'badge' => ucfirst($rider->account_status ?? ''),
+                    'text' => 'Rider account' . ($rider->rider_account ? ' ' . $rider->rider_account : '') . '. Your details, locality and payout number.',
+                    'back' => route('hub.account.index'),
+                    'links' => [['href' => route('hub.account.rider.edit'), 'icon' => 'fa-solid fa-user-pen', 'label' => 'Edit profile']],
+                ])
 
 
                 {{-- Account --}}
@@ -121,6 +110,29 @@
 
                 </div>
 
+
+                {{-- Locality --}}
+                <div class="account-detail">
+
+                    <h4 class="sub-heading">Your locality</h4>
+
+                    <span>
+                        <h4>County</h4>
+                        <h3>{{ $locality['county'] ?? '—' }}</h3>
+                    </span>
+
+                    <span>
+                        <h4>Town</h4>
+                        <h3>{{ $locality['town'] ?? '—' }}</h3>
+                    </span>
+
+                    <span>
+                        <h4>Place</h4>
+                        <h3>{{ $locality['place'] ?? '—' }}</h3>
+                    </span>
+
+                </div>
+
             </div>
         </div>
 
@@ -134,11 +146,8 @@
         {{-- No Rider Account --}}
         <div class="no-account">
 
-            {{-- back to where they came from (My account if there is no history) --}}
-            <a href="{{ route('hub.account.index') }}" class="no-account-back"
-               onclick="if (history.length > 1) { history.back(); return false; }">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-            </a>
+            {{-- the page's only Back (the partial tells layouts/hub not to add its own) --}}
+            @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'no-account-back'])
 
             <h3>Team</h3>
 

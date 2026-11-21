@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Smart Market || Cart')</title>
+    <title>Smart Market · @yield('title', 'Cart')</title>
 
     {{-- Shared by cart, checkout, M-Pesa payment and order success. main.css keeps the old
          structural rules; tokens/components/flow.css (loaded last) give them the new look. --}}

@@ -65,7 +65,13 @@ return [
 
     //custom    
     'google_maps' => [
+        // browser key (Maps JavaScript / Places): restrict it to the site's addresses (HTTP referrers)
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
+
+        // server key for road distances at checkout (Routes API, called from PHP). A browser key
+        // restricted to HTTP referrers is refused there, so use a key restricted to the server's
+        // IP address. Falls back to the browser key.
+        'server_key' => env('GOOGLE_MAPS_SERVER_KEY', env('GOOGLE_MAPS_API_KEY')),
     ],
 
 ];

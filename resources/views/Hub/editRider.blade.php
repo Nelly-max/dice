@@ -3,10 +3,10 @@
 
 @section('content')
 
-<div class="hub-content hub-dash no-sidebar fullground">
+<div class="hub-content hub-form hub-dash no-sidebar fullground">
 
     <form
-        action="#"
+        action="{{ route('hub.account.rider.update') }}"
         method="POST"
         id="riderUpdateForm"
     >
@@ -18,11 +18,13 @@
             <div class="account-details">
 
                 {{-- HEADER --}}
-                <div class="account-detail top-area">
-
-                    <h4>Update your Details</h4>
-
-                </div>
+                @include('partials.Hub.page-hero', [
+                    'back' => route('hub.account.rider.index'),
+                    'tone' => 'rider',
+                    'icon' => 'fa-solid fa-user-pen',
+                    'title' => 'Edit your rider profile',
+                    'text' => 'Keep your details, locality and M-Pesa number up to date so payouts and nearby deliveries reach you.',
+                ])
 
 
                 {{-- PERSONAL DETAILS --}}
@@ -192,6 +194,38 @@
 
                         </div>
 
+                    </span>
+
+                </div>
+
+
+                {{-- LOCALITY --}}
+                <div class="account-detail">
+
+                    <h4 class="sub-heading">Your locality</h4>
+
+                    <span>
+                        <h4>County</h4>
+                        <div class="required-input">
+                            @include('partials.Hub.picker', ['name' => 'county_id', 'label' => 'County', 'options' => $counties, 'value' => old('county_id', $rider->county_id ?? ''), 'required' => true])
+                            <h6 class="required">*</h6>
+                        </div>
+                    </span>
+
+                    <span>
+                        <h4>Town</h4>
+                        <div class="required-input">
+                            {{-- towns and places are loaded for the chosen county / town (resources/js/select.js) --}}
+                            @include('partials.Hub.picker', ['name' => 'town_id', 'label' => 'Town', 'options' => [], 'value' => old('town_id', $rider->town_id ?? ''), 'required' => true])
+                            <h6 class="required">*</h6>
+                        </div>
+                    </span>
+
+                    <span>
+                        <h4>Place</h4>
+                        <div class="required-input">
+                            @include('partials.Hub.picker', ['name' => 'place_id', 'label' => 'Place', 'options' => [], 'value' => old('place_id', $rider->place_id ?? '')])
+                        </div>
                     </span>
 
                 </div>

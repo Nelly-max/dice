@@ -87,15 +87,21 @@ class RetailInventory extends Model
     //     return $this->item?->images?->first()?->image_path;
     // }
 
+    /**
+     * Cart photo: the same address as the product cards (ProductPresenter::imageUrl):
+     * MEDIA_URL / homemarket.product_image_prefix / image_path. (Had an extra "/media/" that the
+     * cards don't use, so cart photos pointed at files that don't exist.)
+     */
     public function getCartImage()
     {
+        $base = rtrim((string) config('app.media_url'), '/');
         $image = $this->item?->images()->value('image_path');
 
         if (!$image) {
-            return rtrim(config('app.media_url'), '/') . '/media/img/homeMarket/products/item_image.png';
+            return $base . '/' . ltrim((string) config('homemarket.placeholder_image', 'img/homeMarket/products/item_image.png'), '/');
         }
 
-        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
+        return $base . '/' . config('homemarket.product_image_prefix') . ltrim($image, '/');
     }
 
 // public function getCartImage()

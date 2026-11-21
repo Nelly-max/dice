@@ -262,3 +262,28 @@ if (document.readyState === "loading") {
 
     paint();
 })();
+
+
+// ===================================================
+//     Add a lead: "I'm here: save pin" (Hub/leadForm)
+// ===================================================
+
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest?.('[data-lead-gps]');
+    if (!btn) return;
+    const form = btn.closest('form');
+    const label = btn.querySelector('b');
+    if (!navigator.geolocation) { label.textContent = 'This phone cannot share its location'; return; }
+    label.textContent = 'Finding you…';
+    btn.disabled = true;
+    navigator.geolocation.getCurrentPosition((p) => {
+        form.querySelector('[data-lead-lat]').value = p.coords.latitude.toFixed(7);
+        form.querySelector('[data-lead-lng]').value = p.coords.longitude.toFixed(7);
+        label.textContent = 'Pin saved (±' + Math.round(p.coords.accuracy) + ' m)';
+        btn.classList.add('is-set');
+        btn.disabled = false;
+    }, () => {
+        label.textContent = 'Location blocked (optional)';
+        btn.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 12000 });
+});

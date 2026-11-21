@@ -2,6 +2,8 @@
     Delivery location picker. Opened with showModal('mapModal'); behaviour lives in resources/js/map.js
     One simple screen: search (suggestions drop down over the map), use current location,
     the map with a centred pin to fine-tune, Confirm. The picked address is the sheet's title.
+    The map opens on the saved delivery location, or on the user's current location; while that is
+    being read, or when there is no location, the map picture (#loc-placeholder) covers the map.
 --}}
 <div class="modal sheet loc-sheet" id="mapModal">
     <div class="modal-overlay"></div>
@@ -42,6 +44,14 @@
                     <small>Move the map to adjust</small>
                     <i class="fa-solid fa-location-dot"></i>
                 </span>
+
+                {{-- just the map picture while finding the user, and whenever there is no location (map.js) --}}
+                <div class="loc-placeholder" id="loc-placeholder" data-state="locating">
+                    <img src="{{ asset('img/map_vector.png') }}" alt="" width="577" height="432">
+                    <button type="button" class="loc-ph-map" data-loc-show-map>
+                        <i class="fa-regular fa-map" aria-hidden="true"></i> Choose on the map instead
+                    </button>
+                </div>
             </div>
 
             <button type="button" class="loc-confirm" onclick="confirmDeliveryLocation()">Confirm location</button>

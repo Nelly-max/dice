@@ -78,8 +78,9 @@
             <i class="fa-regular fa-sun is-sun" aria-hidden="true"></i>
         </button>
 
+        {{-- notifications: partials/Hub/notifications (panel + unread count) --}}
         <button type="button" class="hub-icon-btn count-holder" aria-label="Notifications"
-                onclick="document.getElementById('Notif') && showModal('Notif')">
+                data-hub-bell aria-haspopup="dialog" aria-expanded="false" aria-controls="hubNotif">
             <i class="fa-regular fa-bell" aria-hidden="true"></i>
             <span class="counter"></span>
         </button>
