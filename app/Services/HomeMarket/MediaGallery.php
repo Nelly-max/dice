@@ -18,7 +18,8 @@ class MediaGallery
     public function images(string $folder): array
     {
         return Cache::remember(
-            "homemarket.gallery.{$folder}",
+            // the folder's modified time is part of the key, so pictures added from the hub show at once
+            "homemarket.gallery.{$folder}." . (int) @filemtime(rtrim(config('app.media_root'), '/\\') . "/img/homeMarket/{$folder}"),
             now()->addSeconds(config('homemarket.gallery_cache_seconds')),
             function () use ($folder) {
                 $dir = rtrim(config('app.media_root'), '/\\') . "/img/homeMarket/{$folder}";

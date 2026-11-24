@@ -52,38 +52,4 @@ class OrderController extends Controller
         return view('Hub.orders', compact('orders', 'search', 'perPage'));
     }
 
-    /**
-     * View a single order.
-     */
-    public function show(Order $order)
-    {
-        //
-    }
-
-    /**
-     * Create an order from a checkout invoice.
-     *
-     * Normally this is called by PaymentProcessingService
-     * after payment is confirmed or for Cash on Delivery.
-     */
-    public function store(CheckoutInvoice $invoice)
-    {
-        //
-    }
-
-    /**
-     * Cancel an order.
-     */
-    public function cancel(Order $order)
-    {
-        //
-    }
-
-    /**
-     * Mark an order as completed.
-     */
-    public function complete(Order $order)
-    {
-        //
-    }
 }

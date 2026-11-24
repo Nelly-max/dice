@@ -15,7 +15,10 @@ use App\Models\CookingGas\BusinessGasInventory;
 use App\Models\HomeMarket\RetailInventory;
 use App\Models\SubDivision; 
 
+use App\Services\DeliveryLocationService;
 use App\Services\ShipmentService;
+use App\Services\Cart\CartStock;
+use App\Services\HomeMarket\ShopDiscovery;
 class CartController extends Controller
 {
 
@@ -198,32 +201,11 @@ protected ShipmentService $shipmentService;
             ->get();
 
         // =====================================================
-        // VERIFY STOCK
+        // STOCK AND HOLDS (App\Services\Cart\CartStock)
         // =====================================================
-        foreach ($cartItems as $item) {
-
-            $availableStock = $this->getAvailableStock($item->stockable);
-
-            $reservedByOthers = ItemReservation::active()
-                ->where('stockable_type', $item->stockable_type)
-                ->where('stockable_id', $item->stockable_id)
-                ->where('cart_id', '!=', $item->id)
-                ->where('expires_at', '>', now())
-                ->sum('quantity');
-
-            $available = max(0, $availableStock - $reservedByOthers);
-
-            if ($item->quantity > $available) {
-
-                if ($available == 0) {
-                    $item->delete();
-                } else {
-                    $item->update([
-                        'quantity' => $available
-                    ]);
-                }
-            }
-        }
+        // Sold out items leave the cart, quantities follow what the shop has now, and what
+        // is left is held for this buyer for another few minutes.
+        $stock = app(CartStock::class)->sync($cartItems, true);
 
         // Reload cart after any updates/deletes
         $cartItems = Cart::forCurrent()
@@ -259,25 +241,49 @@ protected ShipmentService $shipmentService;
         // =====================================================
         $total = collect($formattedShipments)->sum('subtotal');
 
-        // =====================================================
-        // DETERMINE SUBDIVISION LAYOUT
-        // =====================================================
-        $layout = 'layouts.app'; // default green theme
-
-        if ($cartItems->isNotEmpty()) {
-            $dbConnection = $cartItems->first()->subdivision?->db_connection;
-
-            if ($dbConnection === 'homemarket') {
-                $layout = 'HomeMarket.layouts.app';
-            }
-        }
+        // empty cart: premium-listing items from the subdivision the customer came from
+        $picks = $cartItems->isEmpty()
+            ? app(\App\Services\CartPicks::class)->forShopping(
+                session(\App\Http\Middleware\RememberShoppingSubdivision::KEY),
+                request()
+            )
+            : collect();
 
         return view('Cart.cart', [
             'cartItems' => $cartItems,
             'shipments' => $formattedShipments,
             'total' => $total,
             'expired' => $expired,
-            'layout' => $layout,
+            'picks' => $picks,
+            'stock' => $stock,
+            'holdMinutes' => CartStock::holdMinutes(),
+            'signature' => CartStock::signature($cartItems),
+        ]);
+    }
+
+    /**
+     * The cart page asks every half minute (resources/js/cart-hold.js): did a shop sell out or
+     * lower its stock? Brings the cart in line but does not hold it again (only shopping does).
+     * Route: GET /cart/status
+     */
+    public function status(Request $request)
+    {
+        $items = Cart::forCurrent()->with('stockable')->get();
+        $stock = app(CartStock::class)->sync($items, false);
+        $items = Cart::forCurrent()->get(['id', 'quantity']);
+
+        // the page reloads when something changed: tell it what, on that next page
+        if ($stock['removed'] || $stock['reduced']) {
+            session()->flash('cart_stock_notes', ['removed' => $stock['removed'], 'reduced' => $stock['reduced']]);
+        }
+
+        return response()->json([
+            'signature' => CartStock::signature($items),
+            'changed' => $stock['changed'],
+            'cart_count' => (int) $items->sum('quantity'),
+            'hold_until' => $stock['holdUntil']?->toIso8601String(),
+            'removed' => $stock['removed'],
+            'reduced' => $stock['reduced'],
         ]);
     }
 
@@ -286,6 +292,11 @@ protected ShipmentService $shipmentService;
     {
         if (!$stockable) {
             return 0;
+        }
+
+        // models that know their own stock (Water: made to order, no stock column)
+        if ($stockable instanceof \App\Models\Water\Inventory) {
+            return (int) $stockable->availableStock();
         }
 
         /*
@@ -319,6 +330,33 @@ protected ShipmentService $shipmentService;
     }
 
     // Update quantity (form submission)
+    /**
+     * Remove an item from the cart (the bin button on the cart page).
+     * Route: DELETE /cart/remove/{id}
+     */
+    public function remove($id)
+    {
+        $item = Cart::forCurrent()->where('id', $id)->first();
+
+        if (!$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found',
+            ], 404);
+        }
+
+        DB::transaction(function () use ($item) {
+            ItemReservation::where('cart_id', $item->id)->delete();
+            $item->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'deleted' => true,
+            'cart_count' => Cart::forCurrent()->sum('quantity'),
+        ]);
+    }
+
     public function update(Request $request)
     {
         $request->validate([
@@ -346,19 +384,8 @@ protected ShipmentService $shipmentService;
 
             if ($request->action === 'increase') {
 
-                $reservedByOthers = ItemReservation::active()
-                    ->where('stockable_type', $item->stockable_type)
-                    ->where('stockable_id', $item->stockable_id)
-                    ->where('cart_id', '!=', $item->id)
-                    ->where('expires_at', '>', now())
-                    ->sum('quantity');
-
-                $availableStock = $this->getAvailableStock($item->stockable);
-
-                $available = max(
-                    0,
-                    $availableStock - $reservedByOthers
-                );
+                // the shop's stock now, less what other buyers are holding
+                $available = app(CartStock::class)->free($item);
 
                 if (($quantity + 1) > $available) {
 
@@ -417,19 +444,7 @@ protected ShipmentService $shipmentService;
             |--------------------------------------------------------------------------
             */
 
-            ItemReservation::updateOrCreate(
-                [
-                    'cart_id' => $item->id,
-                ],
-                [
-                    'stockable_type' => $item->stockable_type,
-                    'stockable_id'   => $item->stockable_id,
-                    'quantity'       => $quantity,
-                    'expires_at'     => now()->addMinutes(10),
-
-                    'updated_at'     => now(),
-                ]
-            );
+            app(CartStock::class)->hold($item);
 
             DB::commit();
 
@@ -437,7 +452,7 @@ protected ShipmentService $shipmentService;
                 'success' => true,
                 'quantity' => $quantity,
                 'cart_count' => Cart::forCurrent()->sum('quantity'),
-                'expires_at' => now()->addMinutes(10)->toDateTimeString(),
+                'expires_at' => now()->addMinutes(CartStock::holdMinutes())->toIso8601String(),
             ]);
 
         } catch (\Throwable $e) {
@@ -454,8 +469,37 @@ protected ShipmentService $shipmentService;
     }
 
     // Add to cart
-    public function addToCart(Request $request)
-{
+    /**
+     * The page of the shop selling an item, by subdivision (homemarket, liquorhub, glamroom,
+     * farmmarket by account; cookinggas, water by business id). Null when there is none.
+     */
+    private function shopUrlFor(?string $code, ?string $account): ?string
+    {
+        if (!$code || !$account) return null;
+
+        try {
+            return match ($code) {
+                'homemarket' => route('homemarket.shop', $account),
+                'liquorhub'  => route('liquorhub.shop', $account),
+                'glamroom'   => route('glamroom.shop', $account),
+                'farmmarket' => route('farmmarket.shop', $account),
+                'cookinggas', 'gas', 'water' => (function () use ($code, $account) {
+                    $connection = $code === 'water' ? 'water' : 'cookinggas';
+                    $id = DB::connection($connection)->table('business')->where('account', $account)->value('id');
+                    return $id ? route($code === 'water' ? 'water.shop' : 'gas.shop', $id) : null;
+                })(),
+                default => null,
+            };
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function addToCart(
+    Request $request,
+    DeliveryLocationService $locationService,
+    ShopDiscovery $shops
+) {
     DB::beginTransaction();
 
     try {
@@ -467,10 +511,33 @@ protected ShipmentService $shipmentService;
             'subdivision_code' => 'required|string',
             'quantity'         => 'required|integer|min:1|max:99',
             'shipment_type'    => 'nullable|string',
+            'replace_cart'     => 'nullable|boolean',
         ]);
 
         $userId = auth('customer')->id();
         $sessionId = $request->session()->getId();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delivery Location Required
+        |--------------------------------------------------------------------------
+        |
+        | Nothing can be added to the cart until the buyer has told us where
+        | the order is going. Enforced here, not only in the browser.
+        |
+        */
+
+        $location = $locationService->get($request);
+
+        if (!$location) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'code'    => 'location_required',
+                'message' => 'Please set your delivery location before adding items to your cart.',
+            ], 422);
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -559,26 +626,84 @@ protected ShipmentService $shipmentService;
 
         /*
         |--------------------------------------------------------------------------
+        | Shop Must Be Within Delivery Range
+        |--------------------------------------------------------------------------
+        */
+
+        // Home Market and Liquor Hub shops each live in their own database
+        $rangeCheck = match ($typeKey) {
+            'retail_inventory' => $shops,
+            'liquor_inventory' => app(\App\Services\LiquorHub\ShopDiscovery::class),
+            'glam_inventory'   => app(\App\Services\GlamRoom\ShopDiscovery::class),
+            'farm_inventory'   => app(\App\Services\FarmMarket\ShopDiscovery::class),
+            'water_refill', 'water_bottled', 'water_truck' => app(\App\Services\Water\WaterCatalog::class),
+            default            => null,
+        };
+        $maxRadius = match ($typeKey) {
+            'liquor_inventory' => config('liquorhub.max_radius_m', config('homemarket.max_radius_m')),
+            'glam_inventory'   => config('glamroom.max_radius_m', config('homemarket.max_radius_m')),
+            'farm_inventory'   => config('farmmarket.max_radius_m', config('homemarket.max_radius_m')),
+            'water_refill', 'water_bottled', 'water_truck' => config('water.max_radius_m', config('homemarket.max_radius_m')),
+            default            => config('homemarket.max_radius_m'),
+        };
+
+        if (
+            $rangeCheck &&
+            !$rangeCheck->shopInRange(
+                $businessAccount,
+                $location['latitude'],
+                $location['longitude']
+            )
+        ) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'code'    => 'out_of_range',
+                'message' => 'This shop is more than '
+                    . ($maxRadius / 1000)
+                    . ' km from your delivery location.',
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Check Existing Cart Shop
         |--------------------------------------------------------------------------
         |
-        | A customer's active cart can only contain items belonging
-        | to ONE business/shop.
+        | One cart can hold items from several subdivisions (Home Market, Liquor Hub,
+        | Cooking Gas, ...), but within a subdivision only ONE shop. Each subdivision
+        | is checked out on its own. The stockable type identifies the subdivision.
+        | The buyer may replace that subdivision's items instead (replace_cart).
         |
         */
 
-        $existingCartQuery = Cart::active();
-
-        if ($userId) {
-            $existingCartQuery->where('user_id', $userId);
-        } else {
-            $existingCartQuery->where('session_id', $sessionId);
-        }
-
-        $cartShop = $existingCartQuery
+        // Water sells one inventory row as a refill, a new bottle or a truck trip
+        // (three stockable types): they are still one subdivision with one shop.
+        $subdivisionTypes = $this->subdivisionTypes($typeKey);
+        $cartShop = Cart::forCurrent()
+            ->whereIn('stockable_type', $subdivisionTypes)
             ->whereNotNull('business_account')
             ->select('business_account')
             ->first();
+
+        if (
+            $cartShop &&
+            $cartShop->business_account !== $businessAccount &&
+            $request->boolean('replace_cart')
+        ) {
+            // only this subdivision's items; other subdivisions stay in the cart
+            $cartIds = Cart::forCurrent()->whereIn('stockable_type', $subdivisionTypes)->pluck('id');
+
+            ItemReservation::whereIn('cart_id', $cartIds)->delete();
+            Cart::whereIn('id', $cartIds)->delete();
+
+            $cartShop = null;
+        }
+
+        // nothing from this subdivision in the cart yet: after adding, the page reloads so the
+        // shop's own products are the ones shown (one shop per subdivision)
+        $firstForSubdivision = !$cartShop;
 
         if ($cartShop && $cartShop->business_account !== $businessAccount) {
 
@@ -588,22 +713,17 @@ protected ShipmentService $shipmentService;
             |--------------------------------------------------------------------------
             */
 
-            $currentShopName = DB::connection('homemarket')
-                ->table('business')
-                ->where('account', $cartShop->business_account)
-                ->value('name');
+            $currentShopName = $this->shopNameFor($cartShop->business_account);
 
-            $newShopName = DB::connection('homemarket')
-                ->table('business')
-                ->where('account', $businessAccount)
-                ->value('name');
+            $newShopName = $this->shopNameFor($businessAccount);
 
             DB::rollBack();
 
             return response()->json([
                 'success' => false,
                 'code' => 'different_shop',
-                'message' => 'Your cart already contains items from another shop.',
+                'message' => 'Your cart already has ' . $this->subdivisionLabel($typeKey) . ' items from another shop.',
+                'subdivision' => $this->subdivisionLabel($typeKey),
                 'current_shop' => $currentShopName,
                 'current_business_account' => $cartShop->business_account,
                 'new_shop' => $newShopName,
@@ -674,16 +794,7 @@ protected ShipmentService $shipmentService;
         |--------------------------------------------------------------------------
         */
 
-        $existing = Cart::active()
-            ->where(function ($query) use ($userId, $sessionId) {
-
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-
-            })
+        $existing = Cart::forCurrent()
             ->where('stockable_id', $request->stockable_id)
             ->where('stockable_type', $typeKey)
             ->where('business_account', $businessAccount)
@@ -732,6 +843,45 @@ protected ShipmentService $shipmentService;
 
             /*
             |--------------------------------------------------------------------------
+            | An old (expired) row for the same item
+            |--------------------------------------------------------------------------
+            | Cart rows older than a day drop out of forCurrent() (scopeActive) but stay
+            | in the table, and the unique key (user, session, shop, item) then refused a
+            | new row ("Duplicate entry ... cart_user_vendor_product_unique"). Reuse it.
+            */
+
+            $stale = Cart::query()
+                ->where(function ($q) use ($userId, $sessionId) {
+                    if ($userId) {
+                        $q->where('user_id', $userId);
+                    } else {
+                        $q->where('session_id', $sessionId);
+                    }
+                })
+                ->where('stockable_id', $request->stockable_id)
+                ->where('stockable_type', $typeKey)
+                ->where('business_account', $businessAccount)
+                ->lockForUpdate()
+                ->first();
+
+            if ($stale) {
+                $stale->forceFill([
+                    'session_id'       => $sessionId,
+                    'subdivision_code' => $request->subdivision_code,
+                    'sub_division_id'  => $subDivisionId,
+                    'quantity'         => $request->quantity,
+                    'shipment_type'    => $request->shipment_type ?? 'quick',
+                    'updated_at'       => now(),
+                ])->save();
+
+                $cart = $stale;
+            }
+        }
+
+        if (!isset($cart)) {
+
+            /*
+            |--------------------------------------------------------------------------
             | Create Cart Item
             |--------------------------------------------------------------------------
             */
@@ -759,19 +909,8 @@ protected ShipmentService $shipmentService;
         |--------------------------------------------------------------------------
         */
 
-        ItemReservation::updateOrCreate(
-            [
-                'cart_id' => $cart->id,
-            ],
-            [
-                'stockable_type' => $cart->stockable_type,
-                'stockable_id'   => $cart->stockable_id,
-                'quantity'       => $cart->quantity,
-                'expires_at'     => now()->addMinutes(10),
-
-                'updated_at'     => now(),
-            ]
-        );
+        // held for this buyer for a few minutes (config smartmarket.cart_hold_minutes)
+        app(CartStock::class)->hold($cart->loadMissing('stockable'));
 
         DB::commit();
 
@@ -781,24 +920,19 @@ protected ShipmentService $shipmentService;
         |--------------------------------------------------------------------------
         */
 
-        $cartCount = Cart::active()
-            ->where(function ($query) use ($userId, $sessionId) {
-
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-
-            })
-            ->sum('quantity');
+        $cartCount = Cart::forCurrent()->sum('quantity');
 
         return response()->json([
             'success' => true,
             'message' => 'Added to cart!',
             'cart_count' => $cartCount,
             'business_account' => $businessAccount,
-            'expires_at' => now()->addMinutes(10)->toDateTimeString(),
+            'cart_item_id' => $cart->id,               // item cards switch to "- qty +" (cart.js)
+            'item_quantity' => (int) $cart->quantity,
+            'expires_at' => now()->addMinutes(CartStock::holdMinutes())->toIso8601String(),
+            'reload' => $firstForSubdivision,          // first item from this subdivision: show only its shop
+            // ... on that shop's own page (cart.js goes there after the first item from a shop)
+            'shop_url' => $firstForSubdivision ? $this->shopUrlFor($code, $businessAccount) : null,
         ]);
 
     } catch (\Throwable $e) {
@@ -807,11 +941,63 @@ protected ShipmentService $shipmentService;
 
         report($e);
 
+        // no database/SQL text in the toast
         return response()->json([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => 'We could not add this item right now. Please try again.'
         ], 500);
     }
 }
 
+
+    /**
+     * Shop name for a business account. Shops live in their subdivision's own
+     * database (Home Market, Liquor Hub, ...), so look in each until found.
+     */
+    /** Subdivision name for a stockable type (config/stockables.php keys). */
+    private function subdivisionLabel(string $typeKey): string
+    {
+        return [
+            'retail_inventory' => 'Home Market',
+            'liquor_inventory' => 'Liquor Hub',
+            'glam_inventory' => 'Glam Room',
+            'farm_inventory' => 'Farm Market',
+            'cooking_gas_stock' => 'Cooking Gas',
+            'water_refill' => 'Water',
+            'water_bottled' => 'Water',
+            'water_truck' => 'Water',
+        ][$typeKey] ?? 'these';
+    }
+
+    /** Stockable types that make up the same subdivision as $typeKey (one shop per subdivision). */
+    private function subdivisionTypes(string $typeKey): array
+    {
+        return in_array($typeKey, \App\Models\Water\Inventory::TYPES, true)
+            ? \App\Models\Water\Inventory::TYPES
+            : [$typeKey];
+    }
+
+    private function shopNameFor(?string $account): ?string
+    {
+        if (!$account) {
+            return null;
+        }
+
+        foreach (['homemarket', 'liquorhub', 'glamroom', 'farmmarket', 'cookinggas', 'water'] as $connection) {
+            try {
+                $name = DB::connection($connection)
+                    ->table('business')
+                    ->where('account', $account)
+                    ->value('name');
+
+                if ($name) {
+                    return $name;
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return null;
+    }
 }

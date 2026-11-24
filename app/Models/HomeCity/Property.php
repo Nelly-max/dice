@@ -60,10 +60,14 @@ class Property extends Model
     }
 
     /** Lister */
-    public function lister()
-    {
-        return $this->belongsTo(Lister::class, 'lister_id');
-    }
+public function lister()
+{
+    return $this->belongsTo(
+        Business::class,
+        'lister_id',
+        'account'
+    );
+}
 
     public function extraCharges()
     {
@@ -178,37 +182,6 @@ class Property extends Model
     /* ============================================================
      |  🔹 CUSTOM ACCESSORS & LOGIC
      * ============================================================ */
-
-    /** Price range for vacant units */
-    public function getVacantPriceRange()
-    {
-        $vacantPrices = $this->units()
-            ->where('status', 'Vacant')
-            ->pluck('price');
-
-        if ($vacantPrices->isEmpty()) {
-            return null;
-        }
-
-        $min = $vacantPrices->min();
-        $max = $vacantPrices->max();
-
-        return $min === $max
-            ? ['label' => 'Ksh ' . number_format($min)]
-            : ['label' => 'Ksh ' . number_format($min) . ' - Ksh ' . number_format($max)];
-    }
-
-    /** Vacant unit types names */
-    public function getVacantUnitTypes()
-    {
-        return $this->units()
-            ->where('status', 'Vacant')
-            ->with('type')
-            ->get()
-            ->pluck('type.name')
-            ->unique()
-            ->values();
-    }
 
     /** Formatted location: "County, Town" */
     public function getFormattedLocationAttribute()

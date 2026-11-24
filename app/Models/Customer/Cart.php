@@ -57,7 +57,7 @@ class Cart extends Model
         return $query->where(
             'updated_at',
             '>',
-           now()->subDay()
+           now()->subDays((int) config('smartmarket.cart_keep_days', 30))
         );
     }
     
@@ -78,12 +78,6 @@ class Cart extends Model
             : 0;
     }
 
-// public function getDisplayImageAttribute()
-// {
-//     return $this->stockable
-//         ? $this->stockable->getCartImage()
-//         : asset('img/placeholder.png');
-// }
 
     public function getDisplayImageAttribute()
     {
@@ -93,7 +87,7 @@ class Cart extends Model
             return $this->stockable->getCartImage();
         }
 
-        return asset('img/placeholder.png');
+        return null;   // no photo: the cart shows an image icon (there is no img/placeholder.png)
     }
 
     public function getBusinessNameAttribute()
@@ -118,10 +112,6 @@ class Cart extends Model
     /**
      * Scope for current user/session
      */
-    // public function scopeForCurrent($query)
-    // {
-    //     return $query->where('user_id', Auth::id());
-    // }
     
     public function scopeForCurrent($query)
     {
@@ -177,176 +167,5 @@ class Cart extends Model
     // ============================================
     // HELPER METHODS
     // ============================================
-    
-    /**
-     * Add item to cart
-     */
-    public static function addItem($stockable, $quantity = 1, $shipmentType = 'quick')
-    {
-        $userId = Auth::id();
-        $sessionId = session()->getId();
 
-        // ============================================
-        // CORE IDENTIFIERS
-        // ============================================
-
-        $stockableId = $stockable->getStockableId();
-        $stockableType = $stockable->getStockableType();
-
-        $businessAccount = null;
-
-        if (method_exists($stockable, 'getBusinessAccount')) {
-            $businessAccount = $stockable->getBusinessAccount();
-        }
-
-        if (!$businessAccount && isset($stockable->business_account)) {
-            $businessAccount = $stockable->business_account;
-        }
-
-        $subdivisionCode = $stockable->getSubdivisionCode();
-
-        // ============================================
-        // FIND EXISTING ITEM
-        // ============================================
-
-        $existing = self::forCurrent()
-            ->where('stockable_id', $stockableId)
-            ->where('stockable_type', $stockableType)
-            ->where('business_account', $businessAccount)
-            ->first();
-
-        if ($existing) {
-            $existing->quantity += $quantity;
-            $existing->shipment_type = $shipmentType;
-            $existing->save();
-
-            return $existing;
-        }
-
-        // ============================================
-        // RESOLVE SUBDIVISION
-        // ============================================
-
-        $subDivisionId = null;
-
-        if (!empty($subdivisionCode) && class_exists(Subdivision::class)) {
-
-            $subDivision = Subdivision::where('db_connection', $subdivisionCode)
-                ->first();
-
-            $subDivisionId = $subDivision->id ?? null;
-        }
-
-        // ============================================
-        // CREATE CART ITEM
-        // ============================================
-
-        return self::create([
-            'user_id' => $userId,
-            'session_id' => $sessionId,
-
-            'business_account' => $businessAccount,
-
-            'subdivision_code' => $subdivisionCode,
-            'sub_division_id' => $subDivisionId,
-
-            'stockable_id' => $stockableId,
-            'stockable_type' => $stockableType,
-
-            'quantity' => $quantity,
-            'shipment_type' => $shipmentType,
-        ]);
-    }
-    
-    /**
-     * Get cart count for current user/session
-     */
-    public static function getCount()
-    {
-        return self::forCurrent()->sum('quantity');
-    }
-    
-    /**
-     * Get cart total for current user/session
-     */
-    public static function getTotal()
-    {
-        return self::forCurrent()->withProduct()->get()->sum('total');
-    }
-    
-    /**
-     * Get cooking gas items only
-     */
-    public static function getCookingGasItems()
-    {
-        return self::forCurrent()->cookingGas()->withProduct()->get();
-    }
-    
-    /**
-     * Get cart grouped by subdivision
-     */
-    public static function getGroupedBySubdivision()
-    {
-        return self::forCurrent()
-            ->withProduct()
-            ->get()
-            ->groupBy('subdivision_code');
-    }
-    
-    /**
-     * Get cart grouped by shipment type
-     */
-    public static function getGroupedByShipment()
-    {
-        return self::forCurrent()
-            ->withProduct()
-            ->get()
-            ->groupBy('shipment_type');
-    }
-
-
-    public function getBusinessLocation()
-    {
-        $connection = $this->subdivision?->db_connection;
-
-        if (!$connection || !$this->business_account) {
-            return null;
-        }
-
-        $business = DB::connection($connection)
-            ->table('business')
-            ->select('latitude', 'longitude', 'name')
-            ->where('account', $this->business_account)
-            ->first();
-
-        return $business;
-    }
-
-    public static function getShipmentBusinesses()
-    {
-        return self::forCurrent()
-            ->with('subdivision')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->sub_division_id . '-' . $item->business_account;
-            })
-            ->map(function ($items) {
-
-                $cart = $items->first();
-
-                $location = $cart->getBusinessLocation();
-
-                return [
-                    'subdivision_id'   => $cart->sub_division_id,
-                    'db_connection'    => $cart->subdivision->db_connection,
-                    'business_account' => $cart->business_account,
-                    'latitude'         => $location->latitude ?? null,
-                    'longitude'        => $location->longitude ?? null,
-                    'name'             => $location->name ?? null,
-                    'items'            => $items,
-                ];
-            })
-            ->values();
-    }
-    
 }

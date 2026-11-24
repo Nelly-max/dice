@@ -20,7 +20,7 @@ class PurgeExpiredReservations extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Release cart holds that ran out';
 
     /**
      * Execute the console command.
@@ -28,11 +28,10 @@ class PurgeExpiredReservations extends Command
 
     public function handle()
     {
-        $count = ItemReservation::where(
-            'updated_at',
-            '<=',
-            now()->subMinutes(10)
-        )->delete();
+        // a hold that ran out: the quantity goes back to the shop (the item stays in the cart)
+        $count = ItemReservation::where('expires_at', '<=', now())
+            ->orWhere('updated_at', '<=', now()->subMinutes(\App\Services\Cart\CartStock::holdMinutes()))
+            ->delete();
 
         $this->info("Expired reservations removed: {$count}");
 

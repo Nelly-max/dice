@@ -11,6 +11,9 @@ use App\Http\Controllers\Web\DeliveryLocationController;
 
 use App\Http\Controllers\Web\HomeCity\PropertyController;
 use App\Http\Controllers\Web\HomeMarket\ItemsController;
+use App\Http\Controllers\Web\LiquorHub\ItemsController as LiquorItemsController;
+use App\Http\Controllers\Web\GlamRoom\ItemsController as GlamItemsController;
+use App\Http\Controllers\Web\FarmMarket\ItemsController as FarmItemsController;
 use App\Http\Controllers\Web\CookingGas\ProductController;
 
 use App\Http\Controllers\Web\Cart\CartController;
@@ -159,6 +162,9 @@ use App\Models\Customer\Cart;
         Route::put('/update', [CartController::class, 'update'])
             ->name('cart.update');
 
+        Route::get('/status', [CartController::class, 'status'])
+            ->name('cart.status');
+
         Route::delete('/remove/{id}', [CartController::class, 'remove'])
             ->name('cart.remove');
 
@@ -218,19 +224,26 @@ use App\Models\Customer\Cart;
         Route::post('/mpesa/stk-push', [MpesaPaymentController::class, 'stkPush'])
             ->name('payment.mpesa.stk');
 
+        // Safaricom only (secret key in the URL + Safaricom IP ranges)
         Route::post('/mpesa/callback', [MpesaPaymentController::class, 'callback'])
+            ->middleware(\App\Http\Middleware\VerifySafaricomCallback::class)
             ->name('payment.mpesa.callback');
 
         Route::get('/mpesa/status', [MpesaPaymentController::class, 'status'])
             ->name('payment.mpesa.status');
 
-        Route::post('/mpesa/c2b/validation', [MpesaC2BPaymentController::class, 'validatePayment']);
+        Route::post('/mpesa/c2b/validation', [MpesaC2BPaymentController::class, 'validatePayment'])
+            ->middleware(\App\Http\Middleware\VerifySafaricomCallback::class);
 
-        Route::post('/mpesa/c2b/confirmation', [MpesaC2BPaymentController::class, 'confirmPayment']);
+        Route::post('/mpesa/c2b/confirmation', [MpesaC2BPaymentController::class, 'confirmPayment'])
+            ->middleware(\App\Http\Middleware\VerifySafaricomCallback::class);
 
-        Route::post('/mpesa/c2b/register', [MpesaC2BPaymentController::class, 'register']);
+        // set-up / testing tools: never reachable on a live server
+        if (app()->environment('local')) {
+            Route::post('/mpesa/c2b/register', [MpesaC2BPaymentController::class, 'register']);
 
-        Route::post('/mpesa/c2b/simulate', [MpesaC2BPaymentController::class, 'simulate']);
+            Route::post('/mpesa/c2b/simulate', [MpesaC2BPaymentController::class, 'simulate']);
+        }
 
 
         /*
@@ -277,6 +290,20 @@ use App\Models\Customer\Cart;
 
         Route::get('/property/{id}', [PropertyController::class, 'viewListing'])
             ->name('homecity.listing.view');
+
+        // listings nearest to the visitor's location; listers and each lister's listings
+        Route::get('/near-me', [PropertyController::class, 'near'])
+            ->name('homecity.near');
+        Route::get('/listers', [PropertyController::class, 'listers'])
+            ->name('homecity.listers');
+        Route::get('/listers/{account}', [PropertyController::class, 'lister'])
+            ->where('account', '[A-Za-z0-9_-]+')
+            ->name('homecity.lister');
+
+        // "Book a viewing" (BookingController; the lister confirms it in the business app)
+        Route::post('/property/{id}/viewing', [\App\Http\Controllers\Web\BookingController::class, 'storeViewing'])
+            ->whereNumber('id')->middleware('throttle:10,1')
+            ->name('homecity.viewing');
     });
 
 
@@ -287,6 +314,13 @@ use App\Models\Customer\Cart;
     */
 
     Route::prefix('home-market')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [ItemsController::class, 'category'])->whereNumber('id')->name('homemarket.category');
+        Route::get('/deals', [ItemsController::class, 'deals'])->name('homemarket.deals');
+        Route::get('/online-exclusives', [ItemsController::class, 'exclusives'])->name('homemarket.exclusives');
+        Route::get('/shops', [ItemsController::class, 'shops'])->name('homemarket.shops');
+        Route::get('/shops/{account}', [ItemsController::class, 'shop'])->where('account', '[A-Za-z0-9_-]+')->name('homemarket.shop');
 
         Route::get('/', [ItemsController::class, 'index'])
             ->name('homemarket.home');
@@ -299,6 +333,145 @@ use App\Models\Customer\Cart;
 
         Route::get('/product/viewItem/{inventoryId}', [ItemsController::class, 'ViewItem'])
             ->name('item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LIQUOR HUB ROUTES (same structure as Home Market)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('liquor-hub')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [LiquorItemsController::class, 'category'])->whereNumber('id')->name('liquorhub.category');
+        Route::get('/deals', [LiquorItemsController::class, 'deals'])->name('liquorhub.deals');
+        Route::get('/online-exclusives', [LiquorItemsController::class, 'exclusives'])->name('liquorhub.exclusives');
+        Route::get('/shops', [LiquorItemsController::class, 'shops'])->name('liquorhub.shops');
+        Route::get('/shops/{account}', [LiquorItemsController::class, 'shop'])->where('account', '[A-Za-z0-9_-]+')->name('liquorhub.shop');
+
+        Route::get('/', [LiquorItemsController::class, 'index'])
+            ->name('liquorhub.home');
+
+        Route::get('/search', [LiquorItemsController::class, 'search'])
+            ->name('liquorhub.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [LiquorItemsController::class, 'ViewItem'])
+            ->name('liquorhub.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GLAM ROOM ROUTES (beauty - same structure as Home Market)
+    |--------------------------------------------------------------------------
+    | ?brand=Maybelline  ?shop_by=skin-type.oily  ?category=3
+    */
+
+    Route::prefix('glam-room')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [GlamItemsController::class, 'category'])->whereNumber('id')->name('glamroom.category');
+        Route::get('/deals', [GlamItemsController::class, 'deals'])->name('glamroom.deals');
+        Route::get('/online-exclusives', [GlamItemsController::class, 'exclusives'])->name('glamroom.exclusives');
+        Route::get('/shops', [GlamItemsController::class, 'shops'])->name('glamroom.shops');
+        Route::get('/shops/{account}', [GlamItemsController::class, 'shop'])->where('account', '[A-Za-z0-9_-]+')->name('glamroom.shop');
+
+        Route::get('/', [GlamItemsController::class, 'index'])
+            ->name('glamroom.home');
+
+        Route::get('/search', [GlamItemsController::class, 'search'])
+            ->name('glamroom.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [GlamItemsController::class, 'ViewItem'])
+            ->name('glamroom.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FARM MARKET ROUTES (fresh produce - same structure as Home Market)
+    |--------------------------------------------------------------------------
+    | ?category=3  ?organic=1
+    */
+
+    Route::prefix('farm-market')->group(function () {
+
+        // categories and offers (Web\Concerns\ShopPages)
+        Route::get('/category/{id}', [FarmItemsController::class, 'category'])->whereNumber('id')->name('farmmarket.category');
+        Route::get('/deals', [FarmItemsController::class, 'deals'])->name('farmmarket.deals');
+        Route::get('/online-exclusives', [FarmItemsController::class, 'exclusives'])->name('farmmarket.exclusives');
+        Route::get('/shops', [FarmItemsController::class, 'shops'])->name('farmmarket.shops');
+        Route::get('/shops/{account}', [FarmItemsController::class, 'shop'])->where('account', '[A-Za-z0-9_-]+')->name('farmmarket.shop');
+
+        Route::get('/', [FarmItemsController::class, 'index'])
+            ->name('farmmarket.home');
+
+        Route::get('/search', [FarmItemsController::class, 'search'])
+            ->name('farmmarket.search');
+
+        Route::get('/product/viewItem/{inventoryId}', [FarmItemsController::class, 'ViewItem'])
+            ->name('farmmarket.item.view');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | AIRBNB ROUTES (short stays; airbnb database, sample data in config/airbnb.php if it cannot be reached)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('airbnb')->group(function () {
+
+        Route::get('/', [\App\Http\Controllers\Web\Airbnb\StayController::class, 'index'])
+            ->name('airbnb.index');
+
+        // {id}: "<house>-<unit type>" for stays from the airbnb database, a number for the sample stays
+        Route::get('/stay/{id}', [\App\Http\Controllers\Web\Airbnb\StayController::class, 'show'])
+            ->where('id', '[0-9]+(-[0-9]+)?')
+            ->name('airbnb.stay');
+
+        // "Request to book" (BookingController; the host confirms it in the business app)
+        Route::post('/stay/{id}/book', [\App\Http\Controllers\Web\BookingController::class, 'storeStay'])
+            ->where('id', '[0-9]+-[0-9]+')->middleware('throttle:10,1')
+            ->name('airbnb.book');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | BOOKINGS (Airbnb stays, Home City viewings): open by the signed link, or signed in
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('bookings')->group(function () {
+        Route::get('/{reference}', [\App\Http\Controllers\Web\BookingController::class, 'show'])
+            ->where('reference', 'BK-[A-Za-z0-9]{6}')
+            ->name('bookings.show');
+        Route::post('/{reference}/cancel', [\App\Http\Controllers\Web\BookingController::class, 'cancel'])
+            ->where('reference', 'BK-[A-Za-z0-9]{6}')
+            ->name('bookings.cancel');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | WATER ROUTES (water database: refills, bottled water, clean water by truck, shops)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('water')->controller(\App\Http\Controllers\Web\Water\WaterController::class)->group(function () {
+
+        Route::get('/', 'index')->name('water.index');
+
+        Route::get('/refill', 'refill')->name('water.refill');
+        Route::get('/bottled', 'bottled')->name('water.bottled');
+        Route::get('/clean-water', 'clean')->name('water.clean');
+
+        Route::get('/shops', 'shops')->name('water.shops');
+        Route::get('/shops/{business}', 'shop')->whereNumber('business')->name('water.shop');
+
+        Route::get('/product/{id}', 'show')->whereNumber('id')->name('water.product');
     });
 
 
@@ -323,8 +496,30 @@ use App\Models\Customer\Cart;
 
         Route::get('/search', [ProductController::class, 'search'])
             ->name('search');
+
+        // browse pages: all refills (?brand= ?size=), brands, shops nearest first, one shop
+        Route::get('/cylinders', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'cylinders'])
+            ->name('gas.cylinders');
+        Route::get('/brands', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'brands'])
+            ->name('gas.brands');
+        Route::get('/shops', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'shops'])
+            ->name('gas.shops');
+        Route::get('/shops/{business}', [\App\Http\Controllers\Web\CookingGas\GasPagesController::class, 'shop'])
+            ->whereNumber('business')
+            ->name('gas.shop');
     });
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROFESSIONALS (public): directory, a professional's page, booking them
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/pros', [\App\Http\Controllers\Web\ProsController::class, 'index'])->name('pros.index');
+    Route::get('/pros/{account}', [\App\Http\Controllers\Web\ProsController::class, 'show'])
+        ->where('account', 'PRO[0-9]+')->name('pros.show');
+    Route::post('/pros/{account}/book', [\App\Http\Controllers\Web\ProsController::class, 'book'])
+        ->where('account', 'PRO[0-9]+')->middleware('throttle:6,1')->name('pros.book');
 
     /*
     |--------------------------------------------------------------------------
@@ -337,20 +532,49 @@ use App\Models\Customer\Cart;
         ->name('hub.')
         ->group(function () {
 
+            // notifications (the bell): open one, mark all read
+            Route::get('/notifications/{notification}', [\App\Http\Controllers\Web\Hub\NotificationController::class, 'open'])
+                ->whereNumber('notification')->name('notifications.open');
+            Route::post('/notifications/read', [\App\Http\Controllers\Web\Hub\NotificationController::class, 'readAll'])
+                ->name('notifications.read');
+
             Route::get('/home', fn () => view('Hub.index'))
                 ->name('index');
 
             Route::get('/orders', [OrderController::class, 'index'])
                 ->name('orders');
 
+            Route::get('/bookings', [\App\Http\Controllers\Web\BookingController::class, 'index'])
+                ->name('bookings');
+
             Route::get('/referrals', [MarketerController::class, 'referrals'])
                 ->name('referrals');
+
+            Route::get('/referrals/{referral}', [MarketerController::class, 'referral'])
+                ->whereNumber('referral')
+                ->name('referrals.show');
+
+            // leads: businesses a marketer suggests (marketers only; Hub\LeadController)
+            Route::get('/leads', [\App\Http\Controllers\Web\Hub\LeadController::class, 'index'])
+                ->name('leads');
+            Route::get('/leads/new', [\App\Http\Controllers\Web\Hub\LeadController::class, 'create'])
+                ->name('leads.create');
+            Route::post('/leads', [\App\Http\Controllers\Web\Hub\LeadController::class, 'store'])
+                ->middleware('throttle:20,1')
+                ->name('leads.store');
+            Route::get('/leads/{lead}', [\App\Http\Controllers\Web\Hub\LeadController::class, 'show'])
+                ->whereNumber('lead')
+                ->name('leads.show');
 
             Route::get('/account', [ProfileController::class, 'index'])
                 ->name('account.index');
 
             Route::put('/account/update', [ProfileController::class, 'updateAccount'])
                 ->name('account.update');
+
+            Route::post('/account/photo', [ProfileController::class, 'updatePhoto'])
+                ->middleware('throttle:10,1')
+                ->name('account.photo');
 
             Route::get('/account/join-team', fn () => view('Hub.joinTeam'))
                 ->name('account.join-team');
@@ -374,6 +598,9 @@ use App\Models\Customer\Cart;
             Route::get('/team/marketer/edit', [MarketerController::class, 'editMarketer'])
                 ->name('account.marketer.edit');
 
+            Route::put('/team/marketer', [MarketerController::class, 'updateMarketer'])
+                ->name('account.marketer.update');
+
 
 
             /*
@@ -388,10 +615,8 @@ use App\Models\Customer\Cart;
             Route::get('/team/rider/edit', [RiderController::class, 'editRider'])
                 ->name('account.rider.edit');
 
-// Route::put(
-//     '/account/rider/update',
-//     [RiderController::class, 'updateRider']
-// )->name('hub.account.rider.update');
+            Route::put('/team/rider', [RiderController::class, 'updateRider'])
+                ->name('account.rider.update');
 
 
 
@@ -406,10 +631,29 @@ use App\Models\Customer\Cart;
 
             /*
             |--------------------------------------------------------------------------
+            | PROFESSIONAL: profile (Hub\ProfessionalController) and jobs (bookings)
+            |--------------------------------------------------------------------------
+            */
+            Route::get('/team/professional', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'index'])
+                ->name('account.professional.index');
+            Route::get('/team/professional/profile', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'form'])
+                ->name('account.professional.form');
+            Route::post('/team/professional/profile', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'save'])
+                ->middleware('throttle:10,1')->name('account.professional.save');
+            Route::get('/jobs', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'jobs'])
+                ->name('jobs');
+            Route::get('/jobs/{job}', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'job'])
+                ->whereNumber('job')->name('jobs.show');
+            Route::patch('/jobs/{job}', [\App\Http\Controllers\Web\Hub\ProfessionalController::class, 'updateJob'])
+                ->whereNumber('job')->name('jobs.update');
+
+            /*
+            |--------------------------------------------------------------------------
             | FINANCE
             |--------------------------------------------------------------------------
             */
-            Route::get('/account/finance', fn () => view('Hub.finance'))
+            // rider payouts and marketer commission payouts (finance database)
+            Route::get('/account/finance', [\App\Http\Controllers\Web\Hub\FinanceController::class, 'index'])
                 ->name('account.finance');
 
             /*
@@ -420,6 +664,10 @@ use App\Models\Customer\Cart;
 
             Route::get('/deliveries', [DeliveryController::class, 'deliveries'])
                 ->name('deliveries');
+
+            Route::get('/deliveries/{delivery}', [DeliveryController::class, 'show'])
+                ->whereNumber('delivery')
+                ->name('deliveries.show');
 
             Route::get('/navigate/map', [RiderLocationController::class, 'navigate'])
                 ->name('navigate.map');

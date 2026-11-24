@@ -1902,41 +1902,6 @@ function hideActiveDeliveryToast()
 |--------------------------------------------------------------------------
 */
 
-function clearActiveDelivery()
-{
-
-    DeliveryState.currentDeliveryId =
-        null;
-
-
-    try {
-
-        localStorage.removeItem(
-            DeliveryState.storageKey
-        );
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            '[DELIVERY] Could not clear delivery:',
-            error
-        );
-
-    }
-
-
-    hideActiveDeliveryToast();
-
-
-    console.log(
-        '[DELIVERY] Active delivery cleared.'
-    );
-
-}
-
-
 /*
 |--------------------------------------------------------------------------
 | OPEN CURRENT DELIVERY

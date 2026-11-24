@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="hub-content hub-dash no-sidebar fullground">
+<div class="hub-content hub-form hub-dash no-sidebar fullground">
 
 @if($marketer)
 
@@ -10,24 +10,18 @@
         <div class="account-details">
 
             {{-- Header --}}
-            <div class="account-detail top-area">
-                <h4>Marketer Account</h4>
-
-                {{-- Shortcuts --}}
-                <div class="shortcuts">
-
-                    @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'shortcut'])
-
-                    <a
-                        href="{{ route('hub.account.marketer.edit') }}"
-                        class="shortcut"
-                    >
-                        <i class="fa-solid fa-user-pen"></i>
-                        Edit
-                    </a>
-
-                </div>
-            </div>
+            @include('partials.Hub.page-hero', [
+                'tone' => 'marketer',
+                'icon' => 'fa-solid fa-bullhorn',
+                'title' => $marketer->name ?: 'Marketer account',
+                'badge' => ucfirst($marketer->status ?? ''),
+                'text' => 'Marketer account' . ($marketer->referral_code ? ' · referral code ' . $marketer->referral_code : '') . '. Share your link and earn on every customer you bring.',
+                'back' => route('hub.account.index'),
+                'links' => [
+                    ['href' => route('hub.leads.create'), 'icon' => 'fa-solid fa-plus', 'label' => 'Add a lead'],
+                    ['href' => route('hub.account.marketer.edit'), 'icon' => 'fa-solid fa-user-pen', 'label' => 'Edit profile'],
+                ],
+            ])
 
             {{-- Account --}}
             <div class="account-detail">
@@ -124,11 +118,8 @@
         {{-- No Marketer Account --}}
         <div class="no-account">
 
-            {{-- back to where they came from (My account if there is no history) --}}
-            <a href="{{ route('hub.account.index') }}" class="no-account-back"
-               onclick="if (history.length > 1) { history.back(); return false; }">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-            </a>
+            {{-- the page's only Back (the partial tells layouts/hub not to add its own) --}}
+            @include('partials.Hub.back', ['fallback' => route('hub.account.index'), 'class' => 'no-account-back'])
 
             <h3>Team</h3>
 

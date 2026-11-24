@@ -211,3 +211,26 @@ body.auth-page .field-label span { font-weight: 500; color: #7b8f83; }
 body.auth-page .input-field input[type="date"] { padding-right: 1rem; color: #14281c; }
 body.auth-page .input-field input[type="date"]:invalid, body.auth-page .input-field input[type="date"]:placeholder-shown { color: #7b8f83; }
 body.auth-page.dark-mode .input-field input[type="date"] { color-scheme: dark; color: #eee; }
+
+/* date of birth: the calendar picker (ui-controls.js) fills the field like the other inputs, and
+   the field's own icon is the only one (no second calendar inside the button) */
+body.auth-page .input-field > .ui-date { position: absolute; inset: 0; display: block; width: 100%; }
+body.auth-page .input-field > .ui-date > .ui-date-btn {
+    height: 100%;
+    min-height: 0;
+    padding: 0 1rem 0 2.75rem;
+    border: 1px solid #d7e5dc;
+    border-radius: .8rem;
+    background: var(--surface, #fff);
+    color: #14281c;
+    font-size: .95rem;
+    font-weight: 600;
+}
+body.auth-page .input-field > .ui-date .ui-cal-ico { display: none; }
+body.auth-page .input-field > .ui-date.is-placeholder .ui-date-label { color: #7b8f83; font-weight: 500; }
+body.auth-page .input-field > .ui-date.is-open > .ui-date-btn,
+body.auth-page .input-field > .ui-date > .ui-date-btn:focus-visible { border-color: var(--auth-accent) !important; box-shadow: 0 0 0 3px var(--auth-ring); }
+body.auth-page .input-field:has(> .ui-date) > i.icon { z-index: 1; pointer-events: none; }
+body.auth-page .input-field:has(> .ui-date.is-open) > i.icon,
+body.auth-page .input-field:has(> .ui-date > .ui-date-btn:focus-visible) > i.icon { color: var(--auth-accent); }
+body.auth-page .input-field:has(> .ui-date.is-invalid) > .ui-date > .ui-date-btn { border-color: #d92d20 !important; }

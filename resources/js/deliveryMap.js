@@ -232,22 +232,6 @@ function getDeliveryIdentifier() {
 |--------------------------------------------------------------------------
 */
 
-function getInitialDeliveryStatus() {
-
-    const mapElement =
-        getElement("map");
-
-    if (!mapElement) {
-        return null;
-    }
-
-    return (
-        mapElement.dataset.deliveryStatus ||
-        null
-    );
-}
-
-
 function normalizeDeliveryStatus(status) {
 
     if (!status) {
@@ -5898,43 +5882,3 @@ if (
 |--------------------------------------------------------------------------
 */
 
-function setupMinimizeButton() {
-
-    const minimizeButton =
-        document.querySelector(
-            ".minimize"
-        );
-
-
-    if (!minimizeButton) {
-        return;
-    }
-
-
-    if (
-        minimizeButton.dataset.minimizeReady ===
-        "true"
-    ) {
-        return;
-    }
-
-
-    minimizeButton.dataset.minimizeReady =
-        "true";
-
-
-    minimizeButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-            event.stopPropagation();
-
-
-            this.classList.toggle(
-                "active"
-            );
-        }
-    );
-}

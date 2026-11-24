@@ -14,7 +14,7 @@
 @elseif ($cartShopName)
     <div class="context-banner context-banner--shop" role="status">
         <i class="fa-solid fa-store"></i>
-        <p>Your are now shopping at <strong>{{ $cartShopName }}</strong> add items to cart.</p>
+        <p>You are now shopping at <strong>{{ $cartShopName }}</strong>. Add items from this shop to your cart.</p>
         <a href="{{ route('cart.index') }}"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> View cart</a>
     </div>
 @endif

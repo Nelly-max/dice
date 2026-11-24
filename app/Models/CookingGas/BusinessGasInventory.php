@@ -105,11 +105,12 @@ class BusinessGasInventory extends Model
             ->where('quantity_id', $this->gas_quantity_id)
             ->value('image_path');
 
+        // same address as the gas cards (MEDIA_URL / image_path); had an extra "/media/"
         if (!$image) {
-            return rtrim(config('app.media_url'), '/') . '/media/img/placeholder.png';
+            return null;   // the cart shows an image icon (there is no img/placeholder.png)
         }
 
-        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
+        return rtrim((string) config('app.media_url'), '/') . '/' . ltrim($image, '/');
     }
     /**
      * Get business name
@@ -133,46 +134,6 @@ class BusinessGasInventory extends Model
     }
 
     /**
-     * Apply quantity to image path
-     */
-    private function applyQuantityToImage($imagePath, $quantity)
-    {
-        // Your existing logic for quantity-based images
-        if (preg_match('/qty_\d+\.\w+$/i', $imagePath)) {
-            return preg_replace('/qty_\d+/i', 'qty_' . $quantity, $imagePath);
-        }
-        
-        if (preg_match('/_\d+\.\w+$/i', $imagePath)) {
-            $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
-            return preg_replace('/_\d+\.\w+$/i', '_' . $quantity . '.' . $extension, $imagePath);
-        }
-        
-        // Add quantity if not present
-        $pathInfo = pathinfo($imagePath);
-        $extension = $pathInfo['extension'] ?? 'png';
-        $filename = $pathInfo['filename'] ?? 'product';
-        $dirname = $pathInfo['dirname'] ?? '';
-        
-        // Construct new path
-        $newPath = ($dirname ? $dirname . '/' : '') . $filename . '_' . $quantity . '.' . $extension;
-        
-        // Use media URL if configured
-        if (config('app.media_url')) {
-            return config('app.media_url') . '/' . ltrim($newPath, '/');
-        }
-        
-        return asset($newPath);
-    }
-    
-    /**
-     * Check if product is available for cart
-     */
-    public function isAvailableForCart()
-    {
-        return ($this->filled_cylinders ?? 0) > 0;
-    }
-
-    /**
      * Get stock ID for cart reference
      * This is the ID that will be stored in cart.stockable_id
      */
@@ -190,22 +151,15 @@ class BusinessGasInventory extends Model
         return self::class; // Returns 'App\Models\CookingGas\BusinessGasStock'
     }
 
-    public function getCurrentDiscount()
+    /**
+     * Refills a buyer may see and order — the Home Market rules (App\Services\CookingGas\GasCatalog):
+     * subscribed shop with e-commerce, open, the cart's gas shop or within the delivery radius,
+     * and filled cylinders in stock.
+     */
+    public function scopeSellable($query)
     {
-        if (!$this->discount || $this->discount <= 0) {
-            return 0;
-        }
-
-        $now = now();
-
-        if ($this->discount_start && $this->discount_start->isFuture()) {
-            return 0;
-        }
-
-        if ($this->discount_stop && $this->discount_stop->isPast()) {
-            return 0;
-        }
-
-        return $this->discount;
+        return $query
+            ->whereIn('business_id', app(\App\Services\CookingGas\GasCatalog::class)->visibleIds() ?: [0])
+            ->where('filled_cylinders', '>', 0);
     }
 }

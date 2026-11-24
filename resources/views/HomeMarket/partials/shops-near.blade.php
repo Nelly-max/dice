@@ -1,20 +1,25 @@
-{{-- Open shops inside the buyer's delivery radius, nearest first (ShopDiscovery::nearbyShops). --}}
+{{-- Open shops inside the buyer's delivery radius, nearest first (ShopDiscovery::nearbyShops).
+     Each opens the shop's page (homemarket.shop); "See all" opens Shops near you. --}}
 @if ($nearbyShops->isNotEmpty())
-    <section aria-label="Shops near you">
+    <section class="hm-near" aria-label="Shops near you">
         <div class="hm-section-head">
             <h2>Shops near you</h2>
-            <small>within {{ $radiusKm }} km</small>
+            <small><i class="fa-solid fa-location-dot" aria-hidden="true"></i> within {{ $radiusKm }} km · <a href="{{ route('homemarket.shops') }}">See all</a></small>
         </div>
 
         <div class="hm-shops-row">
             @foreach ($nearbyShops as $shop)
-                <div class="hm-shop">
-                    <span class="hm-shop-mark" aria-hidden="true">{{ $shop->initial }}</span>
+                <a class="hm-shop" href="{{ route('homemarket.shop', $shop->account) }}" aria-label="{{ $shop->name }}: see what it sells">
+                    <span class="hm-shop-mark" aria-hidden="true">{{ $shop->initial }}<i class="hm-shop-open" title="Open"></i></span>
                     <div class="hm-shop-text">
                         <strong>{{ $shop->name }}</strong>
-                        <small>{{ $shop->distance_km }} km · ~{{ $shop->eta_min }} min</small>
+                        <small>
+                            <span><i class="fa-solid fa-route" aria-hidden="true"></i> {{ $shop->distance_km < 0.1 ? 'Under 100 m' : $shop->distance_km . ' km' }}</span>
+                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ~{{ $shop->eta_min }} min</span>
+                        </small>
                     </div>
-                </div>
+                    <i class="fa-solid fa-chevron-right hm-shop-go" aria-hidden="true"></i>
+                </a>
             @endforeach
         </div>
     </section>

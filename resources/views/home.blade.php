@@ -8,7 +8,8 @@
     $firstName = $customer ? \Illuminate\Support\Str::of($customer->name ?? '')->explode(' ')->first() : null;
     $mediaBase = rtrim(config('app.media_url'), '/');
 
-    $heroes = [
+    // slides uploaded from the hub (Home → Banners) into {MEDIA_ROOT}/img/smartMarket/Sliders; the built-in ones until then
+    $heroes = array_column(app(\App\Services\SmartMarket\MediaGallery::class)->images('Sliders'), 'url') ?: [
         asset('img/Hero_Banner_1.png'),
         asset('img/homeMarket/Hero_Banner_2.jpg'),
         asset('img/homeMarket/Hero_Banner_3.jpg'),

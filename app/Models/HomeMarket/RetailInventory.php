@@ -53,59 +53,30 @@ class RetailInventory extends Model
             ->find($id);
     }
 
-//     public static function resolveById($id)
-// {
-//     return static::with([
-//         'business',
-//         'product',
-//         'item'
-//     ])->find($id);
-// }
 
     public function getCartPrice()
     {
         return $this->retail_price ?? 0;
     }
 
-    // public function getCartImage($quantity = 1)
-    // {
-    //     // Get base image from GasQntImage
-    //     $image = \App\Models\CookingGas\GasQntImage::where('gas_cylinder_id', $this->gas_cylinder_id)
-    //         ->where('quantity_id', $this->gas_quantity_id)
-    //         ->value('file_path');
-        
-    //     if (!$image) {
-    //         return asset('img/placeholder.png');
-    //     }
-        
-    //     // Apply quantity to image path
-    //     return $this->applyQuantityToImage($image, $quantity);
-    // }
 
-    // public function getCartImage()
-    // {
-    //     return $this->item?->images?->first()?->image_path;
-    // }
-
+    /**
+     * Cart photo: the same address as the product cards (ProductPresenter::imageUrl):
+     * MEDIA_URL / homemarket.product_image_prefix / image_path. (Had an extra "/media/" that the
+     * cards don't use, so cart photos pointed at files that don't exist.)
+     */
     public function getCartImage()
     {
+        $base = rtrim((string) config('app.media_url'), '/');
         $image = $this->item?->images()->value('image_path');
 
         if (!$image) {
-            return rtrim(config('app.media_url'), '/') . '/media/img/homeMarket/products/item_image.png';
+            return $base . '/' . ltrim((string) config('homemarket.placeholder_image', 'img/homeMarket/products/item_image.png'), '/');
         }
 
-        return rtrim(config('app.media_url'), '/') . '/media/' . ltrim($image, '/');
+        return $base . '/' . config('homemarket.product_image_prefix') . ltrim($image, '/');
     }
 
-// public function getCartImage()
-// {
-//     dd([
-//         'item_id' => $this->item?->id,
-//         'images_count' => $this->item?->images()->count(),
-//         'first_image' => $this->item?->images()->first(),
-//     ]);
-// }
 
     public function getProductNameAttribute()
     {
@@ -160,22 +131,4 @@ class RetailInventory extends Model
             ?? null;
     }
 
-    public function getCurrentDiscount()
-    {
-        if (!$this->discount || $this->discount <= 0) {
-            return 0;
-        }
-
-        $now = now();
-
-        if ($this->discount_start && $this->discount_start->isFuture()) {
-            return 0;
-        }
-
-        if ($this->discount_stop && $this->discount_stop->isPast()) {
-            return 0;
-        }
-
-        return $this->discount;
-    }
 }

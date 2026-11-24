@@ -30,7 +30,7 @@ class ItemReservation extends Model
         return $query->where(
             'updated_at',
             '>',
-            now()->subMinutes(10)
+            now()->subMinutes(\App\Services\Cart\CartStock::holdMinutes())
         );
     }
 }

@@ -45,6 +45,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body class="hub-body">
+    @php $skipRiderRequest = true; @endphp {{-- requests handled by riderLocation.js / deliveryMap.js here --}}
     @include('partials.theme-init')
 
     <div id="all_contents" class="hub-app">
@@ -56,13 +57,36 @@
             @include('partials.Hub.topbar')
 
             <div class="hub-page">
-                @yield('content')
+                @php
+                    // the page first: a page with its own back button (partials/Hub/back, or the
+                    // delivery / referral pages' link) sets that while it renders
+                    $hubContent = $__env->yieldContent('content');
+                    // a Back button on every page that is not in the sidebar (and not the map)
+                    $sidebarPage = request()->routeIs('hub.index', 'hub.orders', 'hub.bookings', 'hub.deliveries', 'hub.referrals', 'hub.leads', 'hub.jobs', 'hub.account.index');
+                    $ownBack = request()->attributes->get('hub_back_shown')
+                        || request()->routeIs('hub.deliveries.show', 'hub.referrals.show', 'hub.leads.show', 'hub.navigate.*', 'hub.navigate');
+                    $backTo = match (true) {
+                        request()->routeIs('hub.orders.*') => route('hub.orders'),
+                        request()->routeIs('hub.deliveries.*') => route('hub.deliveries'),
+                        request()->routeIs('hub.referrals.*') => route('hub.referrals'),
+                        request()->routeIs('hub.leads.*') => route('hub.leads'),
+                        request()->routeIs('hub.jobs.*') => route('hub.jobs'),
+                        default => route('hub.account.index'),
+                    };
+                @endphp
+                @if (!$sidebarPage && !$ownBack)
+                    <div class="hub-backbar">
+                        @include('partials.Hub.back', ['fallback' => $backTo])
+                    </div>
+                @endif
+                {!! $hubContent !!}
             </div>
 
             {{-- Footer --}}
             @include('partials.Hub.footer')
         </main>
 
+        @include('partials.Hub.notifications')
         @include('toast.toast')
         @include('toast.openDeliveryMap')
     </div>

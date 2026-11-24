@@ -47,8 +47,37 @@ public function riderAccount()
     $rider = Rider::where('customer_id', $customerId)
         ->first();
 
-    return view('Hub.rider', compact('rider'));
+    // not approved yet (pending, in review or not approved): the "Rider" page is the
+    // application itself, with its progress on top
+    // added as a rider by a business (account_status "business") but never applied:
+    // show the page as for someone without a rider account, so they can apply
+    if ($rider && $rider->account_status === 'business') {
+        return view('Hub.rider', ['rider' => null]);
+    }
+
+    if ($rider && in_array($rider->account_status, ['pending', 'processing', 'rejected'], true)) {
+        return redirect()->route('hub.account.rider.view');
+    }
+
+    return view('Hub.rider', [
+        'rider' => $rider,
+        'locality' => $rider ? $this->localityNames($rider) : null,
+    ]);
 }
+
+    /** County, town and place names for a rider (null where not set). */
+    private function localityNames(Rider $rider): array
+    {
+        $name = fn (string $table, $id) => $id
+            ? DB::table($table)->where('id', $id)->value('name')
+            : null;
+
+        return [
+            'county' => $name('physical_counties', $rider->county_id),
+            'town' => $name('physical_towns', $rider->town_id),
+            'place' => $name('physical_places', $rider->place_id),
+        ];
+    }
 
 
 
@@ -70,7 +99,13 @@ public function riderAccount()
         | Show edit page
         |--------------------------------------------------------------------------
         */
-        return view('Hub.editRider', compact('rider'));
+        // county list for the locality pickers; towns / places are loaded by select.js
+        $counties = DB::table('physical_counties')
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return view('Hub.editRider', compact('rider', 'counties'));
     }
 
 
@@ -88,6 +123,14 @@ public function updateRider(Request $request)
     */
     $rider = Rider::where('customer_id', $customerId)
         ->firstOrFail();
+
+    // phone numbers come formatted ("0745 286 733"): keep digits and a leading +
+    $clean = fn ($v) => $v === null ? null : preg_replace('/(?!^\+)[^\d]/', '', trim($v));
+    $request->merge([
+        'phone' => $clean($request->input('phone')),
+        'mpesa_number' => $clean($request->input('mpesa_number')),
+        'place_id' => $request->filled('place_id') ? $request->input('place_id') : null,
+    ]);
 
 
     /*
@@ -141,6 +184,32 @@ public function updateRider(Request $request)
             'max:20',
         ],
 
+        // locality: the town must be in the county, the place in the town
+        'county_id' => [
+            'required',
+            'integer',
+            'exists:physical_counties,id',
+        ],
+
+        'town_id' => [
+            'required',
+            'integer',
+            \Illuminate\Validation\Rule::exists('physical_towns', 'id')
+                ->where('physical_county_id', (int) $request->input('county_id')),
+        ],
+
+        'place_id' => [
+            'nullable',
+            'integer',
+            \Illuminate\Validation\Rule::exists('physical_places', 'id')
+                ->where('physical_town_id', (int) $request->input('town_id')),
+        ],
+
+    ], [
+        'county_id.required' => 'Choose your county.',
+        'town_id.required' => 'Choose your town.',
+        'town_id.exists' => 'Choose a town in the county you picked.',
+        'place_id.exists' => 'Choose a place in the town you picked.',
     ]);
 
 
@@ -164,6 +233,12 @@ public function updateRider(Request $request)
         'date_of_birth' => $validated['date_of_birth'],
 
         'mpesa_number' => $validated['mpesa_number'],
+
+        'county_id' => $validated['county_id'],
+
+        'town_id' => $validated['town_id'],
+
+        'place_id' => $validated['place_id'] ?? null,
 
     ]);
 
@@ -268,7 +343,12 @@ public function updateRider(Request $request)
     {
         // one rider account per customer
         $existing = Rider::where('customer_id', Auth::guard('customer')->id())->first();
-        if ($existing) {
+
+        // a rider account a business created for this customer (status "business") is reused:
+        // the application fills it in and moves it to "pending" instead of creating a second account
+        $businessRider = $existing && $existing->account_status === 'business' ? $existing : null;
+
+        if ($existing && !$businessRider) {
             return redirect()
                 ->route('hub.account.rider.index')
                 ->with('info', 'You already have a rider account.');
@@ -300,8 +380,9 @@ public function updateRider(Request $request)
 
             // Vehicle
             'vehicle_type' => 'required|in:motorcycle,car,bicycle,van,truck',
-            'vehicle_make' => 'required|string',
-            'vehicle_model' => 'required|string',
+            // make and model are optional (the columns are NOT NULL, so blanks are saved as '')
+            'vehicle_make' => 'nullable|string|max:60',
+            'vehicle_model' => 'nullable|string|max:60',
             'plate_number' => 'required|string',
 
 
@@ -336,7 +417,7 @@ public function updateRider(Request $request)
 
 
 
-        DB::connection('customer')->transaction(function () use ($request) {
+        DB::connection('customer')->transaction(function () use ($request, $businessRider) {
 
 
             /*
@@ -345,7 +426,7 @@ public function updateRider(Request $request)
             |--------------------------------------------------------------------------
             */
 
-            $riderAccount = $this->generateRiderAccount();
+            $riderAccount = $businessRider ? $businessRider->rider_account : $this->generateRiderAccount();
 
 
 
@@ -357,7 +438,7 @@ public function updateRider(Request $request)
 
             $customer = Auth::guard('customer')->user();
 
-            $rider = Rider::create([
+            $riderData = [
 
                 'customer_id' => $customer->id,
 
@@ -385,7 +466,14 @@ public function updateRider(Request $request)
 
                 'account_status' => 'pending',
 
-            ]);
+            ];
+
+            if ($businessRider) {
+                $rider = Rider::whereKey($businessRider->id)->lockForUpdate()->firstOrFail();
+                $rider->fill($riderData)->save();
+            } else {
+                $rider = Rider::create($riderData);
+            }
 
 
 
@@ -550,7 +638,7 @@ public function updateRider(Request $request)
 
 
 
-            RiderPersonalDetail::create([
+            RiderPersonalDetail::updateOrCreate(['rider_id' => $rider->id], [
 
                 'rider_id' => $rider->id,
 
@@ -678,7 +766,7 @@ public function updateRider(Request $request)
             */
 
 
-            RiderCarDetail::create([
+            RiderCarDetail::updateOrCreate(['rider_id' => $rider->id], [
 
 
                 'rider_id' => $rider->id,
@@ -687,10 +775,10 @@ public function updateRider(Request $request)
                 'vehicle_type' => $request->vehicle_type,
 
 
-                'vehicle_make' => $request->vehicle_make,
+                'vehicle_make' => (string) ($request->vehicle_make ?? ''),
 
 
-                'vehicle_model' => $request->vehicle_model,
+                'vehicle_model' => (string) ($request->vehicle_model ?? ''),
 
 
                 'plate_number' => strtoupper($request->plate_number),
