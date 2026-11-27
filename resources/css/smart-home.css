@@ -650,6 +650,9 @@ body.sm-home .sm-hero .dots li.active { width: 1.5rem; transform: none; }
 
 /* ---------- professionals (/pros directory and a professional's page) ---------- */
 body.sm-home .pr { display: flex; flex-direction: column; gap: 1.1rem; }
+/* professionals use a sky-blue theme (same as the Hub's professional pages) */
+body.sm-home .pr { --accent: #0ea5e9; --accent-strong: #0369a1; --on-accent: #fff; }
+body.sm-home.dark-mode .pr, body.dark-mode .pr { --accent: #38bdf8; --accent-strong: #7dd3fc; --on-accent: #082f49; }
 .pr-head h1 { margin: .15rem 0 .25rem; font-size: clamp(1.45rem, 3vw, 2rem); font-weight: 900; letter-spacing: -.01em; color: var(--ink); }
 .pr-search { display: flex; align-items: center; gap: .5rem; max-width: 36rem; margin-top: 1rem; padding: .35rem .35rem .35rem 1rem; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line), var(--shadow); }
 .pr-search i { color: var(--ink-soft); }
@@ -682,7 +685,7 @@ body.sm-home .pr { display: flex; flex-direction: column; gap: 1.1rem; }
 .pr-empty a, .pr-booked a { color: var(--accent-strong); font-weight: 800; }
 .pr-pages { display: flex; align-items: center; justify-content: center; gap: 1rem; color: var(--ink-soft); font-size: .85rem; font-weight: 700; }
 .pr-pages a { color: var(--accent-strong); font-weight: 800; }
-.pr-join { display: flex; align-items: center; gap: .9rem; padding: 1rem 1.1rem; border-radius: var(--r-lg); background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; }
+.pr-join { display: flex; align-items: center; gap: .9rem; padding: 1rem 1.1rem; border-radius: var(--r-lg); background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; }
 .pr-join > i:first-child { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: .8rem; background: rgba(255, 255, 255, .18); }
 .pr-join span { display: flex; flex: 1; flex-direction: column; }
 .pr-join small { opacity: .85; }

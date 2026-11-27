@@ -22,11 +22,12 @@ class ProsController extends Controller
         return P::db();
     }
 
-    /** active professionals, with featured tariffs first */
+    /** active professionals, with featured tariffs first; `photo` is the account's profile photo */
     private function listed()
     {
         return $this->db()->table('professionals as p')
             ->leftJoin('professional_tariffs as t', 't.id', '=', 'p.tariff_id')
+            ->leftJoin('customer_accounts as ca', 'ca.id', '=', 'p.customer_id')
             ->where('p.account_status', 'active');
     }
 
@@ -43,7 +44,7 @@ class ProsController extends Controller
             ->when($county, fn ($w) => $w->where('p.county_id', $county))
             ->when($market, fn ($w) => $w->whereIn('p.id', $this->db()->table('professional_subdivisions')->where('sub_division_id', $market)->select('professional_id')))
             ->when($q !== '', fn ($w) => $w->where(fn ($w) => $w->where('p.display_name', 'like', "%$q%")->orWhere('p.profession', 'like', "%$q%")->orWhere('p.area', 'like', "%$q%")))
-            ->select('p.id', 'p.account', 'p.display_name', 'p.profession', 'p.category', 'p.photo', 'p.county_id', 'p.area', 'p.rate_from', 'p.rate_unit', 'p.works_from', 't.featured')
+            ->select('p.id', 'p.account', 'p.display_name', 'p.profession', 'p.category', 'ca.profile_image as photo', 'p.county_id', 'p.area', 'p.rate_from', 'p.rate_unit', 'p.works_from', 't.featured')
             ->selectSub($this->db()->table('professional_jobs')->selectRaw('count(*)')->whereColumn('professional_jobs.professional_id', 'p.id')->where('status', 'done'), 'done_jobs')
             ->orderByDesc('t.featured')->orderByDesc('done_jobs')->orderByDesc('p.id')
             ->paginate(24)->withQueryString();
@@ -57,7 +58,7 @@ class ProsController extends Controller
 
     private function profile(string $account): object
     {
-        return $this->listed()->where('p.account', $account)->select('p.*', 't.featured')->first() ?? abort(404);
+        return $this->listed()->where('p.account', $account)->select('p.*', 't.featured', 'ca.profile_image as photo')->first() ?? abort(404);
     }
 
     public function show(Request $request, string $account)

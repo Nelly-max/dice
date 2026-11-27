@@ -123,6 +123,20 @@
         }
     }
 
+    // inline <script>s that came with the new page: copied nodes never run on their own, so
+    // re-create them (as a full page load would). Not recorded for teardown: page scripts guard
+    // their document listeners (window.__flag) and those must stay for the next visit.
+    function runInlineScripts(root) {
+        root.querySelectorAll('script:not([src])').forEach((old) => {
+            const type = (old.getAttribute('type') || '').trim().toLowerCase();
+            if (type && !['text/javascript', 'application/javascript', 'module'].includes(type)) return;
+            const s = document.createElement('script');
+            [...old.attributes].forEach((a) => s.setAttribute(a.name, a.value));
+            s.textContent = old.textContent;
+            try { old.replaceWith(s); } catch (err) { console.warn('[hubnav] inline script failed', err); }
+        });
+    }
+
     /* ---- swap ---- */
     async function swap(doc, final, push, scrollY) {
         teardown();
@@ -150,6 +164,7 @@
         window.scrollTo(0, scrollY || 0);
 
         window.hubInitPage?.(page);
+        runInlineScripts(page);
         await rerunScripts();
         page.querySelector('h1, h2')?.setAttribute('tabindex', '-1');
 

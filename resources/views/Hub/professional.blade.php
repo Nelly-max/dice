@@ -59,7 +59,7 @@
     @else
         @php
             [$sLabel] = P::STATUSES[$pro->account_status] ?? [ucfirst($pro->account_status)];
-            $photo = P::mediaUrl($pro->photo);
+            $photo = P::mediaUrl(auth('customer')->user()?->profile_image);   // the account photo
             $link = P::publicUrl($pro->account);
             $live = $pro->account_status === 'active';
         @endphp

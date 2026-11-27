@@ -106,7 +106,6 @@ class ProfessionalController extends Controller
             'rate_from' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
             'rate_unit' => ['nullable', Rule::in(['job', 'hour', 'day', 'session'])],
             'years_experience' => ['nullable', 'integer', 'min:0', 'max:60'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'links' => ['nullable', 'array'],
             'links.*' => ['nullable', 'string', 'max:500'],
             'markets' => ['nullable', 'array', 'max:8'],
@@ -125,7 +124,6 @@ class ProfessionalController extends Controller
             'tariff_id.required' => 'Pick a tariff.',
             'phone.regex' => 'Enter a phone number like 0712 345 678.',
             'whatsapp.regex' => 'Enter a WhatsApp number like 0712 345 678.',
-            'photo.max' => 'The photo can be up to 3 MB.',
         ]);
 
         // social links: only the known platforms, as full https addresses
@@ -210,10 +208,6 @@ class ProfessionalController extends Controller
             return $id;
         });
 
-        if ($request->hasFile('photo')) {
-            $this->savePhoto($request->file('photo'), $id);
-        }
-
         $message = !$pro ? 'Your professional profile was sent. Our team will check it and let you know.'
             : (($row['account_status'] ?? null) === 'pending' ? 'Saved and sent back to our team to check.' : 'Your profile was saved.');
         return redirect()->route('hub.account.professional.index')->with('success', $message);
@@ -223,19 +217,6 @@ class ProfessionalController extends Controller
     {
         $n = (int) $this->db()->table('professionals')->where('account', 'like', 'PRO%')->pluck('account')->map(fn ($a) => (int) substr($a, 3))->max();
         return 'PRO' . str_pad((string) ($n + 1), 4, '0', STR_PAD_LEFT);
-    }
-
-    /** MEDIA_ROOT/img/Professionals/{id}/, path kept in professionals.photo */
-    private function savePhoto(\Illuminate\Http\UploadedFile $file, int $id): void
-    {
-        $rel = 'img/Professionals/' . $id;
-        $dir = rtrim((string) config('app.media_root'), '/\\') . '/' . $rel;
-        if (!is_dir($dir)) @mkdir($dir, 0775, true);
-        $name = 'photo_' . now()->format('YmdHis') . '.' . strtolower($file->getClientOriginalExtension() ?: 'jpg');
-        $file->move($dir, $name);
-        $old = $this->db()->table('professionals')->where('id', $id)->value('photo');
-        $this->db()->table('professionals')->where('id', $id)->update(['photo' => $rel . '/' . $name, 'updated_at' => now()]);
-        if ($old) \Illuminate\Support\Facades\File::delete(rtrim((string) config('app.media_root'), '/\\') . '/' . ltrim($old, '/'));
     }
 
     /* ------------------------------------------------------------------ */
